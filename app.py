@@ -71,7 +71,7 @@ REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 # EMAIL CONFIGURATION (Gmail App Password - SMTP)
 # ============================================================
 MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
 MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
 MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'awwalu253@gmail.com')
 MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'wkss kuwq mwaf oteb')
@@ -209,10 +209,10 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# EMAIL SYSTEM (Gmail App Password - SMTP)
+# EMAIL SYSTEM (Gmail SSL - Port 465)
 # ============================================================
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send email using Gmail App Password (SMTP)"""
+    """Send email using Gmail SSL (port 465)"""
     try:
         if not MAIL_USERNAME or not MAIL_PASSWORD:
             app.logger.error("❌ Email credentials not configured")
@@ -247,16 +247,10 @@ For support: {COMPANY_EMAIL}
         msg.attach(text_part)
         msg.attach(html_part)
         
-        # Send via SMTP
-        app.logger.info(f"📧 Sending email to {recipient} via SMTP")
+        app.logger.info(f"📧 Sending email to {recipient} via SSL (port 465)")
         
-        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
-        server.ehlo()
-        
-        if MAIL_USE_TLS:
-            server.starttls()
-            server.ehlo()
-        
+        # Use SSL connection (port 465)
+        server = smtplib.SMTP_SSL(MAIL_SERVER, MAIL_PORT, timeout=30)
         server.login(MAIL_USERNAME, MAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
@@ -266,14 +260,11 @@ For support: {COMPANY_EMAIL}
         
     except smtplib.SMTPAuthenticationError as e:
         app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
-        app.logger.error("   Check your email and app password")
-        return False
-    except smtplib.SMTPServerDisconnected as e:
-        app.logger.error(f"❌ SMTP Server disconnected: {str(e)}")
         return False
     except Exception as e:
         app.logger.error(f"❌ SMTP error: {str(e)}")
         return False
+
 
 # ============================================================
 # EMAIL TEMPLATE FUNCTIONS
