@@ -627,6 +627,7 @@ def confirmation(claim_id):
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    # If already logged in, redirect to dashboard
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
