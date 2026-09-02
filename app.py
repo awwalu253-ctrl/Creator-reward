@@ -647,11 +647,16 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     """Admin dashboard with real-time data"""
-    # Double-check session
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
     try:
+        now = datetime.datetime.now()
+        current_month = now.strftime('%m')
+        current_day = now.strftime('%d')
+        current_hour = now.strftime('%H')
+        current_minute = now.strftime('%M')
+        
         # Initialize all variables
         total_claims = 0
         total_paid = 0
@@ -765,7 +770,11 @@ def admin_dashboard():
                              chart_labels=chart_labels,
                              chart_data=chart_data,
                              chart_paid_data=chart_paid_data,
-                             current_year=datetime.datetime.now().year)
+                             current_year=datetime.datetime.now().year,
+                             current_month=current_month,
+                             current_day=current_day,
+                             current_hour=current_hour,
+                             current_minute=current_minute)
         
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}", exc_info=True)
@@ -793,7 +802,11 @@ def admin_dashboard():
                              chart_labels=[],
                              chart_data=[],
                              chart_paid_data=[],
-                             current_year=datetime.datetime.now().year)
+                             current_year=datetime.datetime.now().year,
+                             current_month='01',
+                             current_day='01',
+                             current_hour='00',
+                             current_minute='00')
 
 # ============================================================
 # ADMIN CLAIMS
