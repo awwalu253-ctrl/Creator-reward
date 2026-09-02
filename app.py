@@ -22,6 +22,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response, send_from_directory
+from flask_session import Session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -44,14 +45,23 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - FIXED
+# SESSION CONFIGURATION - FIXED FOR RENDER
 # ============================================================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
-app.config['SESSION_COOKIE_NAME'] = 'admin_session'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+
+# Use filesystem-based sessions (shared across workers)
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'admin_'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Render has writable /tmp
+
+# Initialize Flask-Session
+try:
+    Session(app)
+except Exception as e:
+    print(f"Warning: Session initialization failed: {e}")
 
 # Static files
 app.static_folder = 'static'
@@ -621,10 +631,11 @@ def admin_login():
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
+    # Handle POST request (form submission)
     if request.method == 'POST':
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
-            session.clear()  # Clear any existing session data
+            session.clear()
             session['admin_logged_in'] = True
             session['admin_user'] = 'Administrator'
             session.permanent = True
@@ -632,6 +643,8 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Invalid password', 'error')
+    
+    # Handle GET request (show login page)
     return render_template('admin/login.html', company_name=COMPANY_NAME)
 
 @app.route('/admin/logout')
@@ -640,177 +653,74 @@ def admin_logout():
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
-# ============================================================
-# ADMIN DASHBOARD
-# ============================================================
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin first', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard with real-time data"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
     try:
-        now = datetime.datetime.now()
-        current_month = now.strftime('%m')
-        current_day = now.strftime('%d')
-        current_hour = now.strftime('%H')
-        current_minute = now.strftime('%M')
-        
-        # Initialize all variables
-        total_claims = 0
-        total_paid = 0
-        total_pending = 0
-        total_shipped = 0
-        total_delivered = 0
-        total_cancelled = 0
-        total_revenue = 0.0
-        payment_paid = 0
-        payment_unpaid = 0
-        today_count = 0
-        this_month_count = 0
-        conversion_rate = 0
-        recent_claims = []
-        size_distribution = {'S': 0, 'M': 0, 'L': 0, 'XL': 0, '2XL': 0, '3XL': 0}
-        country_distribution = {}
-        total_codes = 0
-        used_codes = 0
-        active_codes = 0
-        chart_labels = []
-        chart_data = []
-        chart_paid_data = []
-        
-        # Get claims
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
+        
         total_claims = len(claims)
+        payment_paid = len([c for c in claims if c.get('shipping_fee_paid') == 'true'])
+        total_pending = len([c for c in claims if c.get('status') == 'pending'])
+        total_shipped = len([c for c in claims if c.get('status') == 'shipped'])
+        total_delivered = len([c for c in claims if c.get('status') == 'delivered'])
+        total_cancelled = len([c for c in claims if c.get('status') == 'cancelled'])
+        total_revenue = payment_paid * 120.00
         
-        for claim in claims:
-            status = claim.get('status', 'pending')
-            if status == 'pending':
-                total_pending += 1
-            elif status == 'paid':
-                total_paid += 1
-            elif status == 'shipped':
-                total_shipped += 1
-            elif status == 'delivered':
-                total_delivered += 1
-            elif status == 'cancelled':
-                total_cancelled += 1
-            
-            if claim.get('shipping_fee_paid') == 'true':
-                payment_paid += 1
-                total_revenue += 120.00
-            else:
-                payment_unpaid += 1
-            
-            size = claim.get('clothing_size', '')
-            if size in size_distribution:
-                size_distribution[size] += 1
-            
-            country = claim.get('country', 'Unknown')
-            country_distribution[country] = country_distribution.get(country, 0) + 1
-        
-        recent_claims = claims[:10] if claims else []
-        
-        # Today and this month
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_claims = [c for c in claims if c.get('claim_date', '').startswith(today)]
-        today_count = len(today_claims)
-        
-        this_month = datetime.datetime.now().strftime('%Y-%m')
-        this_month_claims = [c for c in claims if c.get('claim_date', '').startswith(this_month)]
-        this_month_count = len(this_month_claims)
-        
-        if total_claims > 0:
-            conversion_rate = round((payment_paid / total_claims) * 100, 1)
-        
-        # Chart data
-        for i in range(6, -1, -1):
-            date = (datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
-            chart_labels.append(date)
-            chart_data.append(len([c for c in claims if c.get('claim_date', '').startswith(date)]))
-            chart_paid_data.append(len([c for c in claims if c.get('claim_date', '').startswith(date) and c.get('shipping_fee_paid') == 'true']))
-        
-        # Payments
-        payments_result = supabase_select('payments')
-        if payments_result and isinstance(payments_result, list):
-            total_revenue = max(total_revenue, sum(float(p.get('amount', 0)) for p in payments_result))
-        
-        # Claim codes
         codes_result = supabase_select('claim_codes')
-        if codes_result and isinstance(codes_result, list):
-            total_codes = len(codes_result)
-            for code in codes_result:
-                if code.get('status') == 'active':
-                    active_codes += 1
-                elif code.get('status') == 'used':
-                    used_codes += 1
+        codes = codes_result if isinstance(codes_result, list) else []
+        total_codes = len(codes)
+        active_codes = len([c for c in codes if c.get('status') == 'active'])
+        used_codes = len([c for c in codes if c.get('status') == 'used'])
+        
+        recent_claims = claims[:5] if claims else []
         
         return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
                              total_claims=total_claims,
-                             total_paid=total_paid,
+                             payment_paid=payment_paid,
                              total_pending=total_pending,
                              total_shipped=total_shipped,
                              total_delivered=total_delivered,
                              total_cancelled=total_cancelled,
                              total_revenue=total_revenue,
-                             payment_paid=payment_paid,
-                             payment_unpaid=payment_unpaid,
-                             today_count=today_count,
-                             this_month_count=this_month_count,
-                             conversion_rate=conversion_rate,
-                             recent_claims=recent_claims,
-                             size_distribution=size_distribution,
-                             country_distribution=country_distribution,
                              total_codes=total_codes,
-                             used_codes=used_codes,
                              active_codes=active_codes,
-                             chart_labels=chart_labels,
-                             chart_data=chart_data,
-                             chart_paid_data=chart_paid_data,
-                             current_year=datetime.datetime.now().year,
-                             current_month=current_month,
-                             current_day=current_day,
-                             current_hour=current_hour,
-                             current_minute=current_minute)
+                             used_codes=used_codes,
+                             recent_claims=recent_claims,
+                             current_year=datetime.datetime.now().year)
         
     except Exception as e:
-        app.logger.error(f"Dashboard error: {str(e)}", exc_info=True)
-        flash('Error loading dashboard data', 'error')
+        app.logger.error(f"Dashboard error: {str(e)}")
+        flash('Error loading dashboard', 'error')
         return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
                              total_claims=0,
-                             total_paid=0,
+                             payment_paid=0,
                              total_pending=0,
                              total_shipped=0,
                              total_delivered=0,
                              total_cancelled=0,
                              total_revenue=0,
-                             payment_paid=0,
-                             payment_unpaid=0,
-                             today_count=0,
-                             this_month_count=0,
-                             conversion_rate=0,
-                             recent_claims=[],
-                             size_distribution={},
-                             country_distribution={},
                              total_codes=0,
-                             used_codes=0,
                              active_codes=0,
-                             chart_labels=[],
-                             chart_data=[],
-                             chart_paid_data=[],
-                             current_year=datetime.datetime.now().year,
-                             current_month='01',
-                             current_day='01',
-                             current_hour='00',
-                             current_minute='00')
+                             used_codes=0,
+                             recent_claims=[],
+                             current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN CLAIMS
-# ============================================================
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
@@ -859,9 +769,6 @@ def admin_claims():
                              current_status='',
                              current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN CLAIM DETAIL
-# ============================================================
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
@@ -891,9 +798,6 @@ def admin_claim_detail(claim_id):
         flash('Error loading claim details', 'error')
         return redirect(url_for('admin_claims'))
 
-# ============================================================
-# ADMIN UPDATE CLAIM
-# ============================================================
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
@@ -935,9 +839,6 @@ def admin_update_claim(claim_id):
         flash('Error updating claim', 'error')
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
 
-# ============================================================
-# ADMIN CODES
-# ============================================================
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
@@ -980,9 +881,6 @@ def admin_codes():
                              expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN GENERATE CODES
-# ============================================================
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
@@ -1019,9 +917,6 @@ def admin_generate_codes():
         flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
-# ============================================================
-# ADMIN BULK DELETE CODES
-# ============================================================
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
@@ -1058,9 +953,6 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
-# ============================================================
-# ADMIN EXPORT
-# ============================================================
 @app.route('/admin/export')
 @admin_required
 def admin_export():
