@@ -44,7 +44,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - SIMPLE (NO FLASK-SESSION)
+# SESSION CONFIGURATION - SIMPLE
 # ============================================================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_COOKIE_NAME'] = 'admin_session'
@@ -617,7 +617,6 @@ def confirmation(claim_id):
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    # If already logged in, redirect to dashboard
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
@@ -633,7 +632,6 @@ def admin_login():
         else:
             flash('Invalid password', 'error')
     
-    # GET request - show login page
     return render_template('admin/login.html', company_name=COMPANY_NAME)
 
 @app.route('/admin/logout')
@@ -643,12 +641,13 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 # ============================================================
-# ADMIN DASHBOARD
+# ADMIN DASHBOARD - FIXED
 # ============================================================
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -704,10 +703,14 @@ def admin_dashboard():
                              recent_claims=[],
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN CLAIMS - FIXED
+# ============================================================
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -752,10 +755,14 @@ def admin_claims():
                              current_status='',
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN CLAIM DETAIL - FIXED
+# ============================================================
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -781,10 +788,14 @@ def admin_claim_detail(claim_id):
         flash('Error loading claim details', 'error')
         return redirect(url_for('admin_claims'))
 
+# ============================================================
+# ADMIN UPDATE CLAIM - FIXED
+# ============================================================
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -822,10 +833,14 @@ def admin_update_claim(claim_id):
         flash('Error updating claim', 'error')
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
 
+# ============================================================
+# ADMIN CODES - FIXED
+# ============================================================
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
 
     try:
@@ -864,10 +879,14 @@ def admin_codes():
                              expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN GENERATE CODES - FIXED
+# ============================================================
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -900,10 +919,14 @@ def admin_generate_codes():
         flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
+# ============================================================
+# ADMIN BULK DELETE CODES - FIXED
+# ============================================================
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
@@ -936,10 +959,14 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
+# ============================================================
+# ADMIN EXPORT - FIXED
+# ============================================================
 @app.route('/admin/export')
 @admin_required
 def admin_export():
     if not session.get('admin_logged_in'):
+        flash('Please login first', 'warning')
         return redirect(url_for('admin_login'))
     
     try:
