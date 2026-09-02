@@ -646,167 +646,66 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard with real-time data"""
+    """Admin dashboard - Simplified"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
     try:
-        now = datetime.datetime.now()
-        current_month = now.strftime('%m')
-        current_day = now.strftime('%d')
-        current_hour = now.strftime('%H')
-        current_minute = now.strftime('%M')
-        
-        # Initialize all variables
-        total_claims = 0
-        total_paid = 0
-        total_pending = 0
-        total_shipped = 0
-        total_delivered = 0
-        total_cancelled = 0
-        total_revenue = 0.0
-        payment_paid = 0
-        payment_unpaid = 0
-        today_count = 0
-        this_month_count = 0
-        conversion_rate = 0
-        recent_claims = []
-        size_distribution = {'S': 0, 'M': 0, 'L': 0, 'XL': 0, '2XL': 0, '3XL': 0}
-        country_distribution = {}
-        total_codes = 0
-        used_codes = 0
-        active_codes = 0
-        chart_labels = []
-        chart_data = []
-        chart_paid_data = []
-        
         # Get claims
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
+        
+        # Calculate stats
         total_claims = len(claims)
+        payment_paid = len([c for c in claims if c.get('shipping_fee_paid') == 'true'])
+        total_pending = len([c for c in claims if c.get('status') == 'pending'])
+        total_shipped = len([c for c in claims if c.get('status') == 'shipped'])
+        total_delivered = len([c for c in claims if c.get('status') == 'delivered'])
+        total_cancelled = len([c for c in claims if c.get('status') == 'cancelled'])
+        total_revenue = payment_paid * 120.00
         
-        for claim in claims:
-            status = claim.get('status', 'pending')
-            if status == 'pending':
-                total_pending += 1
-            elif status == 'paid':
-                total_paid += 1
-            elif status == 'shipped':
-                total_shipped += 1
-            elif status == 'delivered':
-                total_delivered += 1
-            elif status == 'cancelled':
-                total_cancelled += 1
-            
-            if claim.get('shipping_fee_paid') == 'true':
-                payment_paid += 1
-                total_revenue += 120.00
-            else:
-                payment_unpaid += 1
-            
-            size = claim.get('clothing_size', '')
-            if size in size_distribution:
-                size_distribution[size] += 1
-            
-            country = claim.get('country', 'Unknown')
-            country_distribution[country] = country_distribution.get(country, 0) + 1
-        
-        recent_claims = claims[:10] if claims else []
-        
-        # Today and this month
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_claims = [c for c in claims if c.get('claim_date', '').startswith(today)]
-        today_count = len(today_claims)
-        
-        this_month = datetime.datetime.now().strftime('%Y-%m')
-        this_month_claims = [c for c in claims if c.get('claim_date', '').startswith(this_month)]
-        this_month_count = len(this_month_claims)
-        
-        if total_claims > 0:
-            conversion_rate = round((payment_paid / total_claims) * 100, 1)
-        
-        # Chart data
-        for i in range(6, -1, -1):
-            date = (datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
-            chart_labels.append(date)
-            chart_data.append(len([c for c in claims if c.get('claim_date', '').startswith(date)]))
-            chart_paid_data.append(len([c for c in claims if c.get('claim_date', '').startswith(date) and c.get('shipping_fee_paid') == 'true']))
-        
-        # Payments
-        payments_result = supabase_select('payments')
-        if payments_result and isinstance(payments_result, list):
-            total_revenue = max(total_revenue, sum(float(p.get('amount', 0)) for p in payments_result))
-        
-        # Claim codes
+        # Get codes
         codes_result = supabase_select('claim_codes')
-        if codes_result and isinstance(codes_result, list):
-            total_codes = len(codes_result)
-            for code in codes_result:
-                if code.get('status') == 'active':
-                    active_codes += 1
-                elif code.get('status') == 'used':
-                    used_codes += 1
+        codes = codes_result if isinstance(codes_result, list) else []
+        total_codes = len(codes)
+        active_codes = len([c for c in codes if c.get('status') == 'active'])
+        used_codes = len([c for c in codes if c.get('status') == 'used'])
         
-        return render_template('admin/dashboard.html',
+        # Recent claims (last 5)
+        recent_claims = claims[:5] if claims else []
+        
+        return render_template('admin/dashboard_simple.html',
                              company_name=COMPANY_NAME,
                              total_claims=total_claims,
-                             total_paid=total_paid,
+                             payment_paid=payment_paid,
                              total_pending=total_pending,
                              total_shipped=total_shipped,
                              total_delivered=total_delivered,
                              total_cancelled=total_cancelled,
                              total_revenue=total_revenue,
-                             payment_paid=payment_paid,
-                             payment_unpaid=payment_unpaid,
-                             today_count=today_count,
-                             this_month_count=this_month_count,
-                             conversion_rate=conversion_rate,
-                             recent_claims=recent_claims,
-                             size_distribution=size_distribution,
-                             country_distribution=country_distribution,
                              total_codes=total_codes,
-                             used_codes=used_codes,
                              active_codes=active_codes,
-                             chart_labels=chart_labels,
-                             chart_data=chart_data,
-                             chart_paid_data=chart_paid_data,
-                             current_year=datetime.datetime.now().year,
-                             current_month=current_month,
-                             current_day=current_day,
-                             current_hour=current_hour,
-                             current_minute=current_minute)
+                             used_codes=used_codes,
+                             recent_claims=recent_claims,
+                             current_year=datetime.datetime.now().year)
         
     except Exception as e:
-        app.logger.error(f"Dashboard error: {str(e)}", exc_info=True)
-        flash('Error loading dashboard data', 'error')
-        return render_template('admin/dashboard.html',
+        app.logger.error(f"Dashboard error: {str(e)}")
+        flash('Error loading dashboard', 'error')
+        return render_template('admin/dashboard_simple.html',
                              company_name=COMPANY_NAME,
                              total_claims=0,
-                             total_paid=0,
+                             payment_paid=0,
                              total_pending=0,
                              total_shipped=0,
                              total_delivered=0,
                              total_cancelled=0,
                              total_revenue=0,
-                             payment_paid=0,
-                             payment_unpaid=0,
-                             today_count=0,
-                             this_month_count=0,
-                             conversion_rate=0,
-                             recent_claims=[],
-                             size_distribution={},
-                             country_distribution={},
                              total_codes=0,
-                             used_codes=0,
                              active_codes=0,
-                             chart_labels=[],
-                             chart_data=[],
-                             chart_paid_data=[],
-                             current_year=datetime.datetime.now().year,
-                             current_month='01',
-                             current_day='01',
-                             current_hour='00',
-                             current_minute='00')
+                             used_codes=0,
+                             recent_claims=[],
+                             current_year=datetime.datetime.now().year)
 
 # ============================================================
 # ADMIN CLAIMS
