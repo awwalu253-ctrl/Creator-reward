@@ -22,6 +22,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response, send_from_directory
+from flask_session import Session  # Add this import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -44,15 +45,19 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - FIX LOGOUT ISSUE
+# SESSION CONFIGURATION - USE SERVER-SIDE SESSIONS
 # ============================================================
-app.config['SESSION_COOKIE_NAME'] = 'admin_session'
-app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
-app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+
+# Use server-side session (stores session data on the server)
+app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem for Render
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'admin_'
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
+
+# Initialize Flask-Session
+Session(app)
 
 # Static files
 app.static_folder = 'static'
@@ -628,7 +633,6 @@ def admin_login():
             session['admin_logged_in'] = True
             session['admin_user'] = 'Administrator'
             session.permanent = True
-            session.modified = True
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
