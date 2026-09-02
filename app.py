@@ -16,9 +16,7 @@ import pickle
 import csv
 import random
 import string
-import ssl
 import urllib3
-import smtplib
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -31,16 +29,14 @@ import requests
 import logging
 from logging.handlers import RotatingFileHandler
 
-# Google API imports (for potential future use)
+# Google API imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# Disable SSL warnings for development
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Fix Windows console encoding
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
@@ -50,7 +46,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SECRET KEY & SESSION CONFIGURATION
+# SECRET KEY & SESSION
 # ============================================================
 app.secret_key = os.getenv('SECRET_KEY', 'bb0169c81b04bb4ed2d57d0cf94b4631d54f21a787abda6ba95c9d2675b6aeab')
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
@@ -79,15 +75,8 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 
-# Email config (SMTP - Works on Render)
-MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
-MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-MAIL_USERNAME = os.getenv('MAIL_USERNAME')
-MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
-
-# Gmail API credentials (as fallback)
+# Gmail API credentials
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'awwalu253@gmail.com')
 GMAIL_API_CLIENT_ID = os.getenv('GMAIL_API_CLIENT_ID')
 GMAIL_API_CLIENT_SECRET = os.getenv('GMAIL_API_CLIENT_SECRET')
 GMAIL_API_REFRESH_TOKEN = os.getenv('GMAIL_API_REFRESH_TOKEN')
@@ -101,10 +90,9 @@ app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
 # ============================================================
-# SAFE LOG MESSAGE FUNCTION
+# SAFE LOG MESSAGE
 # ============================================================
 def safe_log_message(msg):
-    """Remove emojis for Windows console compatibility"""
     emoji_pattern = re.compile("["
                                u"\U0001F600-\U0001F64F"
                                u"\U0001F300-\U0001F5FF"
@@ -119,7 +107,6 @@ def safe_log_message(msg):
 # SUPABASE HELPERS
 # ============================================================
 def supabase_select(table, filters=None, order_by=None, limit=None):
-    """Select data from Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
     
@@ -140,21 +127,15 @@ def supabase_select(table, filters=None, order_by=None, limit=None):
         params['limit'] = limit
     
     try:
-        app.logger.info(f"📡 Selecting from {table}")
         response = requests.get(url, headers=headers, params=params, timeout=30, verify=False)
-        app.logger.info(f"📡 Response status: {response.status_code}")
-        
         if response.status_code == 200:
             return response.json()
         else:
-            app.logger.error(f"❌ Select error: {response.text}")
             return {'error': f'HTTP {response.status_code}', 'detail': response.text}
     except Exception as e:
-        app.logger.error(f"❌ Select error: {str(e)}")
         return {'error': str(e)}
 
 def supabase_insert(table, data):
-    """Insert data into Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
     
@@ -167,24 +148,15 @@ def supabase_insert(table, data):
     }
     
     try:
-        app.logger.info(f"📡 Inserting into {table}")
         response = requests.post(url, headers=headers, json=data, timeout=30, verify=False)
-        app.logger.info(f"📡 Response status: {response.status_code}")
-        
         if response.status_code in [200, 201]:
-            result = response.json()
-            app.logger.info(f"✅ Insert successful")
-            return result
+            return response.json()
         else:
-            error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
-            app.logger.error(f"❌ Insert failed: {error_msg}")
-            return {'error': error_msg, 'detail': response.text}
+            return {'error': f'HTTP {response.status_code}', 'detail': response.text}
     except Exception as e:
-        app.logger.error(f"❌ Insert error: {str(e)}")
         return {'error': str(e)}
 
 def supabase_update(table, data, filters):
-    """Update data in Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
     
@@ -201,26 +173,19 @@ def supabase_update(table, data, filters):
         params[key] = f"eq.{value}"
     
     try:
-        app.logger.info(f"📡 Updating {table}")
         response = requests.patch(url, headers=headers, params=params, json=data, timeout=30, verify=False)
-        app.logger.info(f"📡 Response status: {response.status_code}")
-        
         if response.status_code in [200, 201]:
             return response.json()
         else:
-            app.logger.error(f"❌ Update error: {response.text}")
             return {'error': f'HTTP {response.status_code}', 'detail': response.text}
     except Exception as e:
-        app.logger.error(f"❌ Update error: {str(e)}")
         return {'error': str(e)}
 
 # ============================================================
 # CLAIM CODE GENERATION
 # ============================================================
 def generate_unique_code():
-    """Generate a unique claim code"""
     max_attempts = 50
-    
     for _ in range(max_attempts):
         parts = [
             ''.join(random.choices(string.ascii_uppercase, k=3)),
@@ -228,16 +193,13 @@ def generate_unique_code():
             ''.join(random.choices(string.ascii_uppercase, k=3))
         ]
         code = '-'.join(parts)
-        
         existing = supabase_select('claim_codes', {'code': code})
         if not existing or (isinstance(existing, dict) and 'error' in existing) or len(existing) == 0:
             return code
-    
     timestamp = datetime.datetime.now().strftime('%y%m%d%H%M%S')
     return f"CODE-{timestamp}-{random.randint(1000, 9999)}"
 
 def generate_bulk_codes(count):
-    """Generate multiple unique codes"""
     codes = []
     for _ in range(count):
         code = generate_unique_code()
@@ -251,55 +213,86 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# EMAIL SYSTEM (SMTP - Works on Render)
+# GMAIL API - REAL EMAIL (NO FILE FALLBACK)
 # ============================================================
-def send_email_via_smtp(recipient, subject, html_content, plain_text_content=None):
-    """Send email using Gmail SMTP"""
-    try:
-        if not MAIL_USERNAME or not MAIL_PASSWORD:
-            app.logger.error("❌ SMTP credentials not configured")
-            return False
+def get_gmail_service():
+    """Get authenticated Gmail API service"""
+    creds = None
+    
+    # Use environment variables
+    client_id = GMAIL_API_CLIENT_ID
+    client_secret = GMAIL_API_CLIENT_SECRET
+    refresh_token = GMAIL_API_REFRESH_TOKEN
+    
+    if client_id and client_secret and refresh_token:
+        app.logger.info("📧 Using Gmail API with environment variables")
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            token_uri='https://oauth2.googleapis.com/token',
+            scopes=SCOPES
+        )
         
-        # Create message
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        msg['To'] = recipient
-        msg['Reply-To'] = COMPANY_EMAIL
+        if creds.expired and creds.refresh_token:
+            app.logger.info("🔄 Refreshing token...")
+            creds.refresh(Request())
+        
+        if creds.valid:
+            app.logger.info("✅ Gmail API ready")
+            return build('gmail', 'v1', credentials=creds)
+    
+    # Fallback to token.pickle (local)
+    if os.path.exists('token.pickle'):
+        app.logger.info("📧 Using token.pickle")
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        if creds.valid:
+            return build('gmail', 'v1', credentials=creds)
+    
+    app.logger.error("❌ No Gmail API credentials found")
+    return None
+
+def send_real_email(recipient, subject, html_content, plain_text_content=None):
+    """Send REAL email using Gmail API - NO FILE FALLBACK"""
+    service = get_gmail_service()
+    if not service:
+        app.logger.error("❌ Cannot send email - no Gmail service")
+        return False
+    
+    try:
+        message = MIMEMultipart('alternative')
+        message['to'] = recipient
+        message['subject'] = subject
+        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        message['reply-to'] = COMPANY_EMAIL
         
         if plain_text_content:
             text_part = MIMEText(plain_text_content, 'plain')
-            msg.attach(text_part)
+            message.attach(text_part)
         
         html_part = MIMEText(html_content, 'html')
-        msg.attach(html_part)
+        message.attach(html_part)
         
-        # Send via SMTP
-        app.logger.info(f"📧 Sending email to {recipient} via SMTP")
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
         
-        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        server.login(MAIL_USERNAME, MAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        service.users().messages().send(
+            userId='me',
+            body={'raw': raw_message}
+        ).execute()
         
-        app.logger.info(f"✅ Email sent to {recipient}: {subject}")
+        app.logger.info(f"✅ REAL EMAIL SENT to {recipient}: {subject}")
         return True
         
-    except smtplib.SMTPAuthenticationError as e:
-        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
-        return False
-    except smtplib.SMTPServerDisconnected as e:
-        app.logger.error(f"❌ SMTP Server disconnected: {str(e)}")
-        return False
     except Exception as e:
-        app.logger.error(f"❌ SMTP error: {str(e)}")
+        app.logger.error(f"❌ Gmail API error: {str(e)}")
         return False
 
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send email with fallback to file"""
+    """Send REAL email - NO FILE FALLBACK"""
     try:
         with app.app_context():
             html_content = render_template(f'emails/{template_name}.html', **kwargs)
@@ -317,37 +310,16 @@ This is an automated message from {COMPANY_NAME}.
 For support: {COMPANY_EMAIL}
         """
         
-        # Try SMTP first
-        if send_email_via_smtp(recipient, subject, html_content, plain_text):
+        # Send REAL email
+        if send_real_email(recipient, subject, html_content, plain_text):
+            app.logger.info(f"✅ Email delivered to {recipient}")
             return True
         else:
-            app.logger.warning("⚠️ SMTP failed, saving to file")
-            return send_email_to_file(recipient, subject, template_name, **kwargs)
+            app.logger.error(f"❌ Failed to send email to {recipient}")
+            return False
         
     except Exception as e:
         app.logger.error(f"❌ Email error: {str(e)}")
-        return send_email_to_file(recipient, subject, template_name, **kwargs)
-
-def send_email_to_file(recipient, subject, template_name, **kwargs):
-    """Save email to file as fallback"""
-    try:
-        with app.app_context():
-            html_content = render_template(f'emails/{template_name}.html', **kwargs)
-        
-        if not os.path.exists('emails_sent'):
-            os.mkdir('emails_sent')
-        
-        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        safe_recipient = re.sub(r'[^a-zA-Z0-9]', '_', recipient)
-        filename = f"emails_sent/{timestamp}_{safe_recipient}_{template_name}.html"
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-        
-        app.logger.info(f"📧 Email saved to: {filename}")
-        return True
-    except Exception as e:
-        app.logger.error(f"❌ Failed to save email: {str(e)}")
         return False
 
 # ============================================================
@@ -391,7 +363,6 @@ def send_payment_receipt(claim_data, payment_data):
     )
 
 def send_payment_failed(claim_data, error_message=None):
-    """Send payment failed notification to user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
     return send_email(
         recipient=claim_data['email'],
@@ -431,9 +402,8 @@ def generate_claim_number():
             check = supabase_select('gift_claims', filters={'claim_number': claim_number})
             if check and isinstance(check, list) and len(check) == 0:
                 return claim_number
-    except Exception as e:
-        app.logger.error(f"Error generating claim number: {str(e)}")
-    
+    except:
+        pass
     return f"GC-{year}-{random.randint(1000, 9999):04d}"
 
 def generate_payment_reference():
@@ -720,31 +690,8 @@ def payment_callback():
                 flash('Claim not found for this payment.', 'error')
                 return redirect(url_for('landing'))
         else:
-            # Payment failed - send notification
             flash('Payment verification failed. Please try again.', 'error')
-            
-            # Try to find claim and send failed notification
-            try:
-                result = supabase_select('gift_claims', {'payment_reference': reference})
-                if result and isinstance(result, list) and len(result) > 0:
-                    claim = result[0]
-                    claim_id = claim['id']
-                    
-                    def send_failed_in_background():
-                        with app.app_context():
-                            try:
-                                send_payment_failed(claim, data.get('message', 'Payment verification failed'))
-                                app.logger.info(f"Payment failed notification sent for {claim['claim_number']}")
-                            except Exception as e:
-                                app.logger.error(f"Failed email error: {str(e)}")
-                    
-                    threading.Thread(target=send_failed_in_background, daemon=True).start()
-                    return redirect(url_for('review_claim', claim_id=claim_id))
-                else:
-                    return redirect(url_for('landing'))
-            except Exception as e:
-                app.logger.error(f"Failed to send payment failed notification: {str(e)}")
-                return redirect(url_for('landing'))
+            return redirect(url_for('landing'))
             
     except Exception as e:
         app.logger.error(f"Callback error: {str(e)}")
@@ -1123,34 +1070,6 @@ def admin_test_email():
         flash(f'❌ Error: {str(e)}', 'error')
         return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/view-emails')
-@admin_required
-def admin_view_emails():
-    """View saved emails"""
-    emails = []
-    if os.path.exists('emails_sent'):
-        for filename in sorted(os.listdir('emails_sent'), reverse=True)[:50]:
-            emails.append(filename)
-    return render_template('admin/view_emails.html',
-                         company_name=COMPANY_NAME,
-                         emails=emails,
-                         current_year=datetime.datetime.now().year)
-
-@app.route('/admin/view-email/<filename>')
-@admin_required
-def admin_view_email(filename):
-    """View a specific saved email"""
-    try:
-        filepath = os.path.join('emails_sent', filename)
-        if os.path.exists(filepath):
-            with open(filepath, 'r', encoding='utf-8') as f:
-                content = f.read()
-            return content, 200, {'Content-Type': 'text/html'}
-        else:
-            return 'Email not found', 404
-    except Exception as e:
-        return f'Error: {str(e)}', 500
-
 @app.route('/admin/check-session')
 def admin_check_session():
     return jsonify({
@@ -1193,7 +1112,7 @@ if __name__ == '__main__':
     print(f"📍 http://localhost:5000")
     print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
     print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
+    print(f"📧 Gmail API: {'✅ Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else '❌ Not Configured'}")
     print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
     print("=" * 50)
     print("\n⚠️ IMPORTANT DISCLAIMER:")
