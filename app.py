@@ -42,14 +42,21 @@ if sys.platform == 'win32':
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
-app.static_folder = 'static'
-app.static_url_path = '/static'
-# Add this after app initialization
-app.config['SESSION_COOKIE_SECURE'] = True
+
+# ============================================================
+# SESSION CONFIGURATION - FIX LOGOUT ISSUE
+# ============================================================
+app.config['SESSION_COOKIE_NAME'] = 'admin_session'
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+
+# Static files
+app.static_folder = 'static'
+app.static_url_path = '/static'
 
 # ============================================================
 # CONFIGURATION
@@ -619,7 +626,9 @@ def admin_login():
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
-            session.permanent = True  # Make session permanent
+            session['admin_user'] = 'Administrator'
+            session.permanent = True
+            session.modified = True
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -632,6 +641,9 @@ def admin_logout():
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
+# ============================================================
+# ADMIN REQUIRED DECORATOR (USED FOR ALL ADMIN ROUTES)
+# ============================================================
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -641,10 +653,17 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ============================================================
+# ADMIN DASHBOARD
+# ============================================================
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
     """Admin dashboard with real-time data"""
+    # Double-check session
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         # Initialize all variables
         total_claims = 0
@@ -789,9 +808,15 @@ def admin_dashboard():
                              chart_paid_data=[],
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN CLAIMS
+# ============================================================
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         status = request.args.get('status', '')
         search = request.args.get('search', '')
@@ -834,9 +859,15 @@ def admin_claims():
                              current_status='',
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN CLAIM DETAIL
+# ============================================================
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         result = supabase_select('gift_claims', {'id': claim_id})
         if not result or (isinstance(result, dict) and 'error' in result) or len(result) == 0:
@@ -860,9 +891,15 @@ def admin_claim_detail(claim_id):
         flash('Error loading claim details', 'error')
         return redirect(url_for('admin_claims'))
 
+# ============================================================
+# ADMIN UPDATE CLAIM
+# ============================================================
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         action = request.form.get('action')
         tracking_number = request.form.get('tracking_number', '')
@@ -898,10 +935,12 @@ def admin_update_claim(claim_id):
         flash('Error updating claim', 'error')
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
 
+# ============================================================
+# ADMIN CODES
+# ============================================================
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
-
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
@@ -941,9 +980,15 @@ def admin_codes():
                              expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
+# ============================================================
+# ADMIN GENERATE CODES
+# ============================================================
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         count = min(int(request.form.get('count', 10)), 100)
         description = request.form.get('description', '')
@@ -974,9 +1019,15 @@ def admin_generate_codes():
         flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
+# ============================================================
+# ADMIN BULK DELETE CODES
+# ============================================================
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         code_ids = request.form.getlist('code_ids')
         if not code_ids:
@@ -1007,9 +1058,15 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
+# ============================================================
+# ADMIN EXPORT
+# ============================================================
 @app.route('/admin/export')
 @admin_required
 def admin_export():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
