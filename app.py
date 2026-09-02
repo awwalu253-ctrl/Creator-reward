@@ -961,28 +961,56 @@ def admin_export():
 def admin_codes():
     """Admin - Claim Code Management"""
     try:
+        # Get all codes - order by created_at desc
         codes_result = supabase_select('claim_codes', order_by='created_at.desc')
-        codes = codes_result if isinstance(codes_result, list) else []
         
+        # Debug logging
+        app.logger.info(f"🔍 Codes result: {codes_result}")
+        
+        if codes_result and isinstance(codes_result, list):
+            codes = codes_result
+            app.logger.info(f"✅ Found {len(codes)} codes")
+        elif codes_result and isinstance(codes_result, dict) and 'error' in codes_result:
+            app.logger.error(f"❌ Supabase error: {codes_result}")
+            codes = []
+        else:
+            codes = []
+            app.logger.warning("⚠️ No codes found or unexpected response format")
+        
+        # Get claim info for each code
         for code in codes:
             if code.get('used_by_claim_id'):
                 claim_result = supabase_select('gift_claims', {'id': code.get('used_by_claim_id')})
                 if claim_result and isinstance(claim_result, list) and len(claim_result) > 0:
                     code['used_by_claim'] = claim_result[0]
         
+        # Calculate stats
+        total_codes = len(codes)
+        active_codes = len([c for c in codes if c.get('status') == 'active'])
+        used_codes = len([c for c in codes if c.get('status') == 'used'])
+        expired_codes = len([c for c in codes if c.get('status') == 'expired'])
+        
+        app.logger.info(f"📊 Stats - Total: {total_codes}, Active: {active_codes}, Used: {used_codes}, Expired: {expired_codes}")
+        
         return render_template('admin/codes.html',
                              company_name=COMPANY_NAME,
                              codes=codes,
-                             total_codes=len(codes),
-                             active_codes=len([c for c in codes if c.get('status') == 'active']),
-                             used_codes=len([c for c in codes if c.get('status') == 'used']),
-                             expired_codes=len([c for c in codes if c.get('status') == 'expired']),
+                             total_codes=total_codes,
+                             active_codes=active_codes,
+                             used_codes=used_codes,
+                             expired_codes=expired_codes,
                              current_year=datetime.datetime.now().year)
+                             
     except Exception as e:
-        app.logger.error(f"Codes error: {str(e)}")
-        flash('Error loading codes', 'error')
-        return render_template('admin/codes.html', company_name=COMPANY_NAME,
-                             codes=[], total_codes=0, active_codes=0, used_codes=0, expired_codes=0,
+        app.logger.error(f"❌ Admin codes error: {str(e)}", exc_info=True)
+        flash(f'Error loading codes: {str(e)}', 'error')
+        return render_template('admin/codes.html',
+                             company_name=COMPANY_NAME,
+                             codes=[],
+                             total_codes=0,
+                             active_codes=0,
+                             used_codes=0,
+                             expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
 @app.route('/admin/codes/generate', methods=['POST'])
