@@ -1013,6 +1013,42 @@ def admin_codes():
                              expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
+@app.route('/admin/codes/delete/<code_id>', methods=['POST'])
+@admin_required
+def admin_delete_code(code_id):
+    """Delete a single claim code"""
+    try:
+        # Check if code is used
+        result = supabase_select('claim_codes', {'id': code_id})
+        if result and isinstance(result, list) and len(result) > 0:
+            code = result[0]
+            if code.get('status') == 'used':
+                flash('Cannot delete a used code', 'error')
+                return redirect(url_for('admin_codes'))
+            
+            # Delete the code
+            url = f"{SUPABASE_URL}/rest/v1/claim_codes?id=eq.{code_id}"
+            headers = {
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json"
+            }
+            response = requests.delete(url, headers=headers, timeout=30)
+            
+            if response.status_code in [200, 204]:
+                flash('Code deleted successfully', 'success')
+            else:
+                flash('Error deleting code', 'error')
+        else:
+            flash('Code not found', 'error')
+        
+        return redirect(url_for('admin_codes'))
+        
+    except Exception as e:
+        app.logger.error(f"Delete code error: {str(e)}")
+        flash('Error deleting code', 'error')
+        return redirect(url_for('admin_codes'))                             
+
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():

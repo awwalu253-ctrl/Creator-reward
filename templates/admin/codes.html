@@ -113,21 +113,49 @@
                                 <span style="color:#a0aec0;font-size:12px;">🔒</span>
                                 {% endif %}
                             </td>
-                            <td><span class="code-badge">{{ code.code }}</span><button class="action-btn copy" onclick="copyToClipboard('{{ code.code }}', this)"><i class="fas fa-copy"></i></button></td>
-                            <td><span class="status-badge status-{{ code.status }}">{{ code.status|capitalize }}</span></td>
+                            <td>
+                                <span class="code-badge">{{ code.code }}</span>
+                                <button class="action-btn copy" onclick="copyToClipboard('{{ code.code }}', this)">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ code.status }}">
+                                    {{ code.status|capitalize }}
+                                </span>
+                            </td>
                             <td>{{ code.description or '-' }}</td>
-                            <td style="font-size:13px;color:#718096;">{{ code.created_at[:10] if code.created_at else '-' }}</td>
-                            <td>{% if code.used_by_claim %}<a href="{{ url_for('admin_claim_detail', claim_id=code.used_by_claim.id) }}" style="color:#667eea;">{{ code.used_by_claim.claim_number }}</a>{% else %}<span style="color:#a0aec0;">Not used</span>{% endif %}</td>
+                            <td style="font-size:13px;color:#718096;">
+                                {{ code.created_at[:10] if code.created_at else '-' }}
+                            </td>
+                            <td>
+                                {% if code.used_by_claim %}
+                                    <a href="{{ url_for('admin_claim_detail', claim_id=code.used_by_claim.id) }}" style="color:#667eea;">
+                                        {{ code.used_by_claim.claim_number }}
+                                    </a>
+                                {% else %}
+                                    <span style="color:#a0aec0;">Not used</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if code.status != 'used' %}
-                                <form method="POST" action="{{ url_for('admin_delete_code', code_id=code.id) }}" style="display:inline;"><button type="submit" class="action-btn delete" onclick="return confirm('Delete this code?')"><i class="fas fa-trash"></i></button></form>
+                                <form method="POST" action="{{ url_for('admin_delete_code', code_id=code.id) }}" style="display:inline;">
+                                    <button type="submit" class="action-btn delete" onclick="return confirm('Delete this code?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                                 {% else %}
                                 <span style="color:#a0aec0;font-size:12px;">Locked</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="7" style="text-align:center;padding:40px;color:#a0aec0;"><i class="fas fa-key" style="font-size:48px;display:block;margin-bottom:10px;"></i>No claim codes created yet.</td></tr>
+                        <tr>
+                            <td colspan="7" style="text-align:center;padding:40px;color:#a0aec0;">
+                                <i class="fas fa-key" style="font-size:48px;display:block;margin-bottom:10px;"></i>
+                                No claim codes created yet. Generate your first code above!
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -201,4 +229,4 @@
 
     document.addEventListener('DOMContentLoaded', updateSelectedCount);
 </script>
-{% endblock %}      
+{% endblock %}
