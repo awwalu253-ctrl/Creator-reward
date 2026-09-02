@@ -154,7 +154,6 @@
 
 <div class="dashboard-container">
     <div class="container">
-        <!-- Header -->
         <div class="dashboard-header">
             <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
             <div class="header-buttons">
@@ -164,13 +163,15 @@
                 <a href="{{ url_for('admin_codes') }}">
                     <i class="fas fa-key"></i> Codes
                 </a>
+                <a href="{{ url_for('admin_claims') }}">
+                    <i class="fas fa-list"></i> Claims
+                </a>
                 <a href="{{ url_for('admin_logout') }}" class="btn-danger">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </div>
         </div>
 
-        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <span class="number red">{{ total_claims }}</span>
@@ -194,7 +195,6 @@
             </div>
         </div>
 
-        <!-- Recent Claims -->
         <div class="recent-section">
             <h3><i class="fas fa-history"></i> Recent Claims</h3>
             <div class="table-wrap">

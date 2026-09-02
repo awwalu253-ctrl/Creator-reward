@@ -22,6 +22,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response, send_from_directory
+from flask_session import Session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -44,14 +45,23 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - FIXED
+# SESSION CONFIGURATION - FIXED FOR RENDER
 # ============================================================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
-app.config['SESSION_COOKIE_NAME'] = 'admin_session'
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+
+# Use filesystem-based sessions (shared across workers)
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'admin_'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Render has writable /tmp
+
+# Initialize Flask-Session
+try:
+    Session(app)
+except Exception as e:
+    print(f"Warning: Session initialization failed: {e}")
 
 # Static files
 app.static_folder = 'static'
@@ -617,14 +627,13 @@ def confirmation(claim_id):
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    # If already logged in, redirect to dashboard
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
     if request.method == 'POST':
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
-            session.clear()  # Clear any existing session data
+            session.clear()
             session['admin_logged_in'] = True
             session['admin_user'] = 'Administrator'
             session.permanent = True
@@ -640,22 +649,25 @@ def admin_logout():
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
-# ============================================================
-# ADMIN DASHBOARD
-# ============================================================
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin first', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard - Simplified"""
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
     
     try:
-        # Get claims
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
         
-        # Calculate stats
         total_claims = len(claims)
         payment_paid = len([c for c in claims if c.get('shipping_fee_paid') == 'true'])
         total_pending = len([c for c in claims if c.get('status') == 'pending'])
@@ -664,17 +676,15 @@ def admin_dashboard():
         total_cancelled = len([c for c in claims if c.get('status') == 'cancelled'])
         total_revenue = payment_paid * 120.00
         
-        # Get codes
         codes_result = supabase_select('claim_codes')
         codes = codes_result if isinstance(codes_result, list) else []
         total_codes = len(codes)
         active_codes = len([c for c in codes if c.get('status') == 'active'])
         used_codes = len([c for c in codes if c.get('status') == 'used'])
         
-        # Recent claims (last 5)
         recent_claims = claims[:5] if claims else []
         
-        return render_template('admin/dashboard_simple.html',
+        return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
                              total_claims=total_claims,
                              payment_paid=payment_paid,
@@ -692,7 +702,7 @@ def admin_dashboard():
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
         flash('Error loading dashboard', 'error')
-        return render_template('admin/dashboard_simple.html',
+        return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
                              total_claims=0,
                              payment_paid=0,
@@ -707,9 +717,6 @@ def admin_dashboard():
                              recent_claims=[],
                              current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN CLAIMS
-# ============================================================
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
@@ -758,9 +765,6 @@ def admin_claims():
                              current_status='',
                              current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN CLAIM DETAIL
-# ============================================================
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
@@ -790,9 +794,6 @@ def admin_claim_detail(claim_id):
         flash('Error loading claim details', 'error')
         return redirect(url_for('admin_claims'))
 
-# ============================================================
-# ADMIN UPDATE CLAIM
-# ============================================================
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
@@ -834,9 +835,6 @@ def admin_update_claim(claim_id):
         flash('Error updating claim', 'error')
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
 
-# ============================================================
-# ADMIN CODES
-# ============================================================
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
@@ -879,9 +877,6 @@ def admin_codes():
                              expired_codes=0,
                              current_year=datetime.datetime.now().year)
 
-# ============================================================
-# ADMIN GENERATE CODES
-# ============================================================
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
@@ -918,9 +913,6 @@ def admin_generate_codes():
         flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
-# ============================================================
-# ADMIN BULK DELETE CODES
-# ============================================================
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
@@ -957,9 +949,6 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
-# ============================================================
-# ADMIN EXPORT
-# ============================================================
 @app.route('/admin/export')
 @admin_required
 def admin_export():
