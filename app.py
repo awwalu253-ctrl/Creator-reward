@@ -18,7 +18,6 @@ import random
 import string
 import ssl
 import urllib3
-import smtplib
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -31,7 +30,7 @@ import requests
 import logging
 from logging.handlers import RotatingFileHandler
 
-# Google API imports (for potential future use)
+# Google API imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -67,7 +66,7 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
 PAYSTACK_PUBLIC = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_SECRET = os.getenv('PAYSTACK_SECRET_KEY')
-PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'http://localhost:5000/payment/callback')
+PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'https://creator-reward.onrender.com/payment/callback')
 
 # Gmail API Scopes
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
@@ -79,13 +78,11 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 
-# Email config (SMTP - Works on Render)
-MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
-MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-MAIL_USERNAME = os.getenv('MAIL_USERNAME')
-MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
+# Email config (Gmail API - No third party)
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'awwalu253@gmail.com')
+GMAIL_API_CLIENT_ID = os.getenv('GMAIL_API_CLIENT_ID')
+GMAIL_API_CLIENT_SECRET = os.getenv('GMAIL_API_CLIENT_SECRET')
+GMAIL_API_REFRESH_TOKEN = os.getenv('GMAIL_API_REFRESH_TOKEN')
 
 # Setup logging
 if not os.path.exists('logs'):
@@ -246,49 +243,98 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# EMAIL SYSTEM (SMTP - Production Ready)
+# GMAIL API EMAIL SYSTEM (No Third Party)
 # ============================================================
-def send_email_via_smtp(recipient, subject, html_content, plain_text_content=None):
-    """Send email using Gmail SMTP"""
+def get_gmail_service():
+    """Get authenticated Gmail API service (No third party)"""
+    creds = None
+    
+    # Try environment variables first (for production on Render)
+    client_id = GMAIL_API_CLIENT_ID
+    client_secret = GMAIL_API_CLIENT_SECRET
+    refresh_token = GMAIL_API_REFRESH_TOKEN
+    
+    if client_id and client_secret and refresh_token:
+        app.logger.info("📧 Using environment variables for Gmail API")
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            token_uri='https://oauth2.googleapis.com/token',
+            scopes=SCOPES
+        )
+        
+        if creds.expired and creds.refresh_token:
+            app.logger.info("🔄 Refreshing Gmail API token...")
+            creds.refresh(Request())
+        
+        if creds.valid:
+            app.logger.info("✅ Gmail API ready (production mode)")
+            return build('gmail', 'v1', credentials=creds)
+        else:
+            app.logger.error("❌ Gmail API credentials are not valid")
+    
+    # Fallback to token.pickle (local development)
+    if os.path.exists('token.pickle'):
+        app.logger.info("📧 Using token.pickle for Gmail API")
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+        
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        
+        if creds.valid:
+            return build('gmail', 'v1', credentials=creds)
+    
+    # Ultimate fallback to credentials.json (fresh auth)
+    if os.path.exists('credentials.json'):
+        app.logger.info("📧 Using credentials.json for fresh auth")
+        flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+        creds = flow.run_local_server(port=8080)
+        
+        if creds.valid:
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+            return build('gmail', 'v1', credentials=creds)
+    
+    app.logger.error("❌ No valid Gmail API credentials found")
+    return None
+
+def send_email_via_api(recipient, subject, html_content, plain_text_content=None):
+    """Send email using Gmail API (No third party)"""
     try:
-        if not MAIL_USERNAME or not MAIL_PASSWORD:
-            app.logger.error("❌ SMTP credentials not configured")
+        service = get_gmail_service()
+        if not service:
             return False
         
         # Create message
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        msg['To'] = recipient
-        msg['Reply-To'] = COMPANY_EMAIL
+        message = MIMEMultipart('alternative')
+        message['to'] = recipient
+        message['subject'] = subject
+        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        message['reply-to'] = COMPANY_EMAIL
         
         if plain_text_content:
             text_part = MIMEText(plain_text_content, 'plain')
-            msg.attach(text_part)
+            message.attach(text_part)
         
         html_part = MIMEText(html_content, 'html')
-        msg.attach(html_part)
+        message.attach(html_part)
         
-        # Send via SMTP
-        app.logger.info(f"📧 Sending email to {recipient} via SMTP")
+        # Encode and send
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
         
-        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
-        
-        if MAIL_USE_TLS:
-            server.starttls()
-        
-        server.login(MAIL_USERNAME, MAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        service.users().messages().send(
+            userId='me',
+            body={'raw': raw_message}
+        ).execute()
         
         app.logger.info(f"✅ Email sent to {recipient}: {subject}")
         return True
         
-    except smtplib.SMTPAuthenticationError as e:
-        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
-        return False
     except Exception as e:
-        app.logger.error(f"❌ SMTP error: {str(e)}")
+        app.logger.error(f"❌ Gmail API error: {str(e)}")
         return False
 
 def send_email(recipient, subject, template_name, **kwargs):
@@ -310,11 +356,13 @@ This is an automated message from {COMPANY_NAME}.
 For support: {COMPANY_EMAIL}
         """
         
-        # Try SMTP first
-        if send_email_via_smtp(recipient, subject, html_content, plain_text):
+        app.logger.info(f"📧 Sending email to {recipient} via Gmail API")
+        
+        # Try Gmail API first (works on Render)
+        if send_email_via_api(recipient, subject, html_content, plain_text):
             return True
         else:
-            app.logger.warning("⚠️ SMTP failed, saving to file")
+            app.logger.warning("⚠️ Gmail API failed, saving to file")
             return send_email_to_file(recipient, subject, template_name, **kwargs)
         
     except Exception as e:
@@ -347,7 +395,7 @@ def send_email_to_file(recipient, subject, template_name, **kwargs):
 # EMAIL TEMPLATE FUNCTIONS
 # ============================================================
 def send_claim_confirmation(claim_data):
-    payment_url = f"http://localhost:5000/payment/{claim_data['id']}"
+    payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
     return send_email(
         recipient=claim_data['email'],
         subject=f"🎁 Your Gift Claim Confirmation - {claim_data['claim_number']}",
@@ -378,6 +426,21 @@ def send_payment_receipt(claim_data, payment_data):
         template_name='payment_receipt',
         claim=claim_data,
         payment=payment_data,
+        company_name=COMPANY_NAME,
+        reward_name=REWARD_NAME,
+        current_year=datetime.datetime.now().year
+    )
+
+def send_payment_failed(claim_data, error_message=None):
+    """Send payment failed notification to user"""
+    payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
+    return send_email(
+        recipient=claim_data['email'],
+        subject=f"❌ Payment Failed - {claim_data['claim_number']}",
+        template_name='payment_failed',
+        claim=claim_data,
+        payment_url=payment_url,
+        error_message=error_message,
         company_name=COMPANY_NAME,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
@@ -698,8 +761,31 @@ def payment_callback():
                 flash('Claim not found for this payment.', 'error')
                 return redirect(url_for('landing'))
         else:
+            # Payment failed - send notification
             flash('Payment verification failed. Please try again.', 'error')
-            return redirect(url_for('landing'))
+            
+            # Try to find claim and send failed notification
+            try:
+                result = supabase_select('gift_claims', {'payment_reference': reference})
+                if result and isinstance(result, list) and len(result) > 0:
+                    claim = result[0]
+                    claim_id = claim['id']
+                    
+                    def send_failed_in_background():
+                        with app.app_context():
+                            try:
+                                send_payment_failed(claim, data.get('message', 'Payment verification failed'))
+                                app.logger.info(f"Payment failed notification sent for {claim['claim_number']}")
+                            except Exception as e:
+                                app.logger.error(f"Failed email error: {str(e)}")
+                    
+                    threading.Thread(target=send_failed_in_background, daemon=True).start()
+                    return redirect(url_for('review_claim', claim_id=claim_id))
+                else:
+                    return redirect(url_for('landing'))
+            except Exception as e:
+                app.logger.error(f"Failed to send payment failed notification: {str(e)}")
+                return redirect(url_for('landing'))
             
     except Exception as e:
         app.logger.error(f"Callback error: {str(e)}")
@@ -728,6 +814,7 @@ def health():
         'status': 'healthy',
         'supabase_configured': bool(SUPABASE_URL and SUPABASE_KEY),
         'paystack_configured': bool(PAYSTACK_SECRET),
+        'gmail_api_configured': bool(GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN),
         'timestamp': datetime.datetime.now().isoformat()
     })
 
@@ -1119,7 +1206,10 @@ if __name__ == '__main__':
     print(f"📍 http://localhost:5000")
     print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
     print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
+    print(f"📧 Gmail API: {'✅ Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else '❌ Not Configured'}")
     print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
+    print("=" * 50)
+    print("\n⚠️ IMPORTANT DISCLAIMER:")
+    print("   This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000)
