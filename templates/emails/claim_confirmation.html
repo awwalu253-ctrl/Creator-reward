@@ -3,232 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Gift Claim Confirmation</title>
+    <title>🎁 Gift Claim Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .claim-number { background: #dc2626; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 24px; margin: 20px 0; letter-spacing: 2px; }
+        .btn { display: inline-block; background: #dc2626; color: white; padding: 14px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+        .btn:hover { opacity: 0.9; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #888; font-size: 12px; }
+        .disclaimer { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #991b1b; }
+        .support { text-align: center; margin-top: 20px; padding: 15px; background: #fef2f2; border-radius: 8px; }
+    </style>
 </head>
-<body style="margin:0;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.6;background:#000000;-webkit-font-smoothing:antialiased;">
-
-    <!-- ========================================
-    EMAIL CONTAINER
-    ======================================== -->
-    <table align="center" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;margin:0 auto;background:#0D0D0D;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.9);border:1px solid #1A1A1A;">
-        <tr>
-            <td>
-                
-                <!-- ========================================
-                HEADER - YOUTUBE RED
-                ======================================== -->
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#CC0000 0%,#FF0000 50%,#CC0000 100%);padding:48px 32px 38px;text-align:center;">
-                    <tr>
-                        <td align="center">
-                            <!-- Gift Icon -->
-                            <table align="center" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td align="center" style="display:inline-block;width:72px;height:72px;background:rgba(255,255,255,0.08);border-radius:50%;font-size:32px;color:#FFFFFF;margin-bottom:16px;border:1px solid rgba(255,255,255,0.06);padding:18px 0;font-family:Arial,sans-serif;">
-                                        🎁
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <h1 style="color:#FFFFFF;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                Your Gift Claim is Confirmed!
-                            </h1>
-                            
-                            <p style="color:rgba(255,255,255,0.92);font-size:16px;margin:8px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                We've received your claim for the Creator Gift Package
-                            </p>
-                            
-                            <span style="display:inline-block;background:rgba(255,255,255,0.08);color:#FFFFFF;padding:6px 20px 6px 16px;border-radius:50px;font-size:11px;font-weight:700;margin-top:16px;letter-spacing:0.8px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.04);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                <span style="color:#FFD700;margin-right:6px;">⭐</span>
-                                Creator Appreciation Program
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- ========================================
-                BODY
-                ======================================== -->
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:40px 36px 36px;background:#0D0D0D;">
-                    <tr>
-                        <td>
-                            
-                            <!-- Claim Number Box -->
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#141414;border:2px solid #FF0000;border-radius:12px;padding:24px 28px;text-align:center;margin-bottom:32px;">
-                                <tr>
-                                    <td align="center">
-                                        <div style="font-size:10px;color:#888888;font-weight:700;text-transform:uppercase;letter-spacing:2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            # Your Claim Reference Number
-                                        </div>
-                                        <span style="font-size:36px;font-weight:800;color:#FF0000;letter-spacing:2px;display:block;margin-top:4px;font-family:'Courier New',monospace;">
-                                            {{ claim.claim_number }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Greeting -->
-                            <div style="font-size:18px;font-weight:600;color:#FFFFFF;margin-bottom:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                Hello <span style="color:#FF0000;">{{ claim.full_name }}</span> ✌️
-                            </div>
-                            
-                            <p style="color:#AAAAAA;font-size:15px;margin-bottom:16px;line-height:1.8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                Thank you for claiming your <strong style="color:#FFFFFF;">{{ reward_name }}</strong> from <strong style="color:#FFFFFF;">{{ company_name }}</strong>.
-                                We're excited to send this special package to you!
-                            </p>
-
-                            <!-- Gift Items Grid -->
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 28px;">
-                                <!-- Row 1 -->
-                                <tr>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">🖥️</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">Custom Creator PC</span>
-                                    </td>
-                                    <td style="width:10px;"></td>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">📷</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">4K Studio Camera</span>
-                                    </td>
-                                </tr>
-                                <!-- Row 2 -->
-                                <tr><td colspan="3" style="height:10px;"></td></tr>
-                                <tr>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">🎤</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">Studio Microphone</span>
-                                    </td>
-                                    <td style="width:10px;"></td>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">🎧</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">Studio Headphones</span>
-                                    </td>
-                                </tr>
-                                <!-- Row 3 -->
-                                <tr><td colspan="3" style="height:10px;"></td></tr>
-                                <tr>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">👕</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">Creator Hoodie</span>
-                                    </td>
-                                    <td style="width:10px;"></td>
-                                    <td style="background:#141414;border-radius:10px;padding:14px 16px;border:1px solid #222222;width:50%;">
-                                        <span style="font-size:18px;color:#FF0000;margin-right:12px;display:inline-block;width:28px;text-align:center;">⌨️</span>
-                                        <span style="font-weight:500;color:#EEEEEE;font-size:13px;display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">Peripherals Pack</span>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Next Steps -->
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#141414;border-radius:12px;padding:24px 26px;margin:25px 0;border:1px solid #222222;border-left-width:4px;border-left-color:#FF0000;">
-                                <tr>
-                                    <td>
-                                        <h3 style="font-size:15px;font-weight:700;color:#FFFFFF;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            📋 Next Steps
-                                        </h3>
-                                        <ol style="padding-left:20px;margin:0;color:#AAAAAA;font-size:14px;line-height:1.7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            <li style="padding:6px 0;"><strong style="color:#FFFFFF;">Pay Shipping Fee:</strong> To receive your gift package, please pay the <strong style="color:#FFFFFF;">$120.00</strong> shipping fee.</li>
-                                            <li style="padding:6px 0;"><strong style="color:#FFFFFF;">Complete Payment:</strong> Click the button below to pay securely via Paystack.</li>
-                                            <li style="padding:6px 0;"><strong style="color:#FFFFFF;">Delivery:</strong> After payment confirmation, your package will ship within <strong style="color:#FFFFFF;">5-7 business days</strong>.</li>
-                                        </ol>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Payment Button -->
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:30px 0 24px;text-align:center;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="{{ payment_url }}" style="display:inline-block;background:linear-gradient(135deg,#FF0000 0%,#CC0000 100%);color:#FFFFFF;padding:16px 40px;border-radius:50px;text-decoration:none;font-weight:700;font-size:16px;text-align:center;box-shadow:0 4px 28px rgba(255,0,0,0.25);border:none;letter-spacing:0.3px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            💳 Pay Shipping Fee
-                                            <span style="background:rgba(255,255,255,0.08);padding:2px 14px;border-radius:50px;font-size:14px;display:inline-block;margin-left:4px;border:1px solid rgba(255,255,255,0.04);color:#FFFFFF;">$120.00</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Divider -->
-                            <hr style="border:none;border-top:1px solid #1E1E1E;margin:30px 0;">
-
-                            <!-- Claim Details -->
-                            <div style="font-size:15px;color:#FFFFFF;margin-bottom:16px;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                📝 Claim Details
-                            </div>
-                            
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;border-collapse:collapse;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Claim Number</td>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#EEEEEE;font-weight:600;font-size:14px;">{{ claim.claim_number }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Channel Name</td>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#EEEEEE;font-weight:600;font-size:14px;">{{ claim.channel_name }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Clothing Size</td>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#EEEEEE;font-weight:600;font-size:14px;">{{ claim.clothing_size }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Claim Code</td>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#EEEEEE;font-weight:600;font-size:14px;">{{ claim.claim_code }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Date Submitted</td>
-                                    <td style="padding:11px 0;border-bottom:1px solid #1A1A1A;color:#EEEEEE;font-weight:600;font-size:14px;">{{ claim.claim_date[:10] }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:11px 0;border-bottom:none;color:#888888;font-weight:500;width:40%;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Status</td>
-                                    <td style="padding:11px 0;border-bottom:none;color:#EEEEEE;font-weight:600;font-size:14px;">
-                                        <span style="display:inline-block;background:#1A1A00;color:#FFD700;padding:4px 16px 4px 12px;border-radius:50px;font-size:11px;font-weight:700;border:1px solid #2A2A00;text-transform:uppercase;letter-spacing:0.5px;">⏳ Pending Payment</span>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Support Box -->
-                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#141414;border-radius:12px;padding:24px 26px;text-align:center;margin-top:26px;border:1px solid #222222;">
-                                <tr>
-                                    <td>
-                                        <p style="margin:4px 0;font-size:14px;color:#AAAAAA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            <span style="font-weight:600;color:#FFFFFF;font-size:15px;margin-bottom:6px;display:block;">❓ Need Help?</span>
-                                        </p>
-                                        <p style="margin:4px 0;font-size:14px;color:#AAAAAA;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            Contact our support team at <a href="mailto:{{ company_email }}" style="color:#FF0000;font-weight:600;text-decoration:none;">{{ company_email }}</a>
-                                        </p>
-                                        <p style="margin:4px 0;font-size:12px;color:#888888;margin-top:6px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                            Please mention your claim number: <strong style="color:#FF0000;font-family:'Courier New',monospace;">{{ claim.claim_number }}</strong>
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- ========================================
-                FOOTER
-                ======================================== -->
-                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0D0D0D;padding:28px 32px;text-align:center;border-top:1px solid #1A1A1A;">
-                    <tr>
-                        <td>
-                            <div style="font-weight:800;color:#FFFFFF;font-size:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                ▶️ {{ company_name }}<span style="color:#666666;font-weight:300;">Gifts</span>
-                            </div>
-                            <div style="color:#666666;font-size:13px;margin-top:4px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                Celebrating creators worldwide
-                            </div>
-                            <div style="color:#444444;font-size:12px;margin-top:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                &copy; {{ current_year }} {{ company_name }}. All rights reserved.
-                            </div>
-                            <div style="color:#333333;font-size:11px;margin-top:8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-                                🤖 This is an automated message, please do not reply to this email.
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-                
-            </td>
-        </tr>
-    </table>
-
+<body>
+    <div class="header">
+        <h1>🎉 Gift Claim Confirmation</h1>
+        <p>Your creator gift package claim has been received!</p>
+    </div>
+    <div class="content">
+        <h2>Hello {{ claim.full_name }},</h2>
+        <p>Thank you for claiming your <strong>{{ reward_name }}</strong> from <strong>{{ company_name }}</strong>.</p>
+        <div class="claim-number">
+            <span style="font-size: 14px; display: block; opacity: 0.8;">Your Claim Number:</span>
+            {{ claim.claim_number }}
+        </div>
+        <p><strong>Channel:</strong> {{ claim.channel_name }}</p>
+        <p><strong>Clothing Size:</strong> {{ claim.clothing_size }}</p>
+        <h3>📋 What's Next?</h3>
+        <ol>
+            <li><strong>Pay Shipping Fee:</strong> $120.00</li>
+            <li><strong>Click below</strong> to complete your payment</li>
+            <li>Delivery: <strong>5-7 business days</strong></li>
+        </ol>
+        <div style="text-align: center;">
+            <a href="{{ payment_url }}" class="btn">💳 Pay Shipping Fee ($120.00)</a>
+        </div>
+        <div class="disclaimer">
+            <strong>⚠️ Important:</strong> This promotion is organized by <strong>{{ company_name }}</strong> and is 
+            <strong>not affiliated with, endorsed by, or sponsored by YouTube or Google</strong>.
+        </div>
+        <div class="support">
+            <p><strong>❓ Need Help?</strong><br>
+            <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+    </div>
 </body>
 </html>

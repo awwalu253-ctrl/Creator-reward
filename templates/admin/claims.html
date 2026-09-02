@@ -1,254 +1,106 @@
 {% extends "base.html" %}
 
-{% block title %}Claims - {{ company_name }}{% endblock %}
+{% block title %}All Claims - {{ company_name }}{% endblock %}
 
 {% block content %}
-<div class="admin-claims">
+<style>
+    .claims-section { padding: 40px 0; background: #f7fafc; min-height: 80vh; }
+    .claims-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+    .claims-header h1 { margin: 0; font-size: 28px; color: #1a1a2e; }
+    .claims-header h1 i { color: #dc2626; }
+    .filter-badges { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .filter-badge { padding: 8px 16px; background: white; border-radius: 50px; text-decoration: none; color: #4a5568; font-size: 14px; font-weight: 500; border: 2px solid #e2e8f0; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .filter-badge:hover { border-color: #667eea; color: #667eea; }
+    .filter-badge.active { border-color: #dc2626; background: #dc2626; color: white; }
+    .filter-badge .count { background: #e2e8f0; padding: 0 8px; border-radius: 50px; font-size: 12px; color: #4a5568; }
+    .filter-badge.active .count { background: rgba(255,255,255,0.2); color: white; }
+    .filter-section { background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .filter-form { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+    .filter-form input { flex: 1; min-width: 200px; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; }
+    .filter-form input:focus { outline: none; border-color: #dc2626; }
+    .table-responsive { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .admin-table th { text-align: left; padding: 12px 15px; background: #f7fafc; font-weight: 600; font-size: 12px; color: #4a5568; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
+    .admin-table td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
+    .admin-table tr:hover td { background: #f7fafc; }
+    .status-badge { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; display: inline-block; text-transform: uppercase; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-paid { background: #d1fae5; color: #065f46; }
+    .status-shipped { background: #dbeafe; color: #1e40af; }
+    .status-delivered { background: #e0e7ff; color: #3730a3; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
+    .payment-badge { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .payment-badge.paid { background: #d1fae5; color: #065f46; }
+    .payment-badge.unpaid { background: #fef3c7; color: #92400e; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 4px; text-decoration: none; background: #667eea; color: white; border: none; cursor: pointer; }
+    .btn-sm:hover { background: #5a67d8; }
+    .btn-secondary { background: #e2e8f0; color: #4a5568; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; transition: background 0.3s; border: none; cursor: pointer; }
+    .btn-secondary:hover { background: #cbd5e0; }
+    .table-footer { margin-top: 20px; color: #718096; font-size: 14px; }
+    @media (max-width: 768px) {
+        .filter-form { flex-direction: column; align-items: stretch; }
+        .filter-form input { min-width: 100%; }
+        .claims-header { flex-direction: column; align-items: flex-start; }
+        .admin-table th, .admin-table td { padding: 8px 10px; font-size: 12px; }
+        .filter-badges { gap: 5px; }
+        .filter-badge { font-size: 12px; padding: 5px 12px; }
+    }
+</style>
+
+<div class="claims-section">
     <div class="container">
-        <!-- Header -->
-        <div class="admin-header">
+        <div class="claims-header">
             <div>
                 <h1><i class="fas fa-list"></i> All Claims</h1>
-                <p>Manage and track all campaign claims</p>
+                <p style="color: #718096; font-size: 14px;">Manage all campaign claims</p>
             </div>
             <div>
-                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</a>
+                <a href="{{ url_for('admin_export') }}" class="btn-secondary"><i class="fas fa-download"></i> Export CSV</a>
             </div>
         </div>
 
-        <!-- Search & Filter -->
+        <div class="filter-badges">
+            <a href="{{ url_for('admin_claims') }}" class="filter-badge {% if not current_status %}active{% endif %}">All <span class="count">{{ status_counts.all or 0 }}</span></a>
+            <a href="{{ url_for('admin_claims', status='pending') }}" class="filter-badge {% if current_status == 'pending' %}active{% endif %}">⏳ Pending <span class="count">{{ status_counts.pending or 0 }}</span></a>
+            <a href="{{ url_for('admin_claims', status='paid') }}" class="filter-badge {% if current_status == 'paid' %}active{% endif %}">✅ Paid <span class="count">{{ status_counts.paid or 0 }}</span></a>
+            <a href="{{ url_for('admin_claims', status='shipped') }}" class="filter-badge {% if current_status == 'shipped' %}active{% endif %}">📦 Shipped <span class="count">{{ status_counts.shipped or 0 }}</span></a>
+            <a href="{{ url_for('admin_claims', status='delivered') }}" class="filter-badge {% if current_status == 'delivered' %}active{% endif %}">📬 Delivered <span class="count">{{ status_counts.delivered or 0 }}</span></a>
+            <a href="{{ url_for('admin_claims', status='cancelled') }}" class="filter-badge {% if current_status == 'cancelled' %}active{% endif %}">❌ Cancelled <span class="count">{{ status_counts.cancelled or 0 }}</span></a>
+        </div>
+
         <div class="filter-section">
             <form method="GET" action="{{ url_for('admin_claims') }}" class="filter-form">
-                <div class="filter-group">
-                    <input type="text" name="search" placeholder="Search by name, email, or claim #" 
-                           value="{{ request.args.get('search', '') }}">
-                </div>
-                <div class="filter-group">
-                    <select name="status">
-                        <option value="">All Status</option>
-                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
-                        <option value="paid" {% if request.args.get('status') == 'paid' %}selected{% endif %}>Paid</option>
-                        <option value="shipped" {% if request.args.get('status') == 'shipped' %}selected{% endif %}>Shipped</option>
-                        <option value="delivered" {% if request.args.get('status') == 'delivered' %}selected{% endif %}>Delivered</option>
-                        <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Filter
-                </button>
-                <a href="{{ url_for('admin_claims') }}" class="btn btn-secondary">
-                    <i class="fas fa-undo"></i> Clear
-                </a>
+                <input type="text" name="search" placeholder="Search by name, email, or claim #..." value="{{ request.args.get('search', '') }}">
+                <button type="submit" class="btn-secondary" style="background:#dc2626;color:white;"><i class="fas fa-search"></i> Search</button>
+                <a href="{{ url_for('admin_claims') }}" class="btn-secondary"><i class="fas fa-undo"></i> Clear</a>
             </form>
         </div>
 
-        <!-- Claims Table -->
         <div class="table-responsive">
             <table class="admin-table">
                 <thead>
-                    <tr>
-                        <th>Claim #</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Country</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th>Date</th>
-                        <th>Action</th>
-                    </tr>
+                    <tr><th>Claim #</th><th>Name</th><th>Channel</th><th>Size</th><th>Status</th><th>Payment</th><th>Date</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                     {% for claim in claims %}
                     <tr>
                         <td><strong>{{ claim.claim_number }}</strong></td>
                         <td>{{ claim.full_name }}</td>
-                        <td>{{ claim.email }}</td>
-                        <td>{{ claim.phone }}</td>
-                        <td>{{ claim.country }}</td>
-                        <td>
-                            <span class="status-badge status-{{ claim.status }}">
-                                {{ claim.status|capitalize }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="payment-badge {% if claim.shipping_fee_paid == 'true' %}paid{% else %}unpaid{% endif %}">
-                                {% if claim.shipping_fee_paid == 'true' %}✅ Paid{% else %}❌ Unpaid{% endif %}
-                            </span>
-                        </td>
-                        <td style="font-size: 13px; color: #718096;">
-                            {{ claim.claim_date[:10] if claim.claim_date else '-' }}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('admin_claim_detail', claim_id=claim.id) }}" 
-                               class="btn btn-sm btn-primary">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                        </td>
+                        <td>{{ claim.channel_name[:15] }}{% if claim.channel_name|length > 15 %}...{% endif %}</td>
+                        <td><span style="font-weight:700;background:#f0f0f0;padding:2px 8px;border-radius:4px;">{{ claim.clothing_size or '-' }}</span></td>
+                        <td><span class="status-badge status-{{ claim.status }}">{{ claim.status|capitalize }}</span></td>
+                        <td><span class="payment-badge {% if claim.shipping_fee_paid == 'true' %}paid{% else %}unpaid{% endif %}">{% if claim.shipping_fee_paid == 'true' %}✅ Paid{% else %}❌ Unpaid{% endif %}</span></td>
+                        <td style="font-size:13px;color:#718096;">{{ claim.claim_date[:10] if claim.claim_date else '-' }}</td>
+                        <td><a href="{{ url_for('admin_claim_detail', claim_id=claim.id) }}" class="btn-sm"><i class="fas fa-eye"></i></a></td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="9" style="text-align: center; padding: 40px; color: #a0aec0;">
-                            <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
-                            No claims found matching your criteria.
-                        </td>
-                    </tr>
+                    <tr><td colspan="8" style="text-align:center;padding:30px;color:#a0aec0;"><i class="fas fa-inbox" style="font-size:36px;display:block;margin-bottom:8px;"></i>No claims found.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
-        <!-- Count -->
-        <div class="table-footer">
-            <p>Total claims: <strong>{{ claims|length }}</strong></p>
-        </div>
+        <div class="table-footer"><p>Showing <strong>{{ claims|length }}</strong> claim(s)</p></div>
     </div>
 </div>
-
-<style>
-    .admin-claims {
-        padding: 40px 0;
-        background: #f7fafc;
-        min-height: 80vh;
-    }
-    .admin-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        flex-wrap: wrap;
-        gap: 15px;
-    }
-    .admin-header h1 {
-        margin: 0;
-        font-size: 28px;
-    }
-    .admin-header p {
-        margin: 5px 0 0;
-        color: #718096;
-    }
-    .filter-section {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .filter-form {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .filter-group {
-        flex: 1;
-        min-width: 200px;
-    }
-    .filter-group input,
-    .filter-group select {
-        width: 100%;
-        padding: 10px 14px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 14px;
-        transition: border-color 0.3s;
-    }
-    .filter-group input:focus,
-    .filter-group select:focus {
-        outline: none;
-        border-color: #667eea;
-    }
-    .table-responsive {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        overflow-x: auto;
-    }
-    .admin-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .admin-table th {
-        text-align: left;
-        padding: 12px 15px;
-        background: #f7fafc;
-        font-weight: 600;
-        font-size: 13px;
-        color: #4a5568;
-        border-bottom: 2px solid #e2e8f0;
-    }
-    .admin-table td {
-        padding: 12px 15px;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 14px;
-    }
-    .admin-table tr:hover td {
-        background: #f7fafc;
-    }
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    .status-pending {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .status-paid {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .status-shipped {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    .status-delivered {
-        background: #e0e7ff;
-        color: #3730a3;
-    }
-    .status-cancelled {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-    .payment-badge {
-        padding: 4px 12px;
-        border-radius: 50px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    .payment-badge.paid {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .payment-badge.unpaid {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .btn-sm {
-        padding: 6px 12px;
-        font-size: 13px;
-    }
-    .table-footer {
-        margin-top: 20px;
-        color: #718096;
-        font-size: 14px;
-    }
-    @media (max-width: 768px) {
-        .filter-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        .filter-group {
-            min-width: 100%;
-        }
-        .admin-table th, .admin-table td {
-            padding: 8px 10px;
-            font-size: 12px;
-        }
-    }
-</style>
 {% endblock %}

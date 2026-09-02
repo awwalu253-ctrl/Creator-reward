@@ -5,305 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📋 New Gift Claim</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            line-height: 1.6;
-            color: #1a1a2e;
-            background: #f5f5f5;
-            -webkit-font-smoothing: antialiased;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 20px auto;
-            background: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-        }
-        .email-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
-            padding: 30px 30px 25px;
-            text-align: center;
-        }
-        .email-header h1 {
-            color: #ffffff;
-            font-size: 24px;
-            font-weight: 800;
-            margin: 0;
-        }
-        .email-header p {
-            color: rgba(255,255,255,0.7);
-            font-size: 15px;
-            margin: 6px 0 0;
-        }
-        .email-header .badge {
-            display: inline-block;
-            background: #f59e0b;
-            color: #1a1a2e;
-            padding: 4px 16px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .email-body {
-            padding: 30px;
-        }
-        .alert-box {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            font-size: 14px;
-            color: #92400e;
-        }
-        .alert-box strong {
-            color: #78350f;
-        }
-        .section-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 14px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
-        }
-        .section-title span {
-            color: #dc2626;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 20px;
-            margin-bottom: 20px;
-        }
-        .info-item {
-            display: flex;
-            flex-direction: column;
-            padding: 6px 0;
-            border-bottom: 1px solid #f5f5f5;
-        }
-        .info-item .label {
-            font-size: 12px;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-        .info-item .value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #1a1a2e;
-        }
-        .info-item .value a {
-            color: #dc2626;
-            text-decoration: none;
-        }
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        .action-box {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin: 20px 0;
-            border: 1px solid #e5e7eb;
-        }
-        .action-box h4 {
-            font-size: 14px;
-            color: #1a1a2e;
-            margin-bottom: 8px;
-        }
-        .action-box ol {
-            padding-left: 18px;
-            margin: 0;
-        }
-        .action-box ol li {
-            padding: 4px 0;
-            font-size: 14px;
-            color: #4b5563;
-        }
-        .btn-admin {
-            display: inline-block;
-            background: #1a1a2e;
-            color: #ffffff !important;
-            padding: 12px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .btn-admin:hover {
-            background: #2d2d44;
-        }
-        .btn-container {
-            text-align: center;
-            margin: 20px 0 10px;
-        }
-        .divider {
-            border: none;
-            border-top: 2px solid #f0f0f0;
-            margin: 25px 0;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 2px 14px;
-            border-radius: 50px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .email-footer {
-            background: #f8fafc;
-            padding: 20px 30px;
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-        }
-        .email-footer p {
-            color: #9ca3af;
-            font-size: 13px;
-            margin: 2px 0;
-        }
-        @media (max-width: 500px) {
-            .email-container {
-                margin: 10px;
-                border-radius: 12px;
-            }
-            .email-header h1 {
-                font-size: 20px;
-            }
-            .email-body {
-                padding: 20px;
-            }
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            .btn-admin {
-                width: 100%;
-                text-align: center;
-            }
-        }
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        .header { background: #1a1a2e; color: white; padding: 25px 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; }
+        .claim-details { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626; }
+        .claim-details p { margin: 8px 0; }
+        .claim-details strong { display: inline-block; width: 140px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #888; font-size: 12px; }
+        .badge { display: inline-block; background: #dc2626; color: white; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: bold; }
+        .action-required { background: #fee2e2; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <!-- Header -->
-        <div class="email-header">
-            <h1>📋 New Gift Claim Submitted</h1>
-            <p>A new creator has claimed their gift package</p>
-            <span class="badge">⚠️ Action Required</span>
+    <div class="header">
+        <h1>📋 New Gift Claim Submitted!</h1>
+        <p>A new creator has claimed their gift package</p>
+    </div>
+    <div class="content">
+        <h2>🔔 New Claim Alert</h2>
+        <div class="claim-details">
+            <h3 style="margin-top: 0; color: #dc2626;">📝 Claim Information</h3>
+            <p><strong>Claim Number:</strong> {{ claim.claim_number }}</p>
+            <p><strong>Name:</strong> {{ claim.full_name }}</p>
+            <p><strong>Email:</strong> <a href="mailto:{{ claim.email }}">{{ claim.email }}</a></p>
+            <p><strong>Channel:</strong> {{ claim.channel_name }}</p>
+            <p><strong>Phone:</strong> {{ claim.phone }}</p>
+            <p><strong>Country:</strong> {{ claim.country }}</p>
+            <p><strong>Address:</strong> {{ claim.address }}, {{ claim.city }}, {{ claim.postal_code }}</p>
+            <p><strong>Clothing Size:</strong> {{ claim.clothing_size }}</p>
+            <p><strong>Status:</strong> <span class="badge">Pending Payment</span></p>
         </div>
-
-        <!-- Body -->
-        <div class="email-body">
-            <div class="alert-box">
-                <strong>⚡ New Claim Alert!</strong> A new gift claim has been submitted and needs your review.
-            </div>
-
-            <h3 class="section-title">📝 <span>Claim Information</span></h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">Claim Number</span>
-                    <span class="value" style="color: #dc2626;">{{ claim.claim_number }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Status</span>
-                    <span class="value"><span class="status-badge status-pending">Pending Payment</span></span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Date Submitted</span>
-                    <span class="value">{{ claim.claim_date[:10] }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Claim Code</span>
-                    <span class="value">{{ claim.claim_code }}</span>
-                </div>
-            </div>
-
-            <h3 class="section-title">👤 <span>Creator Details</span></h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">Full Name</span>
-                    <span class="value">{{ claim.full_name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Email</span>
-                    <span class="value"><a href="mailto:{{ claim.email }}">{{ claim.email }}</a></span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Channel Name</span>
-                    <span class="value">{{ claim.channel_name }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Channel URL</span>
-                    <span class="value">{% if claim.channel_url %}<a href="{{ claim.channel_url }}" target="_blank">{{ claim.channel_url }}</a>{% else %}Not provided{% endif %}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Phone</span>
-                    <span class="value">{{ claim.phone }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Clothing Size</span>
-                    <span class="value"><strong>{{ claim.clothing_size }}</strong></span>
-                </div>
-            </div>
-
-            <h3 class="section-title">📍 <span>Shipping Address</span></h3>
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="label">Country</span>
-                    <span class="value">{{ claim.country }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">City</span>
-                    <span class="value">{{ claim.city }}</span>
-                </div>
-                <div class="info-item full-width">
-                    <span class="label">Address</span>
-                    <span class="value">{{ claim.address }}, {{ claim.postal_code }}</span>
-                </div>
-            </div>
-
-            <div class="action-box">
-                <h4>⚡ Quick Actions</h4>
-                <ol>
-                    <li><strong>Verify</strong> the claim details and shipping address</li>
-                    <li><strong>Prepare</strong> the gift package items (size: {{ claim.clothing_size }})</li>
-                    <li><strong>Wait</strong> for payment confirmation from the creator</li>
-                    <li><strong>Ship</strong> the package once payment is received</li>
-                </ol>
-            </div>
-
-            <div class="btn-container">
-                <a href="https://app.supabase.com/project/kqjksujlbvwrljetwbrr/editor" target="_blank" class="btn-admin">
-                    📊 View in Database
-                </a>
-            </div>
-
-            <hr class="divider">
-
-            <div style="background: #fef2f2; padding: 14px 18px; border-radius: 8px; font-size: 13px; color: #7f1d1d;">
-                <strong>⚠️ Important:</strong> This claim is from an independent campaign by {{ company_name }}. 
-                This is NOT affiliated with YouTube or Google.
-            </div>
+        <div class="action-required">
+            <h3 style="margin: 0; color: #991b1b;">⚡ Action Required</h3>
+            <p style="margin: 5px 0 0;">Review claim and prepare for fulfillment.</p>
         </div>
-
-        <!-- Footer -->
-        <div class="email-footer">
-            <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
-            <p style="font-size: 11px;">This is an automated admin notification.</p>
-        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
     </div>
 </body>
 </html>

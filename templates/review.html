@@ -4,510 +4,171 @@
 
 {% block content %}
 <style>
-    /* ========================================
-       YOUTUBE DARK REVIEW PAGE
-       ======================================== */
     .review-section {
-        padding: 48px 0 72px;
-        background: var(--yt-bg-primary);
-        min-height: 85vh;
+        padding: 60px 0;
+        background: #f9fafb;
+        min-height: 80vh;
     }
-
     .review-wrapper {
         max-width: 1000px;
         margin: 0 auto;
     }
-
-    /* Header */
     .review-header {
         text-align: center;
         margin-bottom: 40px;
     }
-
     .review-header h1 {
         font-size: 2.2rem;
         font-weight: 800;
-        color: var(--yt-text-primary);
-        letter-spacing: -0.5px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
+        color: var(--secondary);
     }
-
     .review-header h1 i {
-        color: var(--yt-red);
-        font-size: 2rem;
+        color: var(--primary);
     }
-
     .review-header p {
-        color: var(--yt-text-secondary);
-        margin-top: 6px;
-        font-size: 1rem;
+        color: var(--text-light);
     }
-
-    /* ========================================
-       REVIEW GRID
-       ======================================== */
     .review-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 28px;
+        gap: 30px;
     }
-
-    /* Cards - YouTube Style */
     .review-card {
-        background: var(--yt-bg-secondary);
-        padding: 32px 36px 36px;
-        border-radius: var(--yt-radius);
-        border: 1px solid var(--yt-border);
-        transition: var(--yt-transition);
-        position: relative;
+        background: white;
+        padding: 32px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--gray);
     }
-
-    .review-card:hover {
-        border-color: rgba(255, 0, 0, 0.12);
-    }
-
     .review-card h3 {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 24px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--yt-text-primary);
-        letter-spacing: -0.2px;
-    }
-
-    .review-card h3 i {
-        color: var(--yt-red);
         font-size: 1.2rem;
-        width: 28px;
-        text-align: center;
+        color: var(--secondary);
     }
-
-    /* ========================================
-       INFO ITEMS
-       ======================================== */
+    .review-card h3 i {
+        color: var(--primary);
+    }
     .info-item {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding: 11px 0;
-        border-bottom: 1px solid var(--yt-border-light);
-        gap: 16px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--gray);
     }
-
     .info-item:last-child {
         border-bottom: none;
     }
-
     .info-item .label {
-        color: var(--yt-text-muted);
+        color: var(--text-light);
         font-weight: 500;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        flex-shrink: 0;
     }
-
     .info-item .value {
         font-weight: 600;
         text-align: right;
-        color: var(--yt-text-primary);
-        font-size: 0.92rem;
-        word-break: break-word;
+        color: var(--secondary);
     }
-
     .info-item .value.highlight {
-        color: var(--yt-red);
-        font-weight: 700;
-        font-family: 'Inter', monospace;
-        letter-spacing: 0.5px;
+        color: var(--primary);
     }
-
-    /* ========================================
-       FEE DISCLOSURE CARD - YOUTUBE STYLE
-       ======================================== */
     .fee-disclosure {
-        border: 2px solid var(--yt-red) !important;
+        border: 2px solid var(--primary);
         position: relative;
-        background: var(--yt-bg-secondary);
-        overflow: hidden;
     }
-
     .fee-disclosure::before {
-        content: '';
+        content: '⚠️ Shipping Fee Required';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at top right, rgba(255, 0, 0, 0.04), transparent 60%);
-        pointer-events: none;
+        top: -12px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
     }
-
-    .fee-disclosure::after {
-        content: 'Shipping Fee Required';
-        position: absolute;
-        top: -1px;
-        right: 24px;
-        background: var(--yt-red);
-        color: var(--yt-text-primary);
-        padding: 5px 20px;
-        border-radius: 0 0 var(--yt-radius) var(--yt-radius);
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        z-index: 1;
-        box-shadow: 0 4px 16px rgba(255, 0, 0, 0.2);
-    }
-
-    .fee-disclosure h3 {
-        margin-top: 8px;
-    }
-
-    .fee-disclosure p {
-        color: var(--yt-text-secondary);
-        font-size: 0.9rem;
-        margin-bottom: 20px;
-        line-height: 1.6;
-    }
-
-    /* Fee Amount */
     .fee-amount {
         text-align: center;
-        padding: 16px 0 8px;
-        position: relative;
-        z-index: 1;
+        padding: 20px 0;
     }
-
     .fee-amount .currency {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         vertical-align: top;
-        color: var(--yt-text-muted);
-        font-weight: 600;
-        position: relative;
-        top: 8px;
+        color: var(--text-light);
     }
-
     .fee-amount .amount {
         font-size: 4rem;
-        font-weight: 900;
-        color: var(--yt-red);
-        letter-spacing: -2px;
-        line-height: 1;
+        font-weight: 800;
+        color: var(--primary);
     }
-
-    .fee-amount .amount-label {
-        font-size: 0.85rem;
-        color: var(--yt-text-muted);
-        margin-top: 4px;
-        font-weight: 500;
-    }
-
-    /* Fee Details List */
     .fee-details {
         display: grid;
         gap: 8px;
         margin: 20px 0;
-        position: relative;
-        z-index: 1;
     }
-
     .fee-item {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 10px 14px;
-        background: var(--yt-bg-primary);
-        border-radius: var(--yt-radius);
-        border: 1px solid var(--yt-border-light);
-        transition: var(--yt-transition);
+        gap: 10px;
+        padding: 8px 12px;
+        background: var(--gray);
+        border-radius: 8px;
     }
-
-    .fee-item:hover {
-        border-color: var(--yt-text-muted);
-    }
-
     .fee-item i {
-        color: #3EA6FF;
-        font-size: 0.9rem;
-        width: 18px;
-        text-align: center;
-        flex-shrink: 0;
+        color: #48bb78;
     }
-
-    .fee-item span {
-        color: var(--yt-text-secondary);
-        font-size: 0.88rem;
-        font-weight: 500;
+    .disclaimer-box {
+        background: var(--primary-light);
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        color: var(--secondary);
     }
-
-    /* ========================================
-       ACTION BUTTONS
-       ======================================== */
     .fee-actions {
         display: flex;
         flex-direction: column;
         gap: 12px;
         margin-top: 24px;
-        position: relative;
-        z-index: 1;
     }
-
-    .btn-yt-pay {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 14px 32px;
-        background: var(--yt-red);
-        color: var(--yt-text-primary);
-        border: none;
-        border-radius: var(--yt-radius-full);
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: var(--yt-transition);
-        text-decoration: none;
-        font-family: inherit;
-        box-shadow: 0 0 30px rgba(255, 0, 0, 0.12);
-        width: 100%;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .btn-yt-pay::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
-        transition: var(--yt-transition);
-    }
-
-    .btn-yt-pay:hover::before {
-        left: 100%;
-    }
-
-    .btn-yt-pay:hover {
-        background: var(--yt-red-dark);
-        transform: scale(1.02);
-        box-shadow: 0 0 50px rgba(255, 0, 0, 0.2);
-    }
-
-    .btn-yt-pay:active {
-        transform: scale(0.97);
-    }
-
-    .btn-yt-pay i {
-        font-size: 1.1rem;
-    }
-
-    .btn-yt-pay .pay-amount {
-        background: rgba(255, 255, 255, 0.15);
-        padding: 2px 12px;
-        border-radius: var(--yt-radius-full);
-        font-size: 0.85rem;
-    }
-
-    .btn-yt-outline {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 12px 24px;
-        background: transparent;
-        color: var(--yt-text-secondary);
-        border: 1px solid var(--yt-border);
-        border-radius: var(--yt-radius-full);
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: var(--yt-transition);
-        text-decoration: none;
-        font-family: inherit;
-        width: 100%;
-    }
-
-    .btn-yt-outline:hover {
-        border-color: var(--yt-text-primary);
-        color: var(--yt-text-primary);
-        background: var(--yt-bg-hover);
-    }
-
-    .btn-yt-outline i {
-        font-size: 0.9rem;
-    }
-
-    /* ========================================
-       RESPONSIVE
-       ======================================== */
     @media (max-width: 768px) {
         .review-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
         }
-
         .review-card {
-            padding: 24px 20px 28px;
+            padding: 20px;
         }
-
-        .review-header h1 {
-            font-size: 1.7rem;
-            flex-wrap: wrap;
-        }
-
-        .review-header h1 i {
-            font-size: 1.5rem;
-        }
-
-        .review-header p {
-            font-size: 0.9rem;
-        }
-
         .fee-amount .amount {
             font-size: 3rem;
         }
-
-        .fee-amount .currency {
-            font-size: 1.2rem;
-            top: 6px;
-        }
-
         .info-item {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 2px;
-            padding: 10px 0;
+            gap: 4px;
         }
-
         .info-item .value {
             text-align: left;
-            width: 100%;
         }
-
-        .info-item .label {
-            font-size: 0.75rem;
-        }
-
-        .fee-disclosure::after {
-            right: 16px;
-            font-size: 0.6rem;
-            padding: 4px 14px;
-        }
-
-        .btn-yt-pay {
-            padding: 14px 20px;
-            font-size: 0.9rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .review-section {
-            padding: 24px 0 48px;
-        }
-
-        .review-card {
-            padding: 18px 14px 22px;
-            border-radius: var(--yt-radius);
-        }
-
-        .review-header h1 {
-            font-size: 1.4rem;
-        }
-
-        .review-header p {
-            font-size: 0.82rem;
-        }
-
-        .review-card h3 {
-            font-size: 0.95rem;
-            margin-bottom: 16px;
-        }
-
-        .fee-amount .amount {
-            font-size: 2.4rem;
-        }
-
-        .fee-amount .currency {
-            font-size: 1rem;
-            top: 4px;
-        }
-
-        .fee-item {
-            padding: 8px 12px;
-            font-size: 0.8rem;
-        }
-
-        .fee-item span {
-            font-size: 0.8rem;
-        }
-
-        .btn-yt-pay {
-            font-size: 0.82rem;
-            padding: 12px 16px;
-        }
-
-        .btn-yt-outline {
-            font-size: 0.8rem;
-            padding: 10px 16px;
-        }
-
-        .fee-disclosure::after {
+        .fee-disclosure::before {
             right: 10px;
-            font-size: 0.55rem;
-            padding: 3px 10px;
+            font-size: 0.7rem;
+            padding: 3px 12px;
         }
-    }
-
-    /* ========================================
-       ANIMATION - FEE CARD PULSE
-       ======================================== */
-    @keyframes ytPulseGlow {
-        0%, 100% {
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.05);
-        }
-        50% {
-            box-shadow: 0 0 40px rgba(255, 0, 0, 0.10);
-        }
-    }
-
-    .fee-disclosure {
-        animation: ytPulseGlow 3s ease-in-out infinite;
     }
 </style>
 
-<!-- ========================================
-REVIEW SECTION - YOUTUBE DARK
-======================================== -->
 <div class="review-section">
     <div class="container">
         <div class="review-wrapper">
-
-            <!-- Header -->
             <div class="review-header">
-                <h1>
-                    <i class="fas fa-clipboard-check"></i>
-                    Review Your Gift Claim
-                </h1>
+                <h1><i class="fas fa-clipboard-check"></i> Review Your Gift Claim</h1>
                 <p>Please review your details before submitting payment</p>
             </div>
 
-            <!-- Review Grid -->
             <div class="review-grid">
-
-                <!-- Left Card: User Information -->
                 <div class="review-card">
-                    <h3>
-                        <i class="fas fa-user-check"></i>
-                        Your Information
-                    </h3>
+                    <h3><i class="fas fa-user-check"></i> Your Information</h3>
                     <div class="info-item">
                         <span class="label">Name</span>
                         <span class="value">{{ claim.full_name }}</span>
@@ -542,51 +203,45 @@ REVIEW SECTION - YOUTUBE DARK
                     </div>
                 </div>
 
-                <!-- Right Card: Shipping Fee -->
                 <div class="review-card fee-disclosure">
-                    <h3>
-                        <i class="fas fa-shipping-fast"></i>
-                        Shipping &amp; Delivery
-                    </h3>
-                    <p>
+                    <h3><i class="fas fa-shipping-fast"></i> Shipping & Delivery</h3>
+                    <p style="color: var(--text-light); margin-bottom: 20px;">
                         Your gift package will be shipped to the address you provided.
                     </p>
-
                     <div class="fee-amount">
                         <span class="currency">$</span>
                         <span class="amount">{{ "%.2f"|format(shipping_fee) }}</span>
-                        <div class="amount-label">Shipping &amp; Handling Fee</div>
+                        <div style="font-size: 14px; color: var(--text-light);">Shipping & Handling Fee</div>
                     </div>
-
                     <div class="fee-details">
                         <div class="fee-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>International shipping &amp; handling</span>
+                            <i class="fas fa-check"></i>
+                            <span>International shipping & handling</span>
                         </div>
                         <div class="fee-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Insurance &amp; tracking</span>
+                            <i class="fas fa-check"></i>
+                            <span>Insurance & tracking</span>
                         </div>
                         <div class="fee-item">
-                            <i class="fas fa-check-circle"></i>
+                            <i class="fas fa-check"></i>
                             <span>Express delivery (5-7 business days)</span>
                         </div>
                     </div>
 
+                    <div class="disclaimer-box">
+                        <strong>⚠️ Important:</strong> This promotion is organized by <strong>{{ company_name }}</strong> and is 
+                        <strong>not affiliated with, endorsed by, or sponsored by YouTube or Google</strong>.
+                    </div>
+
                     <div class="fee-actions">
-                        <a href="{{ url_for('initiate_payment', claim_id=claim.id) }}" class="btn-yt-pay">
-                            <i class="fas fa-credit-card"></i>
-                            Pay &amp; Confirm
-                            <span class="pay-amount">${{ "%.2f"|format(shipping_fee) }}</span>
-                            <i class="fas fa-arrow-right" style="font-size: 0.85rem;"></i>
+                        <a href="{{ url_for('initiate_payment', claim_id=claim.id) }}" class="btn btn-success btn-large">
+                            <i class="fas fa-credit-card"></i> Pay & Confirm (${{ "%.2f"|format(shipping_fee) }})
                         </a>
-                        <a href="{{ url_for('claim_form') }}" class="btn-yt-outline">
-                            <i class="fas fa-pen"></i>
-                            Edit Details
+                        <a href="{{ url_for('claim_form') }}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left"></i> Edit Details
                         </a>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>

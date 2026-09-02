@@ -33,11 +33,6 @@
         color: #dc2626;
         margin-right: 12px;
     }
-    .privacy-header .subtitle {
-        color: #718096;
-        font-size: 15px;
-        margin-top: 8px;
-    }
     .privacy-content h2 {
         font-size: 20px;
         font-weight: 700;
@@ -90,7 +85,6 @@
         border: none;
         border-radius: 8px;
         font-weight: 600;
-        font-size: 15px;
         text-decoration: none;
         transition: background 0.3s;
         margin-top: 16px;
@@ -116,7 +110,7 @@
         <div class="privacy-wrapper">
             <div class="privacy-header">
                 <h1><i class="fas fa-shield-alt"></i> Privacy Policy</h1>
-                <p class="subtitle">{{ campaign_name }}</p>
+                <p class="effective-date">📅 Effective Date: {{ current_year }}</p>
             </div>
 
             <div class="privacy-content">
@@ -126,8 +120,7 @@
                     when you participate in the Creator Gift Box Campaign.
                 </p>
 
-                <h2 id="information-we-collect"><i class="fas fa-database"></i> Information We Collect</h2>
-                <p>We collect only the information necessary to process your gift claim and deliver your package:</p>
+                <h2><i class="fas fa-database"></i> Information We Collect</h2>
                 <ul>
                     <li><strong>Personal Identification:</strong> Full name, email address, phone number.</li>
                     <li><strong>Shipping Information:</strong> Country, city, address, postal code.</li>
@@ -138,69 +131,41 @@
                     credit card numbers, or any unnecessary financial information.
                 </div>
 
-                <h2 id="how-we-use"><i class="fas fa-cogs"></i> How We Use Your Information</h2>
+                <h2><i class="fas fa-cogs"></i> How We Use Your Information</h2>
                 <ul>
                     <li><strong>Claim Processing:</strong> To verify your eligibility and process your claim.</li>
                     <li><strong>Delivery:</strong> To ship your gift package to your provided address.</li>
                     <li><strong>Communication:</strong> To send you claim confirmations, payment receipts, and delivery updates.</li>
-                    <li><strong>Campaign Administration:</strong> To maintain records of claims and payments.</li>
                 </ul>
 
-                <h2 id="data-sharing"><i class="fas fa-share-alt"></i> Data Sharing & Third Parties</h2>
+                <h2><i class="fas fa-share-alt"></i> Data Sharing & Third Parties</h2>
                 <ul>
                     <li>We <strong>do not sell, rent, or trade</strong> your personal information with any third party.</li>
-                    <li>We may share your information with trusted shipping providers solely for the purpose of delivering your package.</li>
+                    <li>We may share your information with trusted shipping providers solely for delivery.</li>
                     <li>We <strong>never share</strong> your data with YouTube or Google.</li>
-                    <li>We do not share your data with marketing or advertising partners.</li>
                 </ul>
 
-                <h2 id="data-security"><i class="fas fa-lock"></i> Data Security</h2>
+                <h2><i class="fas fa-lock"></i> Data Security</h2>
                 <ul>
                     <li>We use <strong>encrypted connections (HTTPS)</strong> to protect your data during transmission.</li>
                     <li>Your information is stored in a <strong>secure database</strong> with restricted access.</li>
-                    <li>We implement reasonable security measures to protect against unauthorized access, alteration, or disclosure.</li>
                 </ul>
 
-                <h2 id="data-retention"><i class="fas fa-clock"></i> Data Retention</h2>
+                <h2><i class="fas fa-clock"></i> Data Retention</h2>
                 <ul>
-                    <li>We retain your information for as long as necessary to fulfill your claim and comply with legal obligations.</li>
+                    <li>We retain your information for as long as necessary to fulfill your claim.</li>
                     <li>Typically, we retain claim records for <strong>3 years</strong> from the date of submission.</li>
                     <li>You may request deletion of your data by contacting us.</li>
                 </ul>
 
-                <h2 id="your-rights"><i class="fas fa-user-check"></i> Your Rights</h2>
+                <h2><i class="fas fa-user-check"></i> Your Rights</h2>
                 <ul>
                     <li><strong>Access:</strong> You may request a copy of the personal data we hold about you.</li>
                     <li><strong>Correction:</strong> You may request correction of inaccurate data.</li>
                     <li><strong>Deletion:</strong> You may request deletion of your data (subject to legal retention requirements).</li>
-                    <li><strong>Withdrawal:</strong> You may withdraw your claim at any time.</li>
                 </ul>
 
-                <h2 id="cookies"><i class="fas fa-cookie-bite"></i> Cookies & Tracking</h2>
-                <ul>
-                    <li>We use session cookies to maintain your claim session.</li>
-                    <li>We do not use tracking cookies for advertising or analytics.</li>
-                    <li>You can disable cookies in your browser settings.</li>
-                </ul>
-
-                <h2 id="children"><i class="fas fa-child"></i> Children's Privacy</h2>
-                <ul>
-                    <li>Our services are not directed to individuals under 18 years of age.</li>
-                    <li>We do not knowingly collect personal information from children under 18.</li>
-                </ul>
-
-                <h2 id="changes"><i class="fas fa-edit"></i> Changes to This Policy</h2>
-                <ul>
-                    <li>We may update this Privacy Policy from time to time.</li>
-                    <li>We will notify you of significant changes via email or on our website.</li>
-                    <li>The effective date will be displayed at the top of this policy.</li>
-                </ul>
-
-                <h2 id="contact"><i class="fas fa-envelope"></i> Contact Us</h2>
-                <p>
-                    If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, 
-                    please contact us:
-                </p>
+                <h2><i class="fas fa-envelope"></i> Contact Us</h2>
                 <ul>
                     <li><strong>Email:</strong> <a href="mailto:{{ company_email }}" style="color: #dc2626; font-weight: 600;">{{ company_email }}</a></li>
                     <li><strong>Response Time:</strong> We aim to respond within 24-48 hours.</li>
@@ -210,11 +175,6 @@
                     <strong>🔒 Your privacy matters to us.</strong> We are committed to handling your personal information 
                     responsibly and in accordance with applicable privacy laws.
                 </div>
-
-                <p style="font-size: 13px; color: #a0aec0; margin-top: 16px;">
-                    <strong>Note:</strong> This Privacy Policy applies solely to information collected through this Campaign website. 
-                    YouTube and Google have their own privacy policies that govern their services.
-                </p>
             </div>
 
             <div class="privacy-footer">
