@@ -18,6 +18,7 @@ import random
 import string
 import ssl
 import urllib3
+import smtplib
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -30,7 +31,7 @@ import requests
 import logging
 from logging.handlers import RotatingFileHandler
 
-# Google API imports
+# Google API imports (for potential future use)
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -46,32 +47,15 @@ if sys.platform == 'win32':
 
 load_dotenv()
 
-# Check if .env loaded correctly
-if not os.getenv('SUPABASE_URL'):
-    print("⚠️ WARNING: .env file not found or not loaded correctly!")
-    print("   Make sure .env file exists in the project root.")
-    print("   Copy .env.example to .env and fill in your credentials.")
-
-# Print Supabase config for debugging
-print("=" * 50)
-print("🔍 Checking Supabase Configuration")
-print("=" * 50)
-print(f"SUPABASE_URL: {os.getenv('SUPABASE_URL')}")
-print(f"SUPABASE_KEY: {os.getenv('SUPABASE_KEY')[:30]}..." if os.getenv('SUPABASE_KEY') else "❌ Not set")
-print("=" * 50)
 app = Flask(__name__)
 
 # ============================================================
-# SECRET KEY CONFIGURATION
+# SECRET KEY & SESSION CONFIGURATION
 # ============================================================
-app.secret_key = 'bb0169c81b04bb4ed2d57d0cf94b4631d54f21a787abda6ba95c9d2675b6aeab'
-
-# ============================================================
-# SESSION CONFIGURATION
-# ============================================================
+app.secret_key = os.getenv('SECRET_KEY', 'bb0169c81b04bb4ed2d57d0cf94b4631d54f21a787abda6ba95c9d2675b6aeab')
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
@@ -90,11 +74,18 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'Creator Rewards')
 COMPANY_EMAIL = os.getenv('COMPANY_EMAIL', 'support@creatorrewards.com')
-ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'juwon20092006@gmail.com')
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'awwalu253@gmail.com')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@creatorrewards.com')
+
+# Email config (SMTP - Works on Render)
+MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
 
 # Setup logging
 if not os.path.exists('logs'):
@@ -103,85 +94,6 @@ file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=1
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
-
-# ============================================================
-# GMAIL API HELPER FUNCTIONS
-# ============================================================
-def get_gmail_service():
-    """Get authenticated Gmail API service (local + production)"""
-    creds = None
-    
-    # Try environment variables first (for production on Render)
-    client_id = os.getenv('GMAIL_API_CLIENT_ID')
-    client_secret = os.getenv('GMAIL_API_CLIENT_SECRET')
-    refresh_token = os.getenv('GMAIL_API_REFRESH_TOKEN')
-    
-    if client_id and client_secret and refresh_token:
-        app.logger.info("📧 Using environment variables for Gmail API")
-        creds = Credentials(
-            token=None,
-            refresh_token=refresh_token,
-            client_id=client_id,
-            client_secret=client_secret,
-            token_uri='https://oauth2.googleapis.com/token',
-            scopes=SCOPES
-        )
-        
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        
-        if creds.valid:
-            app.logger.info("✅ Gmail API ready (production mode)")
-            return build('gmail', 'v1', credentials=creds)
-    
-    # Fallback to token.pickle (local development)
-    if os.path.exists('token.pickle'):
-        app.logger.info("📧 Using token.pickle for Gmail API")
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-        
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        
-        if creds.valid:
-            app.logger.info("✅ Gmail API ready (local mode)")
-            return build('gmail', 'v1', credentials=creds)
-    
-    app.logger.error("❌ No valid Gmail API credentials found")
-    return None
-
-def send_email_via_api(recipient, subject, html_content, plain_text_content=None):
-    """Send email using Gmail API"""
-    try:
-        service = get_gmail_service()
-        if not service:
-            return False
-        
-        message = MIMEMultipart('alternative')
-        message['to'] = recipient
-        message['subject'] = subject
-        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        message['reply-to'] = COMPANY_EMAIL
-        
-        if plain_text_content:
-            text_part = MIMEText(plain_text_content, 'plain')
-            message.attach(text_part)
-        
-        html_part = MIMEText(html_content, 'html')
-        message.attach(html_part)
-        
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
-        
-        service.users().messages().send(
-            userId='me',
-            body={'raw': raw_message}
-        ).execute()
-        
-        return True
-        
-    except Exception as e:
-        app.logger.error(f"Gmail API error: {str(e)}")
-        return False
 
 # ============================================================
 # SAFE LOG MESSAGE FUNCTION
@@ -199,10 +111,10 @@ def safe_log_message(msg):
     return emoji_pattern.sub('', msg)
 
 # ============================================================
-# SUPABASE HELPERS (SSL FIXED)
+# SUPABASE HELPERS
 # ============================================================
 def supabase_select(table, filters=None, order_by=None, limit=None):
-    """Select data from Supabase with SSL fix"""
+    """Select data from Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
     
@@ -237,9 +149,8 @@ def supabase_select(table, filters=None, order_by=None, limit=None):
         return {'error': str(e)}
 
 def supabase_insert(table, data):
-    """Insert data into Supabase with SSL fix"""
+    """Insert data into Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
-        app.logger.error(f"❌ Supabase not configured! URL: {SUPABASE_URL}, KEY: {bool(SUPABASE_KEY)}")
         return {'error': 'Supabase not configured'}
     
     url = f"{SUPABASE_URL}/rest/v1/{table}"
@@ -252,7 +163,6 @@ def supabase_insert(table, data):
     
     try:
         app.logger.info(f"📡 Inserting into {table}")
-        app.logger.info(f"📡 URL: {url}")
         response = requests.post(url, headers=headers, json=data, timeout=30, verify=False)
         app.logger.info(f"📡 Response status: {response.status_code}")
         
@@ -269,7 +179,7 @@ def supabase_insert(table, data):
         return {'error': str(e)}
 
 def supabase_update(table, data, filters):
-    """Update data in Supabase with SSL fix"""
+    """Update data in Supabase"""
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
     
@@ -324,7 +234,7 @@ def generate_unique_code():
 def generate_bulk_codes(count):
     """Generate multiple unique codes"""
     codes = []
-    for i in range(count):
+    for _ in range(count):
         code = generate_unique_code()
         if code:
             codes.append({
@@ -333,15 +243,56 @@ def generate_bulk_codes(count):
                 'created_at': datetime.datetime.now().isoformat(),
                 'created_by': 'admin'
             })
-        else:
-            app.logger.warning(f"Failed to generate code at index {i}")
     return codes
 
 # ============================================================
-# EMAIL SYSTEM
+# EMAIL SYSTEM (SMTP - Production Ready)
 # ============================================================
+def send_email_via_smtp(recipient, subject, html_content, plain_text_content=None):
+    """Send email using Gmail SMTP"""
+    try:
+        if not MAIL_USERNAME or not MAIL_PASSWORD:
+            app.logger.error("❌ SMTP credentials not configured")
+            return False
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        msg['To'] = recipient
+        msg['Reply-To'] = COMPANY_EMAIL
+        
+        if plain_text_content:
+            text_part = MIMEText(plain_text_content, 'plain')
+            msg.attach(text_part)
+        
+        html_part = MIMEText(html_content, 'html')
+        msg.attach(html_part)
+        
+        # Send via SMTP
+        app.logger.info(f"📧 Sending email to {recipient} via SMTP")
+        
+        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
+        
+        if MAIL_USE_TLS:
+            server.starttls()
+        
+        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        
+        app.logger.info(f"✅ Email sent to {recipient}: {subject}")
+        return True
+        
+    except smtplib.SMTPAuthenticationError as e:
+        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
+        return False
+    except Exception as e:
+        app.logger.error(f"❌ SMTP error: {str(e)}")
+        return False
+
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send email using Gmail API with fallback to file"""
+    """Send email with fallback to file"""
     try:
         with app.app_context():
             html_content = render_template(f'emails/{template_name}.html', **kwargs)
@@ -359,17 +310,15 @@ This is an automated message from {COMPANY_NAME}.
 For support: {COMPANY_EMAIL}
         """
         
-        app.logger.info(safe_log_message(f"Sending email to {recipient} via Gmail API"))
-        
-        if send_email_via_api(recipient, subject, html_content, plain_text):
-            app.logger.info(safe_log_message(f"✅ Email sent via API to {recipient}: {subject}"))
+        # Try SMTP first
+        if send_email_via_smtp(recipient, subject, html_content, plain_text):
             return True
         else:
-            app.logger.warning("Gmail API failed, falling back to file save")
+            app.logger.warning("⚠️ SMTP failed, saving to file")
             return send_email_to_file(recipient, subject, template_name, **kwargs)
         
     except Exception as e:
-        app.logger.error(safe_log_message(f"Email error: {str(e)}"))
+        app.logger.error(f"❌ Email error: {str(e)}")
         return send_email_to_file(recipient, subject, template_name, **kwargs)
 
 def send_email_to_file(recipient, subject, template_name, **kwargs):
@@ -388,12 +337,15 @@ def send_email_to_file(recipient, subject, template_name, **kwargs):
         with open(filename, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
-        app.logger.info(safe_log_message(f"Email saved to: {filename}"))
+        app.logger.info(f"📧 Email saved to: {filename}")
         return True
     except Exception as e:
-        app.logger.error(safe_log_message(f"Failed to save email: {str(e)}"))
+        app.logger.error(f"❌ Failed to save email: {str(e)}")
         return False
 
+# ============================================================
+# EMAIL TEMPLATE FUNCTIONS
+# ============================================================
 def send_claim_confirmation(claim_data):
     payment_url = f"http://localhost:5000/payment/{claim_data['id']}"
     return send_email(
@@ -435,7 +387,6 @@ def send_payment_receipt(claim_data, payment_data):
 # ADMIN AUTHENTICATION
 # ============================================================
 def admin_required(f):
-    """Decorator to check if admin is logged in"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('admin_logged_in'):
@@ -785,8 +736,6 @@ def health():
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login page"""
-    # If already logged in, redirect to dashboard
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
@@ -806,7 +755,6 @@ def admin_login():
 
 @app.route('/admin/logout')
 def admin_logout():
-    """Admin logout"""
     session.clear()
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
@@ -814,7 +762,6 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard with real data from Supabase"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -842,7 +789,6 @@ def admin_dashboard():
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
-    """View all claims with real data and filters"""
     try:
         status = request.args.get('status', '')
         search = request.args.get('search', '')
@@ -883,7 +829,6 @@ def admin_claims():
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
-    """View individual claim details with real data"""
     try:
         result = supabase_select('gift_claims', {'id': claim_id})
         if not result or (isinstance(result, dict) and 'error' in result):
@@ -909,7 +854,6 @@ def admin_claim_detail(claim_id):
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
-    """Update claim status"""
     try:
         action = request.form.get('action')
         tracking_number = request.form.get('tracking_number', '')
@@ -942,7 +886,6 @@ def admin_update_claim(claim_id):
 @app.route('/admin/export')
 @admin_required
 def admin_export():
-    """Export claims as CSV"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -979,38 +922,25 @@ def admin_export():
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
-    """Admin - Claim Code Management"""
     try:
-        # Get all codes - order by created_at desc
         codes_result = supabase_select('claim_codes', order_by='created_at.desc')
-        
-        # Debug logging
-        app.logger.info(f"🔍 Codes result: {codes_result}")
         
         if codes_result and isinstance(codes_result, list):
             codes = codes_result
             app.logger.info(f"✅ Found {len(codes)} codes")
-        elif codes_result and isinstance(codes_result, dict) and 'error' in codes_result:
-            app.logger.error(f"❌ Supabase error: {codes_result}")
-            codes = []
         else:
             codes = []
-            app.logger.warning("⚠️ No codes found or unexpected response format")
         
-        # Get claim info for each code
         for code in codes:
             if code.get('used_by_claim_id'):
                 claim_result = supabase_select('gift_claims', {'id': code.get('used_by_claim_id')})
                 if claim_result and isinstance(claim_result, list) and len(claim_result) > 0:
                     code['used_by_claim'] = claim_result[0]
         
-        # Calculate stats
         total_codes = len(codes)
         active_codes = len([c for c in codes if c.get('status') == 'active'])
         used_codes = len([c for c in codes if c.get('status') == 'used'])
         expired_codes = len([c for c in codes if c.get('status') == 'expired'])
-        
-        app.logger.info(f"📊 Stats - Total: {total_codes}, Active: {active_codes}, Used: {used_codes}, Expired: {expired_codes}")
         
         return render_template('admin/codes.html',
                              company_name=COMPANY_NAME,
@@ -1020,25 +950,45 @@ def admin_codes():
                              used_codes=used_codes,
                              expired_codes=expired_codes,
                              current_year=datetime.datetime.now().year)
-                             
     except Exception as e:
-        app.logger.error(f"❌ Admin codes error: {str(e)}", exc_info=True)
-        flash(f'Error loading codes: {str(e)}', 'error')
-        return render_template('admin/codes.html',
-                             company_name=COMPANY_NAME,
-                             codes=[],
-                             total_codes=0,
-                             active_codes=0,
-                             used_codes=0,
-                             expired_codes=0,
+        app.logger.error(f"Codes error: {str(e)}")
+        flash('Error loading codes', 'error')
+        return render_template('admin/codes.html', company_name=COMPANY_NAME,
+                             codes=[], total_codes=0, active_codes=0, used_codes=0, expired_codes=0,
                              current_year=datetime.datetime.now().year)
+
+@app.route('/admin/codes/generate', methods=['POST'])
+@admin_required
+def admin_generate_codes():
+    try:
+        count = min(int(request.form.get('count', 10)), 100)
+        description = request.form.get('description', '')
+        expires_days = int(request.form.get('expires_days', 0))
+        
+        codes = generate_bulk_codes(count)
+        inserted = 0
+        
+        for code_data in codes:
+            if description:
+                code_data['description'] = description
+            if expires_days > 0:
+                code_data['expires_at'] = (datetime.datetime.now() + datetime.timedelta(days=expires_days)).isoformat()
+            
+            result = supabase_insert('claim_codes', code_data)
+            if not (isinstance(result, dict) and 'error' in result):
+                inserted += 1
+        
+        flash(f'✅ {inserted} claim codes generated successfully!', 'success')
+        return redirect(url_for('admin_codes'))
+    except Exception as e:
+        app.logger.error(f"Generate codes error: {str(e)}")
+        flash(f'Error generating codes: {str(e)}', 'error')
+        return redirect(url_for('admin_codes'))
 
 @app.route('/admin/codes/delete/<code_id>', methods=['POST'])
 @admin_required
 def admin_delete_code(code_id):
-    """Delete a single claim code"""
     try:
-        # Check if code is used
         result = supabase_select('claim_codes', {'id': code_id})
         if result and isinstance(result, list) and len(result) > 0:
             code = result[0]
@@ -1046,7 +996,6 @@ def admin_delete_code(code_id):
                 flash('Cannot delete a used code', 'error')
                 return redirect(url_for('admin_codes'))
             
-            # Delete the code
             url = f"{SUPABASE_URL}/rest/v1/claim_codes?id=eq.{code_id}"
             headers = {
                 "apikey": SUPABASE_KEY,
@@ -1063,70 +1012,14 @@ def admin_delete_code(code_id):
             flash('Code not found', 'error')
         
         return redirect(url_for('admin_codes'))
-        
     except Exception as e:
         app.logger.error(f"Delete code error: {str(e)}")
         flash('Error deleting code', 'error')
-        return redirect(url_for('admin_codes'))                             
-
-@app.route('/admin/codes/generate', methods=['POST'])
-@admin_required
-def admin_generate_codes():
-    """Generate new claim codes"""
-    try:
-        count = min(int(request.form.get('count', 10)), 100)
-        description = request.form.get('description', '')
-        expires_days = int(request.form.get('expires_days', 0))
-        
-        app.logger.info(f"🔄 Generating {count} claim codes...")
-        
-        codes = generate_bulk_codes(count)
-        app.logger.info(f"✅ Generated {len(codes)} codes")
-        
-        if not codes:
-            flash('Failed to generate codes. Please try again.', 'error')
-            return redirect(url_for('admin_codes'))
-        
-        inserted = 0
-        failed = 0
-        
-        for code_data in codes:
-            app.logger.info(f"📝 Code data: {code_data}")
-            
-            if description:
-                code_data['description'] = description
-            if expires_days > 0:
-                code_data['expires_at'] = (datetime.datetime.now() + datetime.timedelta(days=expires_days)).isoformat()
-            
-            app.logger.info(f"📡 Inserting code: {code_data['code']}")
-            result = supabase_insert('claim_codes', code_data)
-            app.logger.info(f"📡 Insert result: {result}")
-            
-            if isinstance(result, dict) and 'error' in result:
-                app.logger.error(f"❌ Failed to insert code {code_data['code']}: {result}")
-                failed += 1
-            else:
-                inserted += 1
-                app.logger.info(f"✅ Inserted code: {code_data['code']}")
-        
-        if inserted > 0:
-            flash(f'✅ {inserted} claim codes generated successfully!', 'success')
-        if failed > 0:
-            flash(f'⚠️ {failed} codes failed to generate', 'warning')
-        if inserted == 0 and failed > 0:
-            flash('❌ Failed to generate any codes. Please check the logs.', 'error')
-        
-        return redirect(url_for('admin_codes'))
-        
-    except Exception as e:
-        app.logger.error(f"Generate codes error: {str(e)}", exc_info=True)
-        flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
-    """Delete multiple claim codes at once"""
     try:
         code_ids = request.form.getlist('code_ids')
         deleted = 0
@@ -1153,9 +1046,39 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
+@app.route('/admin/test-email')
+@admin_required
+def admin_test_email():
+    try:
+        result = send_email(
+            recipient=ADMIN_EMAIL,
+            subject=f"✅ Test Email - {CAMPAIGN_NAME}",
+            template_name='claim_confirmation',
+            claim={
+                'full_name': 'Test User',
+                'claim_number': 'TEST-001',
+                'email': ADMIN_EMAIL,
+                'channel_name': 'Test Channel'
+            },
+            payment_url='https://creator-reward.onrender.com/payment/test',
+            company_name=COMPANY_NAME,
+            campaign_name=CAMPAIGN_NAME,
+            reward_name=REWARD_NAME,
+            current_year=datetime.datetime.now().year
+        )
+        
+        if result:
+            flash('✅ Test email sent! Check your inbox.', 'success')
+        else:
+            flash('❌ Email failed. Check logs.', 'error')
+        
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e:
+        flash(f'❌ Error: {str(e)}', 'error')
+        return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/check-session')
 def admin_check_session():
-    """Check if admin is logged in"""
     return jsonify({
         'logged_in': session.get('admin_logged_in', False),
         'session_keys': list(session.keys()),
@@ -1196,10 +1119,7 @@ if __name__ == '__main__':
     print(f"📍 http://localhost:5000")
     print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
     print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Gmail API: {'✅ Configured' if os.path.exists('credentials.json') else '❌ Not Configured'}")
+    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
     print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
-    print("=" * 50)
-    print("\n⚠️ IMPORTANT DISCLAIMER:")
-    print("   This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000)
