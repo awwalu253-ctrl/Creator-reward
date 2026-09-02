@@ -22,7 +22,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response, send_from_directory
-from flask_session import Session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -45,23 +44,14 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - FIXED FOR RENDER
+# SESSION CONFIGURATION - SIMPLE (NO FLASK-SESSION)
 # ============================================================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
-
-# Use filesystem-based sessions (shared across workers)
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'admin_'
+app.config['SESSION_COOKIE_NAME'] = 'admin_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
-app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'  # Render has writable /tmp
-
-# Initialize Flask-Session
-try:
-    Session(app)
-except Exception as e:
-    print(f"Warning: Session initialization failed: {e}")
 
 # Static files
 app.static_folder = 'static'
@@ -631,7 +621,6 @@ def admin_login():
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
-    # Handle POST request (form submission)
     if request.method == 'POST':
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
@@ -644,7 +633,7 @@ def admin_login():
         else:
             flash('Invalid password', 'error')
     
-    # Handle GET request (show login page)
+    # GET request - show login page
     return render_template('admin/login.html', company_name=COMPANY_NAME)
 
 @app.route('/admin/logout')
@@ -653,15 +642,9 @@ def admin_logout():
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            flash('Please login as admin first', 'warning')
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
+# ============================================================
+# ADMIN DASHBOARD
+# ============================================================
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
@@ -1030,4 +1013,12 @@ def inject_globals():
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV', 'production') != 'production'
+    print("=" * 50)
+    print(f"🎁 YouTube Creator Gift Box Campaign")
+    print(f"📍 http://localhost:{port}")
+    print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
+    print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
+    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
+    print(f"🔐 Admin: http://localhost:{port}/admin/login (password: {ADMIN_PASSWORD})")
+    print("=" * 50)
     app.run(debug=debug, host='0.0.0.0', port=port)
