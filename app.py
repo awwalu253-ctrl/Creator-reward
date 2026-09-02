@@ -17,6 +17,7 @@ import csv
 import random
 import string
 import urllib3
+import smtplib
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -28,12 +29,6 @@ from dotenv import load_dotenv
 import requests
 import logging
 from logging.handlers import RotatingFileHandler
-
-# Google API imports
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -65,9 +60,6 @@ PAYSTACK_PUBLIC = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_SECRET = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'https://creator-reward.onrender.com/payment/callback')
 
-# Gmail API Scopes
-SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'Creator Rewards')
 COMPANY_EMAIL = os.getenv('COMPANY_EMAIL', 'support@creatorrewards.com')
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'awwalu253@gmail.com')
@@ -75,11 +67,15 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 
-# Gmail API credentials
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'awwalu253@gmail.com')
-GMAIL_API_CLIENT_ID = os.getenv('GMAIL_API_CLIENT_ID')
-GMAIL_API_CLIENT_SECRET = os.getenv('GMAIL_API_CLIENT_SECRET')
-GMAIL_API_REFRESH_TOKEN = os.getenv('GMAIL_API_REFRESH_TOKEN')
+# ============================================================
+# EMAIL CONFIGURATION (Gmail App Password - SMTP)
+# ============================================================
+MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+MAIL_PORT = int(os.getenv('MAIL_PORT', 587))
+MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'awwalu253@gmail.com')
+MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', 'wkss kuwq mwaf oteb')
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
 
 # Setup logging
 if not os.path.exists('logs'):
@@ -213,90 +209,27 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# GMAIL API - REAL EMAIL (NO FILE FALLBACK)
+# EMAIL SYSTEM (Gmail App Password - SMTP)
 # ============================================================
-def get_gmail_service():
-    """Get authenticated Gmail API service"""
-    creds = None
-    
-    # Use environment variables
-    client_id = GMAIL_API_CLIENT_ID
-    client_secret = GMAIL_API_CLIENT_SECRET
-    refresh_token = GMAIL_API_REFRESH_TOKEN
-    
-    if client_id and client_secret and refresh_token:
-        app.logger.info("📧 Using Gmail API with environment variables")
-        creds = Credentials(
-            token=None,
-            refresh_token=refresh_token,
-            client_id=client_id,
-            client_secret=client_secret,
-            token_uri='https://oauth2.googleapis.com/token',
-            scopes=SCOPES
-        )
-        
-        if creds.expired and creds.refresh_token:
-            app.logger.info("🔄 Refreshing token...")
-            creds.refresh(Request())
-        
-        if creds.valid:
-            app.logger.info("✅ Gmail API ready")
-            return build('gmail', 'v1', credentials=creds)
-    
-    # Fallback to token.pickle (local)
-    if os.path.exists('token.pickle'):
-        app.logger.info("📧 Using token.pickle")
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        if creds.valid:
-            return build('gmail', 'v1', credentials=creds)
-    
-    app.logger.error("❌ No Gmail API credentials found")
-    return None
-
-def send_real_email(recipient, subject, html_content, plain_text_content=None):
-    """Send REAL email using Gmail API - NO FILE FALLBACK"""
-    service = get_gmail_service()
-    if not service:
-        app.logger.error("❌ Cannot send email - no Gmail service")
-        return False
-    
-    try:
-        message = MIMEMultipart('alternative')
-        message['to'] = recipient
-        message['subject'] = subject
-        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        message['reply-to'] = COMPANY_EMAIL
-        
-        if plain_text_content:
-            text_part = MIMEText(plain_text_content, 'plain')
-            message.attach(text_part)
-        
-        html_part = MIMEText(html_content, 'html')
-        message.attach(html_part)
-        
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
-        
-        service.users().messages().send(
-            userId='me',
-            body={'raw': raw_message}
-        ).execute()
-        
-        app.logger.info(f"✅ REAL EMAIL SENT to {recipient}: {subject}")
-        return True
-        
-    except Exception as e:
-        app.logger.error(f"❌ Gmail API error: {str(e)}")
-        return False
-
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send REAL email - NO FILE FALLBACK"""
+    """Send email using Gmail App Password (SMTP)"""
     try:
+        if not MAIL_USERNAME or not MAIL_PASSWORD:
+            app.logger.error("❌ Email credentials not configured")
+            return False
+        
+        # Render HTML content
         with app.app_context():
             html_content = render_template(f'emails/{template_name}.html', **kwargs)
         
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        msg['To'] = recipient
+        msg['Reply-To'] = COMPANY_EMAIL
+        
+        # Plain text version
         claim = kwargs.get('claim', {})
         plain_text = f"""
 {subject}
@@ -309,17 +242,37 @@ This is an automated message from {COMPANY_NAME}.
 
 For support: {COMPANY_EMAIL}
         """
+        text_part = MIMEText(plain_text, 'plain')
+        html_part = MIMEText(html_content, 'html')
+        msg.attach(text_part)
+        msg.attach(html_part)
         
-        # Send REAL email
-        if send_real_email(recipient, subject, html_content, plain_text):
-            app.logger.info(f"✅ Email delivered to {recipient}")
-            return True
-        else:
-            app.logger.error(f"❌ Failed to send email to {recipient}")
-            return False
+        # Send via SMTP
+        app.logger.info(f"📧 Sending email to {recipient} via SMTP")
         
+        server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
+        server.ehlo()
+        
+        if MAIL_USE_TLS:
+            server.starttls()
+            server.ehlo()
+        
+        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        
+        app.logger.info(f"✅ Email sent to {recipient}: {subject}")
+        return True
+        
+    except smtplib.SMTPAuthenticationError as e:
+        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
+        app.logger.error("   Check your email and app password")
+        return False
+    except smtplib.SMTPServerDisconnected as e:
+        app.logger.error(f"❌ SMTP Server disconnected: {str(e)}")
+        return False
     except Exception as e:
-        app.logger.error(f"❌ Email error: {str(e)}")
+        app.logger.error(f"❌ SMTP error: {str(e)}")
         return False
 
 # ============================================================
@@ -720,7 +673,7 @@ def health():
         'status': 'healthy',
         'supabase_configured': bool(SUPABASE_URL and SUPABASE_KEY),
         'paystack_configured': bool(PAYSTACK_SECRET),
-        'gmail_api_configured': bool(GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN),
+        'email_configured': bool(MAIL_USERNAME and MAIL_PASSWORD),
         'timestamp': datetime.datetime.now().isoformat()
     })
 
@@ -1112,11 +1065,10 @@ if __name__ == '__main__':
     print(f"📍 http://localhost:5000")
     print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
     print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Gmail API: {'✅ Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else '❌ Not Configured'}")
+    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
     print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
     print("=" * 50)
     print("\n⚠️ IMPORTANT DISCLAIMER:")
     print("   This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000)
-    
