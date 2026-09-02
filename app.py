@@ -289,7 +289,7 @@ def generate_unique_code():
 def generate_bulk_codes(count):
     """Generate multiple unique codes"""
     codes = []
-    for _ in range(count):
+    for i in range(count):
         code = generate_unique_code()
         if code:
             codes.append({
@@ -298,6 +298,8 @@ def generate_bulk_codes(count):
                 'created_at': datetime.datetime.now().isoformat(),
                 'created_by': 'admin'
             })
+        else:
+            app.logger.warning(f"Failed to generate code at index {i}")
     return codes
 
 # ============================================================
@@ -977,23 +979,48 @@ def admin_generate_codes():
         description = request.form.get('description', '')
         expires_days = int(request.form.get('expires_days', 0))
         
+        app.logger.info(f"🔄 Generating {count} claim codes...")
+        
         codes = generate_bulk_codes(count)
+        app.logger.info(f"✅ Generated {len(codes)} codes")
+        
+        if not codes:
+            flash('Failed to generate codes. Please try again.', 'error')
+            return redirect(url_for('admin_codes'))
+        
         inserted = 0
+        failed = 0
         
         for code_data in codes:
+            app.logger.info(f"📝 Code data: {code_data}")
+            
             if description:
                 code_data['description'] = description
             if expires_days > 0:
                 code_data['expires_at'] = (datetime.datetime.now() + datetime.timedelta(days=expires_days)).isoformat()
             
+            app.logger.info(f"📡 Inserting code: {code_data['code']}")
             result = supabase_insert('claim_codes', code_data)
-            if not (isinstance(result, dict) and 'error' in result):
+            app.logger.info(f"📡 Insert result: {result}")
+            
+            if isinstance(result, dict) and 'error' in result:
+                app.logger.error(f"❌ Failed to insert code {code_data['code']}: {result}")
+                failed += 1
+            else:
                 inserted += 1
+                app.logger.info(f"✅ Inserted code: {code_data['code']}")
         
-        flash(f'✅ {inserted} claim codes generated successfully!', 'success')
+        if inserted > 0:
+            flash(f'✅ {inserted} claim codes generated successfully!', 'success')
+        if failed > 0:
+            flash(f'⚠️ {failed} codes failed to generate', 'warning')
+        if inserted == 0 and failed > 0:
+            flash('❌ Failed to generate any codes. Please check the logs.', 'error')
+        
         return redirect(url_for('admin_codes'))
+        
     except Exception as e:
-        app.logger.error(f"Generate codes error: {str(e)}")
+        app.logger.error(f"Generate codes error: {str(e)}", exc_info=True)
         flash(f'Error generating codes: {str(e)}', 'error')
         return redirect(url_for('admin_codes'))
 
