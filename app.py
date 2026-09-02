@@ -46,6 +46,16 @@ if sys.platform == 'win32':
 
 load_dotenv()
 
+# DEBUG: Print environment variables
+print("=" * 60)
+print("🔍 ENVIRONMENT VARIABLES CHECK")
+print("=" * 60)
+print(f"GMAIL_API_CLIENT_ID: {os.getenv('GMAIL_API_CLIENT_ID')[:30] if os.getenv('GMAIL_API_CLIENT_ID') else '❌ NOT SET'}...")
+print(f"GMAIL_API_CLIENT_SECRET: {'✅ SET' if os.getenv('GMAIL_API_CLIENT_SECRET') else '❌ NOT SET'}")
+print(f"GMAIL_API_REFRESH_TOKEN: {'✅ SET' if os.getenv('GMAIL_API_REFRESH_TOKEN') else '❌ NOT SET'}")
+print(f"MAIL_DEFAULT_SENDER: {os.getenv('MAIL_DEFAULT_SENDER')}")
+print("=" * 60)
+
 app = Flask(__name__)
 
 # ============================================================
