@@ -20,7 +20,7 @@ from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -48,6 +48,10 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
+
+# Ensure static files work
+app.static_folder = 'static'
+app.static_url_path = '/static'
 
 # ============================================================
 # CONFIGURATION
@@ -667,6 +671,11 @@ def claim_form():
                              campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME,
                              claim_code=CLAIM_CODE, form_data=data)
 
+# Serve static files
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
+    
 @app.route('/review/<claim_id>')
 def review_claim(claim_id):
     result = supabase_select('gift_claims', {'id': claim_id})
