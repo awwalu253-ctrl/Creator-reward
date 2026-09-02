@@ -47,15 +47,24 @@ if sys.platform == 'win32':
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)  # Session lasts 24 hours
+
+# ============================================================
+# SECRET KEY CONFIGURATION
+# ============================================================
+app.secret_key = 'bb0169c81b04bb4ed2d57d0cf94b4631d54f21a787abda6ba95c9d2675b6aeab'
+
+# ============================================================
+# SESSION CONFIGURATION
+# ============================================================
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
-# ============================
+# ============================================================
 # CONFIGURATION
-# ============================
+# ============================================================
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
@@ -82,9 +91,9 @@ file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(messag
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
 
-# ============================
+# ============================================================
 # GMAIL API HELPER FUNCTIONS
-# ============================
+# ============================================================
 def get_gmail_service():
     """Get authenticated Gmail API service"""
     creds = None
@@ -141,9 +150,9 @@ def send_email_via_api(recipient, subject, html_content, plain_text_content=None
         app.logger.error(f"Gmail API error: {str(e)}")
         return False
 
-# ============================
+# ============================================================
 # SAFE LOG MESSAGE FUNCTION
-# ============================
+# ============================================================
 def safe_log_message(msg):
     """Remove emojis for Windows console compatibility"""
     emoji_pattern = re.compile("["
@@ -156,9 +165,9 @@ def safe_log_message(msg):
                                "]+", flags=re.UNICODE)
     return emoji_pattern.sub('', msg)
 
-# ============================
+# ============================================================
 # SUPABASE HELPERS (SSL FIXED)
-# ============================
+# ============================================================
 def supabase_select(table, filters=None, order_by=None, limit=None):
     """Select data from Supabase with SSL fix"""
     if not SUPABASE_URL or not SUPABASE_KEY:
@@ -255,9 +264,9 @@ def supabase_update(table, data, filters):
         app.logger.error(f"❌ Update error: {str(e)}")
         return {'error': str(e)}
 
-# ============================
+# ============================================================
 # CLAIM CODE GENERATION
-# ============================
+# ============================================================
 def generate_unique_code():
     """Generate a unique claim code"""
     max_attempts = 50
@@ -291,9 +300,9 @@ def generate_bulk_codes(count):
             })
     return codes
 
-# ============================
+# ============================================================
 # EMAIL SYSTEM
-# ============================
+# ============================================================
 def send_email(recipient, subject, template_name, **kwargs):
     """Send email using Gmail API with fallback to file"""
     try:
@@ -385,9 +394,9 @@ def send_payment_receipt(claim_data, payment_data):
         current_year=datetime.datetime.now().year
     )
 
-# ============================
+# ============================================================
 # ADMIN AUTHENTICATION
-# ============================
+# ============================================================
 def admin_required(f):
     """Decorator to check if admin is logged in"""
     @wraps(f)
@@ -398,9 +407,9 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ============================
+# ============================================================
 # UTILITY FUNCTIONS
-# ============================
+# ============================================================
 def generate_claim_number():
     year = datetime.datetime.now().year
     try:
@@ -428,9 +437,9 @@ def validate_phone(phone):
     phone = re.sub(r'[\s\-\(\)\+]', '', phone)
     return len(phone) >= 10 and phone.isdigit()
 
-# ============================
+# ============================================================
 # ROUTES - PUBLIC
-# ============================
+# ============================================================
 @app.route('/')
 def landing():
     return render_template('landing.html', 
@@ -725,14 +734,6 @@ def confirmation(claim_id):
                          reward_name=REWARD_NAME,
                          current_year=datetime.datetime.now().year)
 
-@app.route('/admin/check-session')
-def admin_check_session():
-    """Check if admin is logged in"""
-    return jsonify({
-        'logged_in': session.get('admin_logged_in', False),
-        'session': dict(session)
-    })
-
 @app.route('/health')
 def health():
     return jsonify({
@@ -742,9 +743,9 @@ def health():
         'timestamp': datetime.datetime.now().isoformat()
     })
 
-# ============================
+# ============================================================
 # ROUTES - ADMIN
-# ============================
+# ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     """Admin login page"""
@@ -755,9 +756,10 @@ def admin_login():
     if request.method == 'POST':
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
+            session.clear()
             session['admin_logged_in'] = True
             session['admin_user'] = 'Administrator'
-            session.permanent = True  # Make session permanent
+            session.permanent = True
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -768,13 +770,14 @@ def admin_login():
 @app.route('/admin/logout')
 def admin_logout():
     """Admin logout"""
-    session.clear()  # Clear all session data
+    session.clear()
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
+    """Admin dashboard with real data from Supabase"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -802,6 +805,7 @@ def admin_dashboard():
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
+    """View all claims with real data and filters"""
     try:
         status = request.args.get('status', '')
         search = request.args.get('search', '')
@@ -842,6 +846,7 @@ def admin_claims():
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
+    """View individual claim details with real data"""
     try:
         result = supabase_select('gift_claims', {'id': claim_id})
         if not result or (isinstance(result, dict) and 'error' in result):
@@ -867,6 +872,7 @@ def admin_claim_detail(claim_id):
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
+    """Update claim status"""
     try:
         action = request.form.get('action')
         tracking_number = request.form.get('tracking_number', '')
@@ -899,6 +905,7 @@ def admin_update_claim(claim_id):
 @app.route('/admin/export')
 @admin_required
 def admin_export():
+    """Export claims as CSV"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -935,6 +942,7 @@ def admin_export():
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
+    """Admin - Claim Code Management"""
     try:
         codes_result = supabase_select('claim_codes', order_by='created_at.desc')
         codes = codes_result if isinstance(codes_result, list) else []
@@ -963,6 +971,7 @@ def admin_codes():
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
+    """Generate new claim codes"""
     try:
         count = min(int(request.form.get('count', 10)), 100)
         description = request.form.get('description', '')
@@ -991,6 +1000,7 @@ def admin_generate_codes():
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
+    """Delete multiple claim codes at once"""
     try:
         code_ids = request.form.getlist('code_ids')
         deleted = 0
@@ -1017,9 +1027,18 @@ def admin_bulk_delete_codes():
         flash('Error deleting codes', 'error')
         return redirect(url_for('admin_codes'))
 
-# ============================
+@app.route('/admin/check-session')
+def admin_check_session():
+    """Check if admin is logged in"""
+    return jsonify({
+        'logged_in': session.get('admin_logged_in', False),
+        'session_keys': list(session.keys()),
+        'session': dict(session)
+    })
+
+# ============================================================
 # ERROR HANDLERS
-# ============================
+# ============================================================
 @app.errorhandler(404)
 def not_found(e):
     return render_template('landing.html', company_name=COMPANY_NAME), 404
@@ -1029,9 +1048,9 @@ def internal_error(e):
     app.logger.error(f"500 error: {str(e)}")
     return render_template('error.html', company_name=COMPANY_NAME), 500
 
-# ============================
+# ============================================================
 # CONTEXT PROCESSOR
-# ============================
+# ============================================================
 @app.context_processor
 def inject_globals():
     return {
@@ -1042,9 +1061,9 @@ def inject_globals():
         'current_year': datetime.datetime.now().year
     }
 
-# ============================
+# ============================================================
 # RUN APP
-# ============================
+# ============================================================
 if __name__ == '__main__':
     print("=" * 50)
     print(f"🎁 YouTube Creator Gift Box Campaign")
