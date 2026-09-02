@@ -675,7 +675,7 @@ def claim_form():
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
-    
+
 @app.route('/review/<claim_id>')
 def review_claim(claim_id):
     result = supabase_select('gift_claims', {'id': claim_id})
@@ -964,78 +964,26 @@ def admin_dashboard():
         else:
             claims = []
         
-        total_claims = len(claims)
-        total_paid = 0
-        total_pending = 0
-        total_shipped = 0
-        total_delivered = 0
-        total_cancelled = 0
-        total_revenue = 0.0
-        payment_paid = 0
-        payment_unpaid = 0
+        # ... rest of your statistics code ...
         
-        size_distribution = {'S': 0, 'M': 0, 'L': 0, 'XL': 0, '2XL': 0, '3XL': 0}
-        country_distribution = {}
+        # ============================================================
+        # CHART DATA - ALWAYS PROVIDE DEFAULT VALUES
+        # ============================================================
+        chart_labels = []
+        chart_data = []
+        chart_paid_data = []
         
-        for claim in claims:
-            status = claim.get('status', 'pending')
-            if status == 'pending':
-                total_pending += 1
-            elif status == 'paid':
-                total_paid += 1
-            elif status == 'shipped':
-                total_shipped += 1
-            elif status == 'delivered':
-                total_delivered += 1
-            elif status == 'cancelled':
-                total_cancelled += 1
+        # Generate last 7 days labels
+        for i in range(6, -1, -1):
+            date = (datetime.datetime.now() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+            chart_labels.append(date)
             
-            if claim.get('shipping_fee_paid') == 'true':
-                payment_paid += 1
-                total_revenue += 120.00
-            else:
-                payment_unpaid += 1
+            # Count claims for each day
+            daily_total = len([c for c in claims if c.get('claim_date', '').startswith(date)])
+            chart_data.append(daily_total)
             
-            size = claim.get('clothing_size', '')
-            if size in size_distribution:
-                size_distribution[size] += 1
-            
-            country = claim.get('country', 'Unknown')
-            country_distribution[country] = country_distribution.get(country, 0) + 1
-        
-        recent_claims = claims[:10] if claims else []
-        
-        payments_result = supabase_select('payments')
-        if payments_result and isinstance(payments_result, list):
-            payment_revenue = 0.0
-            for payment in payments_result:
-                payment_revenue += float(payment.get('amount', 0))
-            total_revenue = max(total_revenue, payment_revenue)
-        
-        codes_result = supabase_select('claim_codes')
-        total_codes = 0
-        used_codes = 0
-        active_codes = 0
-        
-        if codes_result and isinstance(codes_result, list):
-            total_codes = len(codes_result)
-            for code in codes_result:
-                if code.get('status') == 'active':
-                    active_codes += 1
-                elif code.get('status') == 'used':
-                    used_codes += 1
-        
-        today = datetime.datetime.now().strftime('%Y-%m-%d')
-        today_claims = [c for c in claims if c.get('claim_date', '').startswith(today)]
-        today_count = len(today_claims)
-        
-        this_month = datetime.datetime.now().strftime('%Y-%m')
-        this_month_claims = [c for c in claims if c.get('claim_date', '').startswith(this_month)]
-        this_month_count = len(this_month_claims)
-        
-        conversion_rate = 0
-        if total_claims > 0:
-            conversion_rate = round((payment_paid / total_claims) * 100, 1)
+            daily_paid = len([c for c in claims if c.get('claim_date', '').startswith(date) and c.get('shipping_fee_paid') == 'true'])
+            chart_paid_data.append(daily_paid)
         
         return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
@@ -1057,6 +1005,9 @@ def admin_dashboard():
                              total_codes=total_codes,
                              used_codes=used_codes,
                              active_codes=active_codes,
+                             chart_labels=chart_labels,        # ✅ Always pass this
+                             chart_data=chart_data,            # ✅ Always pass this
+                             chart_paid_data=chart_paid_data,  # ✅ Always pass this
                              current_year=datetime.datetime.now().year)
         
     except Exception as e:
@@ -1082,6 +1033,9 @@ def admin_dashboard():
                              total_codes=0,
                              used_codes=0,
                              active_codes=0,
+                             chart_labels=[],        # ✅ Always pass this
+                             chart_data=[],           # ✅ Always pass this
+                             chart_paid_data=[],     # ✅ Always pass this
                              current_year=datetime.datetime.now().year)
 
 @app.route('/admin/claims')

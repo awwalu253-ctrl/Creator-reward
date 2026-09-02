@@ -651,4 +651,82 @@
         }
     }, 60000);
 </script>
+<script>
+    // Chart.js - Claims trend chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('claimsChart');
+        if (!ctx) return;
+        
+        const labels = {{ chart_labels|tojson|safe }};
+        const data = {{ chart_data|tojson|safe }};
+        const paidData = {{ chart_paid_data|tojson|safe }};
+        
+        // If no data, show empty chart
+        if (!labels || labels.length === 0) {
+            console.log('No chart data available');
+            return;
+        }
+        
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total Claims',
+                        data: data,
+                        backgroundColor: 'rgba(220, 38, 38, 0.7)',
+                        borderColor: '#dc2626',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Paid Claims',
+                        data: paidData,
+                        backgroundColor: 'rgba(72, 187, 120, 0.7)',
+                        borderColor: '#48bb78',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' claims';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
