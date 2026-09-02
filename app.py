@@ -48,6 +48,10 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)  # Session lasts 24 hours
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # ============================
 # CONFIGURATION
@@ -385,6 +389,7 @@ def send_payment_receipt(claim_data, payment_data):
 # ADMIN AUTHENTICATION
 # ============================
 def admin_required(f):
+    """Decorator to check if admin is logged in"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('admin_logged_in'):
@@ -720,6 +725,14 @@ def confirmation(claim_id):
                          reward_name=REWARD_NAME,
                          current_year=datetime.datetime.now().year)
 
+@app.route('/admin/check-session')
+def admin_check_session():
+    """Check if admin is logged in"""
+    return jsonify({
+        'logged_in': session.get('admin_logged_in', False),
+        'session': dict(session)
+    })
+
 @app.route('/health')
 def health():
     return jsonify({
@@ -734,18 +747,28 @@ def health():
 # ============================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    """Admin login page"""
+    # If already logged in, redirect to dashboard
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+    
     if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
+            session['admin_user'] = 'Administrator'
+            session.permanent = True  # Make session permanent
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Invalid password', 'error')
+    
     return render_template('admin/login.html', company_name=COMPANY_NAME)
 
 @app.route('/admin/logout')
 def admin_logout():
-    session.pop('admin_logged_in', None)
+    """Admin logout"""
+    session.clear()  # Clear all session data
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
