@@ -1,39 +1,104 @@
-# Python
+# ============================================================
+# PYTHON
+# ============================================================
 __pycache__/
-*.py[cod]
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Environment
+# ============================================================
+# VIRTUAL ENVIRONMENT
+# ============================================================
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# ============================================================
+# ENVIRONMENT VARIABLES (SENSITIVE)
+# ============================================================
 .env
-*.env
 .env.local
-get_tokens.py
-token.pickle
+.env.production
+.env.staging
+*.env
+
+# ============================================================
+# GOOGLE API CREDENTIALS
+# ============================================================
 credentials.json
-# IDE
+token.pickle
+*.json
+!package.json
+!package-lock.json
+
+# ============================================================
+# LOGS & DATA
+# ============================================================
+logs/
+*.log
+*.csv
+*.db
+*.sqlite
+*.sqlite3
+emails_sent/
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Logs
-logs/
-*.log
-
-# Database
-*.db
-*.sqlite
-
-# OS
+*~
 .DS_Store
 Thumbs.db
+desktop.ini
+*.sublime-project
+*.sublime-workspace
+.venv/
 
-# Deployment
+# ============================================================
+# DEPLOYMENT
+# ============================================================
 *.pyc
 __pycache__/
+.DS_Store
+*.pid
+*.seed
+*.pid.lock
+*.env
+*.env.example
+
+# ============================================================
+# TESTING
+# ============================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================================
+# MISC
+# ============================================================
+*.bak
+*.tmp
+*.temp
+*.dump
+*.dmp
