@@ -6,12 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Claim your exclusive creator gift package">
     <title>{% block title %}{{ campaign_name }}{% endblock %}</title>
-    <!-- Replace this: -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
-    <!-- Make sure these are correct -->
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -77,26 +72,21 @@
             overflow-x: hidden;
         }
 
-        /* Scrollbar - YouTube Style */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
-
         ::-webkit-scrollbar-track {
             background: var(--yt-bg-primary);
         }
-
         ::-webkit-scrollbar-thumb {
             background: var(--yt-bg-hover);
             border-radius: 4px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background: var(--yt-text-muted);
         }
 
-        /* Selection */
         ::selection {
             background: var(--yt-red);
             color: var(--yt-text-primary);
@@ -135,7 +125,6 @@
             height: 100%;
         }
 
-        /* YouTube Logo / Brand */
         .brand {
             display: flex;
             align-items: center;
@@ -150,21 +139,6 @@
 
         .brand:hover {
             opacity: 0.9;
-        }
-
-        /* YouTube Play Button Icon */
-        .brand-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            color: var(--yt-red);
-            filter: drop-shadow(0 0 6px var(--yt-red-glow));
-            transition: var(--yt-transition);
-        }
-
-        .brand-icon .fa-play {
-            font-size: 1.2rem;
         }
 
         .brand-icon-wrapper {
@@ -195,7 +169,6 @@
             font-weight: 300;
         }
 
-        /* Navigation Links */
         .nav-links {
             display: flex;
             gap: 4px;
@@ -221,29 +194,6 @@
         .nav-link i {
             margin-right: 8px;
             font-size: 0.9rem;
-        }
-
-        /* Admin Link - YouTube Style "Sign In" Button */
-        .nav-link.admin-link {
-            background: var(--yt-red);
-            color: var(--yt-text-primary);
-            font-weight: 600;
-            padding: 8px 20px;
-            border-radius: var(--yt-radius-full);
-            font-size: 0.85rem;
-            border: none;
-            transition: var(--yt-transition);
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
-        }
-
-        .nav-link.admin-link:hover {
-            background: var(--yt-red-dark);
-            transform: scale(1.02);
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.25);
-        }
-
-        .nav-link.admin-link i {
-            margin-right: 6px;
         }
 
         /* ========================================
@@ -283,23 +233,18 @@
         .flash.success {
             border-left: 4px solid #3EA6FF;
         }
-
         .flash.success i {
             color: #3EA6FF;
         }
-
         .flash.error {
             border-left: 4px solid var(--yt-red);
         }
-
         .flash.error i {
             color: var(--yt-red);
         }
-
         .flash.warning {
             border-left: 4px solid #FFD600;
         }
-
         .flash.warning i {
             color: #FFD600;
         }
@@ -326,7 +271,6 @@
                 transform: translateX(100%) scale(0.95);
                 opacity: 0;
             }
-
             to {
                 transform: translateX(0) scale(1);
                 opacity: 1;
@@ -359,7 +303,6 @@
             color: var(--yt-text-primary);
             box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
         }
-
         .btn-primary:hover {
             background: var(--yt-red-dark);
             transform: scale(1.02);
@@ -370,7 +313,6 @@
             background: #3EA6FF;
             color: var(--yt-text-primary);
         }
-
         .btn-success:hover {
             background: #2D8FE6;
             transform: scale(1.02);
@@ -381,7 +323,6 @@
             color: var(--yt-text-secondary);
             border: 1px solid var(--yt-border);
         }
-
         .btn-outline:hover {
             border-color: var(--yt-text-primary);
             color: var(--yt-text-primary);
@@ -392,7 +333,6 @@
             background: var(--yt-bg-hover);
             color: var(--yt-text-primary);
         }
-
         .btn-secondary:hover {
             background: var(--yt-bg-elevated);
         }
@@ -401,25 +341,16 @@
             padding: 14px 36px;
             font-size: 1rem;
         }
-
         .btn-sm {
             padding: 6px 14px;
             font-size: 0.75rem;
         }
-
         .btn-danger {
             background: var(--yt-red);
             color: var(--yt-text-primary);
         }
-
         .btn-danger:hover {
             background: var(--yt-red-dark);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
         }
 
         /* ========================================
@@ -456,11 +387,6 @@
             max-width: 340px;
         }
 
-        .footer-col .brand-icon-wrapper {
-            display: inline-flex;
-            margin-bottom: 12px;
-        }
-
         .social-links {
             display: flex;
             gap: 12px;
@@ -491,29 +417,21 @@
         .footer-col ul {
             list-style: none;
         }
-
         .footer-col ul li {
             padding: 6px 0;
         }
-
         .footer-col ul li a {
             color: var(--yt-text-secondary);
             transition: var(--yt-transition);
             font-size: 0.9rem;
         }
-
         .footer-col ul li a:hover {
             color: var(--yt-text-primary);
         }
-
         .footer-col ul li i {
             width: 24px;
             color: var(--yt-text-muted);
             font-size: 0.85rem;
-        }
-
-        .footer-col ul li a:hover i {
-            color: var(--yt-red);
         }
 
         .footer-disclaimer {
@@ -537,7 +455,6 @@
             margin-top: 2px;
             flex-shrink: 0;
         }
-
         .footer-disclaimer .disclaimer-content strong {
             color: #FFD600;
         }
@@ -564,65 +481,45 @@
                 flex-wrap: nowrap;
                 gap: 8px;
             }
-
             .brand-text {
                 display: none;
             }
-
             .brand {
                 font-size: 1rem;
                 gap: 4px;
             }
-
             .nav-links {
                 gap: 2px;
             }
-
             .nav-link {
                 font-size: 0.75rem;
                 padding: 6px 10px;
             }
-
             .nav-link span {
                 display: none;
             }
-
             .nav-link i {
                 margin-right: 0;
                 font-size: 1rem;
             }
-
-            .nav-link.admin-link {
-                padding: 6px 14px;
-                font-size: 0.75rem;
-            }
-
-            .nav-link.admin-link span {
-                display: inline;
-            }
-
             .footer-grid {
                 grid-template-columns: 1fr;
                 gap: 30px;
             }
-
             .footer-col p {
                 max-width: 100%;
             }
-
             .footer-disclaimer .disclaimer-content {
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
             }
-
             .flash-messages {
                 top: calc(var(--yt-header-height) + 12px);
                 right: 10px;
                 left: 10px;
                 max-width: 100%;
             }
-
             .container {
                 padding: 0 16px;
             }
@@ -633,22 +530,14 @@
                 font-size: 0.7rem;
                 padding: 2px 4px 2px 6px;
             }
-
             .nav-link {
                 font-size: 0.7rem;
                 padding: 4px 8px;
             }
-
-            .nav-link.admin-link {
-                padding: 4px 12px;
-                font-size: 0.7rem;
-            }
-
             .btn-large {
                 padding: 12px 20px;
                 font-size: 0.9rem;
             }
-
             .flash {
                 font-size: 0.85rem;
                 padding: 12px 14px;
@@ -689,10 +578,7 @@
                         <i class="fas fa-headset"></i>
                         <span>Support</span>
                     </a>
-                    <a href="{{ url_for('admin_login') }}" class="nav-link admin-link">
-                        <i class="fas fa-user-lock"></i>
-                        <span>Admin</span>
-                    </a>
+                    <!-- ✅ ADMIN LINK REMOVED - Hidden from users -->
                 </div>
             </nav>
         </div>
@@ -768,10 +654,20 @@
             </div>
 
             <div class="footer-disclaimer">
+                <div class="disclaimer-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>
+                        <strong>Important Notice:</strong> {{ company_name }} is an independent company and is
+                        <strong>not affiliated with, endorsed by, or sponsored by YouTube or Google</strong>.
+                        All product names, logos, and brands are property of their respective owners.
+                        This is a legitimate promotional campaign operated by {{ company_name }}.
+                    </p>
+                </div>
             </div>
 
             <div class="footer-bottom">
-                &copy; {{ company_name }} {% raw %}{{ now.year }}{% endraw %} &mdash; All rights reserved.
+                <!-- ✅ FIXED: Year now displays correctly -->
+                &copy; {{ company_name }} {{ current_year }} &mdash; All rights reserved.
                 <div class="disclaimer">Made with <i class="fas fa-heart" style="color: var(--yt-red);"></i> for
                     creators</div>
             </div>
@@ -804,16 +700,13 @@
                 });
             });
 
-            // Add smooth scroll to all anchor links
+            // Smooth scroll
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     const target = document.querySelector(this.getAttribute('href'));
                     if (target) {
                         e.preventDefault();
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 });
             });
