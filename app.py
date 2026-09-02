@@ -45,6 +45,11 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.static_folder = 'static'
 app.static_url_path = '/static'
+# Add this after app initialization
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
 
 # ============================================================
 # CONFIGURATION
@@ -606,9 +611,15 @@ def confirmation(claim_id):
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
+    # If already logged in, redirect to dashboard
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+    
     if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
+            session.permanent = True  # Make session permanent
             flash('Welcome Admin!', 'success')
             return redirect(url_for('admin_dashboard'))
         else:
@@ -617,9 +628,18 @@ def admin_login():
 
 @app.route('/admin/logout')
 def admin_logout():
-    session.pop('admin_logged_in', None)
+    session.clear()
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin first', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/admin/dashboard')
 @admin_required
@@ -881,6 +901,10 @@ def admin_update_claim(claim_id):
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
+
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
     try:
         codes_result = supabase_select('claim_codes', order_by='created_at.desc')
         codes = codes_result if isinstance(codes_result, list) else []
