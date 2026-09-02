@@ -46,6 +46,13 @@ if sys.platform == 'win32':
 
 load_dotenv()
 
+# Print Supabase config for debugging
+print("=" * 50)
+print("🔍 Checking Supabase Configuration")
+print("=" * 50)
+print(f"SUPABASE_URL: {os.getenv('SUPABASE_URL')}")
+print(f"SUPABASE_KEY: {os.getenv('SUPABASE_KEY')[:30]}..." if os.getenv('SUPABASE_KEY') else "❌ Not set")
+print("=" * 50)
 app = Flask(__name__)
 
 # ============================================================
@@ -206,6 +213,7 @@ def supabase_select(table, filters=None, order_by=None, limit=None):
 def supabase_insert(table, data):
     """Insert data into Supabase with SSL fix"""
     if not SUPABASE_URL or not SUPABASE_KEY:
+        app.logger.error(f"❌ Supabase not configured! URL: {SUPABASE_URL}, KEY: {bool(SUPABASE_KEY)}")
         return {'error': 'Supabase not configured'}
     
     url = f"{SUPABASE_URL}/rest/v1/{table}"
@@ -218,6 +226,7 @@ def supabase_insert(table, data):
     
     try:
         app.logger.info(f"📡 Inserting into {table}")
+        app.logger.info(f"📡 URL: {url}")
         response = requests.post(url, headers=headers, json=data, timeout=30, verify=False)
         app.logger.info(f"📡 Response status: {response.status_code}")
         
