@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}Claim Your Creator Gift Package{% endblock %}
+
+{% block content %}
+<style>
+    /* ========================================
+       YOUTUBE DARK LANDING - HERO SECTION
+       ======================================== */
+    .hero-section {
+        padding: 60px 0 80px;
+        background: var(--yt-bg-primary);
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Subtle YouTube-style gradient glow */
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(255, 0, 0, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+        border-radius: 50%;
+    }
+
+    .hero-content {
+        text-align: center;
+        max-width: 960px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* YouTube-style badge / pill */
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--yt-bg-card);
+        color: var(--yt-text-secondary);
+        padding: 6px 18px 6px 14px;
+        border-radius: var(--yt-radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 24px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid var(--yt-border);
+        transition: var(--yt-transition);
+    }
+
+    .hero-badge i {
+        color: var(--yt-red);
+        font-size: 0.85rem;
+    }
+
+    .hero-badge:hover {
+        border-color: var(--yt-red);
+        background: var(--yt-bg-hover);
+    }
+
+    /* Hero Title */
+    .hero-title {
+        font-size: 3.75rem;
+        font-weight: 900;
+        line-height: 1.08;
+        margin-bottom: 20px;
+        color: var(--yt-text-primary);
+        letter-spacing: -1px;
+    }
+
+    .hero-title .highlight {
+        color: var(--yt-red);
+        position: relative;
+    }
+
+    .hero-title .highlight::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: var(--yt-red);
+        opacity: 0.25;
+        border-radius: 4px;
+    }
+
+    /* Hero Subtitle */
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: var(--yt-text-secondary);
+        max-width: 650px;
+        margin: 0 auto 36px;
+        line-height: 1.8;
+        font-weight: 400;
+    }
+
+    /* ========================================
+       GIFT GRID - YOUTUBE VIDEO CARD STYLE
+       ======================================== */
+    .gift-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin: 40px 0 36px;
+        text-align: left;
+    }
+
+    .gift-item {
+        background: var(--yt-bg-card);
+        padding: 20px 22px;
+        border-radius: var(--yt-radius);
+        border: 1px solid var(--yt-border);
+        transition: var(--yt-transition);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: default;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* YouTube-style hover glow */
+    .gift-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 0, 0, 0.04), transparent 60%);
+        opacity: 0;
+        transition: var(--yt-transition);
+        border-radius: var(--yt-radius);
+        pointer-events: none;
+    }
+
+    .gift-item:hover::before {
+        opacity: 1;
+    }
+
+    .gift-item:hover {
+        transform: translateY(-3px);
+        border-color: var(--yt-red);
+        box-shadow: 0 8px 32px rgba(255, 0, 0, 0.08);
+        background: var(--yt-bg-hover);
+    }
+
+    .gift-item i {
+        font-size: 1.8rem;
+        color: var(--yt-red);
+        min-width: 40px;
+        text-align: center;
+        flex-shrink: 0;
+        transition: var(--yt-transition);
+    }
+
+    .gift-item:hover i {
+        transform: scale(1.1);
+    }
+
+    .gift-item .gift-text {
+        font-size: 0.85rem;
+        font-weight: 400;
+        color: var(--yt-text-secondary);
+        line-height: 1.4;
+    }
+
+    .gift-item .gift-text strong {
+        display: block;
+        font-weight: 700;
+        color: var(--yt-text-primary);
+        margin-bottom: 2px;
+        font-size: 0.9rem;
+    }
+
+    /* ========================================
+       CTA SECTION
+       ======================================== */
+    .cta-section {
+        margin-top: 36px;
+    }
+
+    .btn-yt-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 40px;
+        background: var(--yt-red);
+        color: var(--yt-text-primary);
+        border: none;
+        border-radius: var(--yt-radius-full);
+        font-weight: 700;
+        font-size: 1.05rem;
+        cursor: pointer;
+        transition: var(--yt-transition);
+        text-decoration: none;
+        font-family: inherit;
+        box-shadow: 0 0 30px rgba(255, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-yt-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+        transition: var(--yt-transition);
+    }
+
+    .btn-yt-primary:hover::before {
+        left: 100%;
+    }
+
+    .btn-yt-primary:hover {
+        background: var(--yt-red-dark);
+        transform: scale(1.03);
+        box-shadow: 0 0 50px rgba(255, 0, 0, 0.25);
+    }
+
+    .btn-yt-primary:active {
+        transform: scale(0.97);
+    }
+
+    .btn-yt-primary i {
+        font-size: 1.1rem;
+    }
+
+    /* ========================================
+       TRUST BADGES - YOUTUBE STYLE
+       ======================================== */
+    .trust-badges {
+        display: flex;
+        justify-content: center;
+        gap: 48px;
+        flex-wrap: wrap;
+        margin-top: 40px;
+        padding-top: 32px;
+        border-top: 1px solid var(--yt-border);
+    }
+
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--yt-text-muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: var(--yt-transition);
+    }
+
+    .trust-item:hover {
+        color: var(--yt-text-secondary);
+    }
+
+    .trust-item i {
+        color: var(--yt-red);
+        font-size: 1.1rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* ========================================
+       RESPONSIVE
+       ======================================== */
+    @media (max-width: 992px) {
+        .hero-title {
+            font-size: 3rem;
+        }
+        .gift-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 40px 0 60px;
+            min-height: auto;
+        }
+
+        .hero-title {
+            font-size: 2.4rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            padding: 0 8px;
+        }
+
+        .gift-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .gift-item {
+            padding: 16px 18px;
+        }
+
+        .gift-item i {
+            font-size: 1.4rem;
+            min-width: 32px;
+        }
+
+        .gift-item .gift-text {
+            font-size: 0.8rem;
+        }
+
+        .gift-item .gift-text strong {
+            font-size: 0.85rem;
+        }
+
+        .trust-badges {
+            gap: 24px;
+        }
+
+        .btn-yt-primary {
+            padding: 12px 32px;
+            font-size: 0.95rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 1.9rem;
+        }
+
+        .hero-subtitle {
+            font-size: 0.9rem;
+        }
+
+        .gift-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .gift-item {
+            padding: 14px 16px;
+        }
+
+        .hero-badge {
+            font-size: 0.65rem;
+            padding: 4px 14px 4px 10px;
+        }
+
+        .trust-badges {
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding-top: 24px;
+        }
+
+        .btn-yt-primary {
+            padding: 12px 28px;
+            font-size: 0.9rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .hero-section::before {
+            width: 300px;
+            height: 300px;
+            top: -20%;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .hero-title {
+            font-size: 1.6rem;
+        }
+
+        .gift-item i {
+            font-size: 1.2rem;
+            min-width: 28px;
+        }
+    }
+</style>
+
+<!-- ========================================
+HERO SECTION - YOUTUBE DARK
+======================================== -->
+<div class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+
+            <!-- Badge -->
+            <div class="hero-badge">
+                <i class="fas fa-gift"></i>
+                Creator Appreciation Program
+            </div>
+
+            <!-- Title -->
+            <h1 class="hero-title">
+                <i class="fas fa-gift" style="color: var(--yt-red); font-size: 2.8rem; display: inline-block; margin-right: 6px;"></i>
+                A Special <span class="highlight">Gift Package</span> Awaits You!
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="hero-subtitle">
+                We've been following your journey, and we want to say thank you for everything you bring
+                to the creator community. Your dedication and creativity inspire viewers around the world.
+            </p>
+
+            <!-- Gift Grid -->
+            <div class="gift-grid">
+                <div class="gift-item">
+                    <i class="fas fa-desktop"></i>
+                    <div class="gift-text">
+                        <strong>Custom Creator PC</strong>
+                        Fully built workstation with engraved casing
+                    </div>
+                </div>
+                <div class="gift-item">
+                    <i class="fas fa-video"></i>
+                    <div class="gift-text">
+                        <strong>4K Studio Camera</strong>
+                        Cinema camera with lighting kit
+                    </div>
+                </div>
+                <div class="gift-item">
+                    <i class="fas fa-microphone-alt"></i>
+                    <div class="gift-text">
+                        <strong>Studio Microphone</strong>
+                        Broadcast-grade with boom arm
+                    </div>
+                </div>
+                <div class="gift-item">
+                    <i class="fas fa-headphones"></i>
+                    <div class="gift-text">
+                        <strong>Studio Headphones</strong>
+                        Noise-canceling reference monitors
+                    </div>
+                </div>
+                <div class="gift-item">
+                    <i class="fas fa-tshirt"></i>
+                    <div class="gift-text">
+                        <strong>Creator Hoodie</strong>
+                        Custom fitted premium hoodie
+                    </div>
+                </div>
+                <div class="gift-item">
+                    <i class="fas fa-keyboard"></i>
+                    <div class="gift-text">
+                        <strong>Peripherals Pack</strong>
+                        Keyboard, mouse, and Stream Deck
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-section">
+                <a href="{{ url_for('claim_form') }}" class="btn-yt-primary">
+                    <i class="fas fa-gift"></i>
+                    Claim Your Gift Package
+                    <i class="fas fa-arrow-right" style="font-size: 0.85rem;"></i>
+                </a>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="trust-badges">
+                <div class="trust-item">
+                    <i class="fas fa-lock"></i>
+                    <span>Secure &amp; Encrypted</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>100% Legitimate</span>
+                </div>
+                <div class="trust-item">
+                    <i class="fas fa-headset"></i>
+                    <span>24/7 Support</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

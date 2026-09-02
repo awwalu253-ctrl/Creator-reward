@@ -1,0 +1,36 @@
+creator-reward-claim/
+├── app.py                    # ⭐ ALL backend code (routes, models, services, config)
+├── requirements.txt          # Python dependencies
+├── .env                      # Environment variables (never commit)
+├── .gitignore               
+├── Dockerfile                # For deployment
+├── docker-compose.yml        # Local development
+├── wsgi.py                   # For Gunicorn (production entry point)
+│
+├── templates/                # HTML templates
+│   ├── base.html            # Base template with header/footer
+│   ├── landing.html         # Landing page
+│   ├── claim_form.html      # Claim form
+│   ├── review.html          # Review & shipping fee disclosure
+│   ├── confirmation.html    # Claim confirmation with reference number
+│   ├── payment_success.html # Payment success
+│   └── emails/
+│       ├── claim_confirmation.html
+│       └── payment_receipt.html
+│
+├── static/                   # Frontend assets
+│   ├── css/
+│   │   ├── style.css        # Main styles
+│   │   └── responsive.css   # Mobile-first responsive
+│   ├── js/
+│   │   ├── main.js          # Main JS
+│   │   ├── form-validation.js
+│   │   └── payment.js
+│   └── assets/
+│       ├── images/
+│       └── favicon.ico
+│
+├── migrations/               # Database migrations (if using)
+│   └── (optional - can create tables manually)
+│
+└── README.md

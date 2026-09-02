@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Gift Claim Confirmed{% endblock %}
+
+{% block content %}
+<style>
+    .confirmation-section {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #fef2f2 100%);
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+    }
+    .confirmation-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+        text-align: center;
+    }
+    .confirmation-icon {
+        font-size: 5rem;
+        color: var(--primary);
+        margin-bottom: 24px;
+        animation: bounce 1s ease;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+    }
+    .confirmation-wrapper h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--secondary);
+        margin-bottom: 24px;
+    }
+    .confirmation-card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 40px;
+        text-align: left;
+        border: 1px solid var(--gray);
+    }
+    .confirmation-number {
+        background: var(--primary);
+        color: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    .confirmation-number .label {
+        display: block;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .confirmation-number .number {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+    .confirmation-message {
+        margin: 24px 0;
+        padding: 20px;
+        background: var(--gray);
+        border-radius: var(--radius);
+    }
+    .confirmation-message p {
+        margin: 4px 0;
+    }
+    .next-steps {
+        margin: 24px 0;
+        padding: 20px;
+        background: var(--gray);
+        border-radius: var(--radius);
+    }
+    .next-steps h3 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+        color: var(--secondary);
+    }
+    .next-steps h3 i {
+        color: var(--primary);
+    }
+    .next-steps ol {
+        padding-left: 20px;
+    }
+    .next-steps ol li {
+        padding: 6px 0;
+    }
+    .payment-reminder {
+        margin: 24px 0;
+        padding: 20px;
+        background: var(--primary-light);
+        border-radius: var(--radius);
+        border-left: 4px solid var(--primary);
+    }
+    .payment-reminder i {
+        color: var(--primary);
+        font-size: 1.5rem;
+    }
+    .payment-reminder .btn {
+        margin-top: 12px;
+    }
+    .payment-success {
+        margin: 24px 0;
+        padding: 20px;
+        background: #f0fff4;
+        border-radius: var(--radius);
+        border-left: 4px solid #48bb78;
+    }
+    .payment-success i {
+        color: #48bb78;
+        font-size: 1.5rem;
+    }
+    .disclaimer-box {
+        background: var(--primary-light);
+        border-left: 4px solid var(--primary);
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        font-size: 14px;
+        color: var(--secondary);
+    }
+    .support-info {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--gray);
+    }
+    .support-info h4 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        color: var(--secondary);
+    }
+    .support-info h4 i {
+        color: var(--primary);
+    }
+    .support-info a {
+        color: var(--primary);
+        font-weight: 600;
+    }
+    .btn-outline {
+        margin-top: 20px;
+    }
+    .btn-success {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        padding: 14px 30px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+    @media (max-width: 768px) {
+        .confirmation-wrapper h1 {
+            font-size: 1.8rem;
+        }
+        .confirmation-card {
+            padding: 24px;
+        }
+        .confirmation-number .number {
+            font-size: 1.5rem;
+        }
+        .payment-reminder .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="confirmation-section">
+    <div class="container">
+        <div class="confirmation-wrapper">
+            <div class="confirmation-icon">
+                <i class="fas fa-gift"></i>
+            </div>
+            
+            <h1>🎁 Gift Claim Successfully Submitted!</h1>
+            
+            <div class="confirmation-card">
+                <div class="confirmation-number">
+                    <span class="label">Your Claim Reference Number:</span>
+                    <span class="number">{{ claim.claim_number }}</span>
+                </div>
+                
+                <div class="confirmation-message">
+                    <p><strong>Thank you, {{ claim.full_name }}!</strong></p>
+                    <p>Your claim for the <strong>{{ reward_name }}</strong> has been received.</p>
+                    <p><strong>Channel:</strong> {{ claim.channel_name }}</p>
+                    <p><strong>Clothing Size:</strong> {{ claim.clothing_size }}</p>
+                </div>
+                
+                {% if claim.shipping_fee_paid == 'true' or claim.shipping_fee_paid == True %}
+                    <!-- ✅ Payment already confirmed -->
+                    <div class="payment-success">
+                        <i class="fas fa-check-circle"></i>
+                        <p><strong>Payment Confirmed!</strong> Your gift package is being prepared and will be shipped soon.</p>
+                    </div>
+                    
+                    <div class="next-steps">
+                        <h3><i class="fas fa-list"></i> Next Steps</h3>
+                        <ol>
+                            <li>We're preparing your {{ reward_name }} for delivery</li>
+                            <li>You'll receive a tracking number within 24-48 hours</li>
+                            <li>Delivery typically takes <strong>5-7 business days</strong></li>
+                        </ol>
+                    </div>
+                {% else %}
+                    <!-- ❌ Payment NOT yet made -->
+                    <div class="next-steps">
+                        <h3><i class="fas fa-list"></i> Next Steps</h3>
+                        <ol>
+                            <li><strong>Complete the shipping fee payment</strong> of $120.00</li>
+                            <li>Once payment is confirmed, your gift package will be processed</li>
+                            <li>You'll receive a confirmation email with tracking information</li>
+                            <li>Delivery typically takes <strong>5-7 business days</strong></li>
+                        </ol>
+                    </div>
+                    
+                    <div class="payment-reminder">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p><strong>Action Required:</strong> Please complete the shipping fee payment to receive your gift package.</p>
+                        <a href="{{ url_for('initiate_payment', claim_id=claim.id) }}" class="btn btn-success">
+                            <i class="fas fa-credit-card"></i> Pay Shipping Fee Now ($120.00)
+                        </a>
+                    </div>
+                {% endif %}
+
+                <div class="support-info">
+                    <h4><i class="fas fa-headset"></i> Need Help?</h4>
+                    <p>Contact our support team at <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
+                    <p>Please mention your claim number: <strong>{{ claim.claim_number }}</strong></p>
+                </div>
+            </div>
+            
+            <a href="{{ url_for('landing') }}" class="btn btn-outline">
+                <i class="fas fa-home"></i> Return Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

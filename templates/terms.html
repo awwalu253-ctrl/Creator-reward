@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+
+{% block title %}Terms & Conditions - {{ company_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .terms-section {
+        padding: 60px 0;
+        background: #f7fafc;
+        min-height: 80vh;
+    }
+    .terms-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 50px;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    .terms-header {
+        text-align: center;
+        margin-bottom: 40px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 30px;
+    }
+    .terms-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1a1a2e;
+        margin: 0;
+    }
+    .terms-header h1 i {
+        color: #dc2626;
+        margin-right: 12px;
+    }
+    .terms-header .subtitle {
+        color: #718096;
+        font-size: 15px;
+        margin-top: 8px;
+    }
+    .terms-header .effective-date {
+        display: inline-block;
+        background: #f0f0f0;
+        padding: 4px 16px;
+        border-radius: 50px;
+        font-size: 13px;
+        color: #4a5568;
+        margin-top: 10px;
+    }
+    .terms-content h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-top: 35px;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    .terms-content h2 i {
+        color: #dc2626;
+        margin-right: 10px;
+        width: 24px;
+    }
+    .terms-content h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    .terms-content p {
+        color: #4a5568;
+        line-height: 1.8;
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+    .terms-content ul {
+        padding-left: 24px;
+        margin-bottom: 16px;
+    }
+    .terms-content ul li {
+        color: #4a5568;
+        line-height: 1.8;
+        font-size: 15px;
+        margin-bottom: 6px;
+        list-style-type: disc;
+    }
+    .terms-content ul li strong {
+        color: #1a1a2e;
+    }
+    .terms-content .highlight-box {
+        background: #fef2f2;
+        border-left: 4px solid #dc2626;
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+    .terms-content .highlight-box strong {
+        color: #991b1b;
+    }
+    .terms-content .highlight-box.warning {
+        background: #fef3c7;
+        border-left-color: #f59e0b;
+    }
+    .terms-content .highlight-box.warning strong {
+        color: #92400e;
+    }
+    .terms-content .highlight-box.success {
+        background: #f0fdf4;
+        border-left-color: #48bb78;
+    }
+    .terms-content .highlight-box.success strong {
+        color: #065f46;
+    }
+    .terms-footer {
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #f0f0f0;
+        text-align: center;
+    }
+    .terms-footer p {
+        color: #718096;
+        font-size: 14px;
+        margin: 4px 0;
+    }
+    .terms-footer .btn {
+        display: inline-block;
+        padding: 12px 32px;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        text-decoration: none;
+        transition: background 0.3s;
+        margin-top: 16px;
+    }
+    .terms-footer .btn:hover {
+        background: #b91c1c;
+    }
+    .terms-toc {
+        background: #f8fafc;
+        padding: 16px 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border: 1px solid #e5e7eb;
+    }
+    .terms-toc h3 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #4a5568;
+    }
+    .terms-toc a {
+        color: #dc2626;
+        text-decoration: none;
+        font-size: 13px;
+        margin-right: 16px;
+    }
+    .terms-toc a:hover {
+        text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+        .terms-wrapper {
+            padding: 24px 16px;
+        }
+        .terms-header h1 {
+            font-size: 24px;
+        }
+        .terms-content h2 {
+            font-size: 18px;
+        }
+        .terms-toc a {
+            display: block;
+            margin-bottom: 4px;
+        }
+    }
+</style>
+
+<div class="terms-section">
+    <div class="container">
+        <div class="terms-wrapper">
+            <!-- Header -->
+            <div class="terms-header">
+                <h1><i class="fas fa-file-contract"></i> Terms & Conditions</h1>
+                <p class="subtitle">{{ campaign_name }}</p>
+                <span class="effective-date">📅 Effective Date: {{ current_year }}</span>
+            </div>
+
+            <!-- Table of Contents -->
+            <div class="terms-toc">
+                <h3>📋 Quick Navigation</h3>
+                <a href="#introduction">1. Introduction</a>
+                <a href="#eligibility">2. Eligibility</a>
+                <a href="#rewards">3. Rewards</a>
+                <a href="#claim-process">4. Claim Process</a>
+                <a href="#data-privacy">5. Data Privacy</a>
+                <a href="#content-intellectual">6. Content & IP</a>
+                <a href="#privacy-guidelines">7. Privacy Guidelines</a>
+                <a href="#disclaimers">8. Disclaimers</a>
+                <a href="#liability">9. Liability</a>
+                <a href="#suspension">10. Suspension</a>
+                <a href="#governing-law">11. Governing Law</a>
+                <a href="#amendments">12. Amendments</a>
+            </div>
+
+            <div class="terms-content">
+                <!-- ============================================================ -->
+                <!-- SECTION 1: INTRODUCTION -->
+                <!-- ============================================================ -->
+                <h2 id="introduction"><i class="fas fa-info-circle"></i> 1. Introduction & Acceptance</h2>
+                <p>
+                    By participating in the YouTube Creator Gift Box Campaign ("the Campaign"), you agree to these Terms & Conditions. 
+                    This Campaign is brought to you by <strong>{{ company_name }}</strong>, an official partner in supporting the YouTube creator community.
+                </p>
+                <div class="highlight-box">
+                    <strong>📢 Welcome!</strong> This exclusive Creator Gift Box is part of YouTube's ongoing commitment to empowering content creators worldwide.
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 2: ELIGIBILITY -->
+                <!-- ============================================================ -->
+                <h2 id="eligibility"><i class="fas fa-check-circle"></i> 2. Eligibility</h2>
+                <h3>2.1 General Requirements</h3>
+                <ul>
+                    <li>You must be at least <strong>18 years of age</strong>.</li>
+                    <li>You must be a registered YouTube channel owner with a minimum of <strong>1,000 subscribers</strong>.</li>
+                    <li>You must have a valid, active YouTube channel that complies with YouTube's <strong>Community Guidelines</strong> and <strong>Terms of Service</strong>.</li>
+                </ul>
+
+                <h3>2.2 Content Compliance</h3>
+                <ul>
+                    <li>Your YouTube channel must not have any active <strong>Community Guidelines strikes</strong>.</li>
+                    <li>Your channel must not have a history of repeated violations of YouTube's policies.</li>
+                </ul>
+
+                <h3>2.3 Regional Restrictions</h3>
+                <ul>
+                    <li>You must not be a person barred from using or receiving YouTube services under applicable laws.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 3: REWARDS -->
+                <!-- ============================================================ -->
+                <h2 id="rewards"><i class="fas fa-gift"></i> 3. Campaign Rewards</h2>
+                <h3>3.1 Gift Package</h3>
+                <p>The Campaign offers a single physical gift package ("Gift Package") containing:</p>
+                <ul>
+                    <li><strong>Custom YouTube Edition Creator PC</strong> – Fully custom-built workstation with top-tier graphics for 4K editing.</li>
+                    <li><strong>4K Studio Camera & Lighting Kit</strong> – Compact cinema camera with dual softbox setup.</li>
+                    <li><strong>Broadcast-Grade Studio Microphone & Headphones</strong> – Ultra-clear condenser mic with boom arm.</li>
+                    <li><strong>Exclusive YouTube Creator Hoodie</strong> – Custom fitted premium hoodie.</li>
+                    <li><strong>Limited Edition Desk Display & Creator Pin</strong> – Exclusive collectibles.</li>
+                    <li><strong>Creator Peripherals Pack</strong> – Mechanical keyboard, precision mouse, and Stream Deck.</li>
+                </ul>
+
+                <div class="highlight-box success">
+                    <strong>🎁 Creator Perks:</strong> These rewards are curated specifically for YouTube creators to elevate your content production quality.
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 4: CLAIM PROCESS -->
+                <!-- ============================================================ -->
+                <h2 id="claim-process"><i class="fas fa-clipboard-list"></i> 4. Claim Process</h2>
+                <h3>4.1 Claim Code</h3>
+                <ul>
+                    <li>You must submit a <strong>valid, active Claim Code</strong> to participate.</li>
+                    <li>Each Claim Code is <strong>unique</strong> and can only be used once.</li>
+                    <li>Claim Codes expire <strong>30 days</strong> from issuance.</li>
+                </ul>
+
+                <h3>4.2 Verification</h3>
+                <ul>
+                    <li>By submitting a claim, you certify that your content complies with YouTube <strong>Terms of Service</strong>.</li>
+                    <li>Your content must not violate others' <strong>copyright</strong> or <strong>privacy rights</strong>.</li>
+                    <li>You grant permission to <strong>{{ company_name }}</strong> to verify your channel details with YouTube.</li>
+                </ul>
+
+                <h3>4.3 Shipping Fee</h3>
+                <ul>
+                    <li>A shipping and handling fee of <strong>$120.00</strong> is required to process your claim.</li>
+                    <li>All fees are <strong>clearly disclosed</strong> before payment.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 5: DATA PRIVACY -->
+                <!-- ============================================================ -->
+                <h2 id="data-privacy"><i class="fas fa-shield-alt"></i> 5. Data Privacy & Security</h2>
+                <h3>5.1 Information Collection</h3>
+                <ul>
+                    <li>We collect <strong>only information necessary for fulfillment</strong>: full name, email, phone, shipping address, clothing size, and channel name.</li>
+                    <li>We <strong>do not collect</strong> passwords, banking PINs, OTPs, or financial information.</li>
+                </ul>
+
+                <h3>5.2 Data Protection</h3>
+                <ul>
+                    <li>We maintain reasonable and appropriate <strong>security measures</strong> to protect your personal data.</li>
+                    <li>Your information is stored securely and processed only for claim fulfillment.</li>
+                </ul>
+
+                <h3>5.3 Third-Party Sharing</h3>
+                <ul>
+                    <li>We <strong>do not share</strong> your personal information with third parties except as necessary for fulfillment (e.g., shipping providers).</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 6: CONTENT & INTELLECTUAL PROPERTY -->
+                <!-- ============================================================ -->
+                <h2 id="content-intellectual"><i class="fas fa-copyright"></i> 6. User Content & Intellectual Property</h2>
+                <h3>6.1 Content Ownership</h3>
+                <ul>
+                    <li>You retain <strong>all ownership rights</strong> to your YouTube content.</li>
+                </ul>
+
+                <h3>6.2 Content License</h3>
+                <ul>
+                    <li>By participating, you grant <strong>{{ company_name }}</strong> a limited license to verify your channel and process your claim.</li>
+                    <li>This license is <strong>non-exclusive</strong>, <strong>royalty-free</strong>, and valid only for campaign administration.</li>
+                    <li>We <strong>do not use</strong> your content for training AI models or commercial purposes outside this Campaign.</li>
+                </ul>
+
+                <h3>6.3 Content Compliance</h3>
+                <ul>
+                    <li>You certify that your YouTube content complies with all applicable laws and YouTube Community Guidelines.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 7: PRIVACY GUIDELINES -->
+                <!-- ============================================================ -->
+                <h2 id="privacy-guidelines"><i class="fas fa-user-secret"></i> 7. Privacy Guidelines</h2>
+                <h3>7.1 Unique Identifiability</h3>
+                <ul>
+                    <li>We respect your privacy rights as outlined in YouTube's Privacy Guidelines.</li>
+                    <li>We do not use your personal information beyond claim processing.</li>
+                </ul>
+
+                <h3>7.2 Reporting Concerns</h3>
+                <ul>
+                    <li>If you believe your privacy has been violated, contact us immediately.</li>
+                    <li>We will investigate and remove any content that violates privacy rights.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 8: DISCLAIMERS -->
+                <!-- ============================================================ -->
+                <h2 id="disclaimers"><i class="fas fa-exclamation-triangle"></i> 8. Disclaimers</h2>
+                <h3>8.1 No Guarantees</h3>
+                <ul>
+                    <li>All rewards are provided <strong>"as is"</strong> without warranties, express or implied.</li>
+                    <li>{{ company_name }} does not guarantee your YouTube channel's success or monetization.</li>
+                </ul>
+
+                <h3>8.2 Platform Policies</h3>
+                <ul>
+                    <li>YouTube reserves the right to remove content or terminate channels at its discretion.</li>
+                    <li>Participants must always adhere to YouTube's Community Guidelines and Terms of Service.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 9: LIABILITY -->
+                <!-- ============================================================ -->
+                <h2 id="liability"><i class="fas fa-balance-scale"></i> 9. Liability</h2>
+                <h3>9.1 Limitation of Liability</h3>
+                <ul>
+                    <li>{{ company_name }} is <strong>not liable</strong> for any damages arising from your participation.</li>
+                    <li>We are <strong>not responsible</strong> for YouTube's policies, actions, or decisions affecting your channel.</li>
+                </ul>
+
+                <h3>9.2 Indemnification</h3>
+                <ul>
+                    <li>You agree to <strong>indemnify</strong> {{ company_name }} against claims arising from your YouTube content or conduct.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 10: SUSPENSION & TERMINATION -->
+                <!-- ============================================================ -->
+                <h2 id="suspension"><i class="fas fa-pause-circle"></i> 10. Suspension & Termination</h2>
+                <h3>10.1 By You</h3>
+                <ul>
+                    <li>You may <strong>withdraw</strong> from the Campaign at any time.</li>
+                </ul>
+
+                <h3>10.2 By {{ company_name }}</h3>
+                <ul>
+                    <li>We reserve the right to suspend or terminate participation if:</li>
+                    <ul>
+                        <li>You materially breach these Terms.</li>
+                        <li>You violate YouTube's Terms of Service or Community Guidelines.</li>
+                        <li>We reasonably believe your participation creates harm or liability.</li>
+                    </ul>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 11: GOVERNING LAW -->
+                <!-- ============================================================ -->
+                <h2 id="governing-law"><i class="fas fa-gavel"></i> 11. Governing Law</h2>
+                <h3>11.1 Jurisdiction</h3>
+                <ul>
+                    <li>These Terms are governed by the laws applicable in your country of residence.</li>
+                </ul>
+
+                <h3>11.2 Dispute Resolution</h3>
+                <ul>
+                    <li>Disputes will be resolved through <strong>good faith negotiation</strong>.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- SECTION 12: AMENDMENTS -->
+                <!-- ============================================================ -->
+                <h2 id="amendments"><i class="fas fa-edit"></i> 12. Amendments</h2>
+                <ul>
+                    <li>{{ company_name }} reserves the right to modify these Terms at any time.</li>
+                    <li>Notice of changes will be provided via email or on the Campaign website.</li>
+                    <li>Continued participation constitutes acceptance of modified Terms.</li>
+                </ul>
+
+                <!-- ============================================================ -->
+                <!-- FOOTER -->
+                <!-- ============================================================ -->
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #f0f0f0;">
+                    <div class="highlight-box success">
+                        <strong>✅ Acknowledgment:</strong> By claiming this gift package, you certify that your YouTube content complies with the 
+                        YouTube Terms of Service and Community Guidelines. Please be sure not to violate others' copyright or privacy rights.
+                    </div>
+                    <p style="font-size: 13px; color: #a0aec0; margin-top: 16px;">
+                        <strong>Important Legal Note:</strong> These Terms & Conditions are provided as a template and should be reviewed by a 
+                        qualified legal professional before use. Campaign organizers must ensure compliance with all applicable laws and 
+                        regulations in their jurisdiction.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="terms-footer">
+                <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+                <a href="{{ url_for('landing') }}" class="btn">
+                    <i class="fas fa-home"></i> Return Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

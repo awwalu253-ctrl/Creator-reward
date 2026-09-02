@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Claims - {{ company_name }}{% endblock %}
+
+{% block content %}
+<div class="admin-claims">
+    <div class="container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div>
+                <h1><i class="fas fa-list"></i> All Claims</h1>
+                <p>Manage and track all campaign claims</p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="filter-section">
+            <form method="GET" action="{{ url_for('admin_claims') }}" class="filter-form">
+                <div class="filter-group">
+                    <input type="text" name="search" placeholder="Search by name, email, or claim #" 
+                           value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="filter-group">
+                    <select name="status">
+                        <option value="">All Status</option>
+                        <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="paid" {% if request.args.get('status') == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="shipped" {% if request.args.get('status') == 'shipped' %}selected{% endif %}>Shipped</option>
+                        <option value="delivered" {% if request.args.get('status') == 'delivered' %}selected{% endif %}>Delivered</option>
+                        <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{{ url_for('admin_claims') }}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Clear
+                </a>
+            </form>
+        </div>
+
+        <!-- Claims Table -->
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Claim #</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Country</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for claim in claims %}
+                    <tr>
+                        <td><strong>{{ claim.claim_number }}</strong></td>
+                        <td>{{ claim.full_name }}</td>
+                        <td>{{ claim.email }}</td>
+                        <td>{{ claim.phone }}</td>
+                        <td>{{ claim.country }}</td>
+                        <td>
+                            <span class="status-badge status-{{ claim.status }}">
+                                {{ claim.status|capitalize }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="payment-badge {% if claim.shipping_fee_paid == 'true' %}paid{% else %}unpaid{% endif %}">
+                                {% if claim.shipping_fee_paid == 'true' %}✅ Paid{% else %}❌ Unpaid{% endif %}
+                            </span>
+                        </td>
+                        <td style="font-size: 13px; color: #718096;">
+                            {{ claim.claim_date[:10] if claim.claim_date else '-' }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_claim_detail', claim_id=claim.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #a0aec0;">
+                            <i class="fas fa-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                            No claims found matching your criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Count -->
+        <div class="table-footer">
+            <p>Total claims: <strong>{{ claims|length }}</strong></p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .admin-claims {
+        padding: 40px 0;
+        background: #f7fafc;
+        min-height: 80vh;
+    }
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .admin-header h1 {
+        margin: 0;
+        font-size: 28px;
+    }
+    .admin-header p {
+        margin: 5px 0 0;
+        color: #718096;
+    }
+    .filter-section {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .filter-form {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    .table-responsive {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .admin-table th {
+        text-align: left;
+        padding: 12px 15px;
+        background: #f7fafc;
+        font-weight: 600;
+        font-size: 13px;
+        color: #4a5568;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .admin-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+    }
+    .admin-table tr:hover td {
+        background: #f7fafc;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-paid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .status-shipped {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .status-delivered {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    .status-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .payment-badge {
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .payment-badge.paid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .payment-badge.unpaid {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    .table-footer {
+        margin-top: 20px;
+        color: #718096;
+        font-size: 14px;
+    }
+    @media (max-width: 768px) {
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .filter-group {
+            min-width: 100%;
+        }
+        .admin-table th, .admin-table td {
+            padding: 8px 10px;
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}

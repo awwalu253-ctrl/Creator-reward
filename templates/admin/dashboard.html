@@ -1,0 +1,654 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - {{ company_name }}{% endblock %}
+
+{% block head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .admin-dashboard {
+        padding: 30px 0;
+        background: #f7fafc;
+        min-height: 80vh;
+    }
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    .admin-header h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #1a1a2e;
+    }
+    .admin-header h1 i {
+        color: #dc2626;
+    }
+    .admin-header p {
+        margin: 4px 0 0;
+        color: #718096;
+        font-size: 14px;
+    }
+    .admin-header-right {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .admin-header-right .btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        text-decoration: none;
+        transition: background 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-refresh {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+    .btn-refresh:hover {
+        background: #cbd5e0;
+    }
+    .btn-refresh.refreshing {
+        background: #667eea;
+        color: white;
+        cursor: wait;
+    }
+    .btn-export {
+        background: #dc2626;
+        color: white;
+    }
+    .btn-export:hover {
+        background: #b91c1c;
+    }
+    .btn-logout {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .btn-logout:hover {
+        background: #fecaca;
+    }
+    .last-updated {
+        font-size: 12px;
+        color: #a0aec0;
+        text-align: right;
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 25px;
+    }
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .stat-card .stat-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+        display: block;
+    }
+    .stat-card .stat-number {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1a1a2e;
+        line-height: 1.2;
+    }
+    .stat-card .stat-number.paid {
+        color: #48bb78;
+    }
+    .stat-card .stat-number.pending {
+        color: #f6ad55;
+    }
+    .stat-card .stat-number.revenue {
+        color: #667eea;
+    }
+    .stat-card .stat-number.shipped {
+        color: #4299e1;
+    }
+    .stat-card .stat-label {
+        font-size: 14px;
+        color: #718096;
+        margin-top: 4px;
+    }
+    .stat-card .stat-change {
+        font-size: 13px;
+        margin-top: 6px;
+    }
+    .stat-card .stat-change .positive {
+        color: #48bb78;
+        font-weight: 600;
+    }
+    .stat-card .stat-change .negative {
+        color: #fc8181;
+        font-weight: 600;
+    }
+    .stat-card .stat-change .neutral {
+        color: #f6ad55;
+        font-weight: 600;
+    }
+    
+    /* Grid layouts */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    .dashboard-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+    }
+    .dashboard-card h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .dashboard-card h3 i {
+        color: #dc2626;
+        margin-right: 8px;
+    }
+    .dashboard-card .card-subtitle {
+        font-size: 13px;
+        color: #a0aec0;
+        margin-bottom: 12px;
+    }
+    .chart-container {
+        position: relative;
+        height: 250px;
+    }
+    
+    /* Distribution lists */
+    .dist-list {
+        display: grid;
+        gap: 8px;
+    }
+    .dist-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+    }
+    .dist-item:last-child {
+        border-bottom: none;
+    }
+    .dist-item .label {
+        color: #4a5568;
+    }
+    .dist-item .value {
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    .dist-item .bar {
+        flex: 1;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        margin: 0 12px;
+        overflow: hidden;
+    }
+    .dist-item .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #dc2626, #f6ad55);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    
+    /* Recent Claims Table */
+    .recent-claims {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+    }
+    .recent-claims .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .recent-claims .section-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .recent-claims .section-header h3 i {
+        color: #dc2626;
+        margin-right: 8px;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .admin-table th {
+        text-align: left;
+        padding: 10px 12px;
+        background: #f7fafc;
+        font-weight: 600;
+        font-size: 12px;
+        color: #4a5568;
+        border-bottom: 2px solid #e2e8f0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .admin-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+    .admin-table tr:hover td {
+        background: #f7fafc;
+    }
+    .admin-table .status-badge {
+        padding: 3px 10px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+        text-transform: uppercase;
+    }
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-paid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .status-shipped {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .status-delivered {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+    .status-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .payment-badge {
+        padding: 2px 10px;
+        border-radius: 50px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .payment-badge.paid {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .payment-badge.unpaid {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .btn-sm {
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        background: #667eea;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .btn-sm:hover {
+        background: #5a67d8;
+    }
+    .btn-sm i {
+        margin-right: 4px;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    .text-muted {
+        color: #a0aec0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    @media (max-width: 768px) {
+        .admin-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .admin-header-right {
+            width: 100%;
+        }
+        .stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        .admin-table th, .admin-table td {
+            padding: 6px 8px;
+            font-size: 11px;
+        }
+    }
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        .admin-header h1 {
+            font-size: 22px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div>
+                <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+                <p>Real-time overview of your Creator Gift Box campaign</p>
+            </div>
+            <div class="admin-header-right">
+                <span class="last-updated" id="lastUpdated">
+                    <i class="fas fa-clock"></i> Updated: {{ current_year }}-{{ current_month }}-{{ current_day }} {{ current_hour }}:{{ current_minute }}
+                </span>
+                <button onclick="refreshDashboard()" class="btn btn-refresh" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <a href="{{ url_for('admin_export') }}" class="btn btn-export">
+                    <i class="fas fa-download"></i> Export CSV
+                </a>
+                <a href="{{ url_for('admin_codes') }}" class="btn btn-export" style="background: #667eea;">
+                    <i class="fas fa-key"></i> Codes
+                </a>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-icon">📋</span>
+                <div class="stat-number">{{ total_claims }}</div>
+                <div class="stat-label">Total Claims</div>
+                <div class="stat-change"><span class="positive">+{{ today_count }}</span> today</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">✅</span>
+                <div class="stat-number paid">{{ payment_paid }}</div>
+                <div class="stat-label">Paid Claims</div>
+                <div class="stat-change"><span class="positive">{{ conversion_rate }}%</span> conversion rate</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">⏳</span>
+                <div class="stat-number pending">{{ total_pending }}</div>
+                <div class="stat-label">Pending Claims</div>
+                <div class="stat-change"><span class="neutral">Awaiting payment</span></div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">💰</span>
+                <div class="stat-number revenue">${{ "%.2f"|format(total_revenue) }}</div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-change"><span class="positive">{{ payment_paid }}</span> payments</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">📦</span>
+                <div class="stat-number shipped">{{ total_shipped }}</div>
+                <div class="stat-label">Shipped</div>
+                <div class="stat-change">Ready for delivery</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon">🔑</span>
+                <div class="stat-number" style="color: #667eea;">{{ active_codes }}</div>
+                <div class="stat-label">Active Codes</div>
+                <div class="stat-change">{{ total_codes }} total, {{ used_codes }} used</div>
+            </div>
+        </div>
+
+        <!-- Charts & Distribution -->
+        <div class="dashboard-grid">
+            <!-- Chart -->
+            <div class="dashboard-card">
+                <h3><i class="fas fa-chart-bar"></i> Claims Trend (Last 7 Days)</h3>
+                <div class="chart-container">
+                    <canvas id="claimsChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Distribution -->
+            <div class="dashboard-card">
+                <h3><i class="fas fa-tshirt"></i> Clothing Size Distribution</h3>
+                <div class="dist-list">
+                    {% for size, count in size_distribution.items() %}
+                    {% if count > 0 %}
+                    <div class="dist-item">
+                        <span class="label">{{ size }}</span>
+                        <div class="bar">
+                            <div class="bar-fill" style="width: {{ (count / total_claims * 100) if total_claims > 0 else 0 }}%;"></div>
+                        </div>
+                        <span class="value">{{ count }}</span>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="dist-item">
+                        <span class="label text-muted">No data yet</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                    <div class="dist-item">
+                        <span class="label">📍 Countries</span>
+                        <span class="value">{{ country_distribution|length }}</span>
+                    </div>
+                    <div class="dist-item">
+                        <span class="label">📅 This Month</span>
+                        <span class="value">{{ this_month_count }} claims</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Claims -->
+        <div class="recent-claims">
+            <div class="section-header">
+                <h3><i class="fas fa-history"></i> Recent Claims</h3>
+                <a href="{{ url_for('admin_claims') }}" class="btn btn-sm" style="background: #e2e8f0; color: #4a5568; padding: 6px 14px;">
+                    View All <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Claim #</th>
+                            <th>Name</th>
+                            <th>Channel</th>
+                            <th>Size</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for claim in recent_claims %}
+                        <tr>
+                            <td><strong>{{ claim.claim_number }}</strong></td>
+                            <td>{{ claim.full_name }}</td>
+                            <td>{{ claim.channel_name[:15] }}{% if claim.channel_name|length > 15 %}...{% endif %}</td>
+                            <td><span style="font-weight: 700; background: #f0f0f0; padding: 2px 8px; border-radius: 4px;">{{ claim.clothing_size or '-' }}</span></td>
+                            <td>
+                                <span class="status-badge status-{{ claim.status }}">
+                                    {{ claim.status|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="payment-badge {% if claim.shipping_fee_paid == 'true' %}paid{% else %}unpaid{% endif %}">
+                                    {% if claim.shipping_fee_paid == 'true' %}✅ Paid{% else %}❌ Unpaid{% endif %}
+                                </span>
+                            </td>
+                            <td style="font-size: 12px; color: #718096;">
+                                {% if claim.claim_date %}
+                                    {{ claim.claim_date[:10] }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_claim_detail', claim_id=claim.id) }}" class="btn-sm">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 30px; color: #a0aec0;">
+                                <i class="fas fa-inbox" style="font-size: 36px; display: block; margin-bottom: 8px;"></i>
+                                No claims yet. Share your campaign to get started!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CHART.JS - Claims Trend Chart
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('claimsChart').getContext('2d');
+        
+        const labels = {{ chart_labels|tojson }};
+        const data = {{ chart_data|tojson }};
+        const paidData = {{ chart_paid_data|tojson }};
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Total Claims',
+                        data: data,
+                        backgroundColor: 'rgba(220, 38, 38, 0.7)',
+                        borderColor: '#dc2626',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Paid Claims',
+                        data: paidData,
+                        backgroundColor: 'rgba(72, 187, 120, 0.7)',
+                        borderColor: '#48bb78',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' claims';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: { size: 11 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    // ============================================================
+    // REFRESH FUNCTION
+    // ============================================================
+    function refreshDashboard() {
+        const btn = document.getElementById('refreshBtn');
+        btn.classList.add('refreshing');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        
+        // Reload the page to get fresh data
+        location.reload();
+    }
+
+    // Auto-refresh every 60 seconds
+    setInterval(function() {
+        // Update timestamp without full reload
+        const now = new Date();
+        const timestamp = now.getFullYear() + '-' + 
+                         String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                         String(now.getDate()).padStart(2, '0') + ' ' +
+                         String(now.getHours()).padStart(2, '0') + ':' +
+                         String(now.getMinutes()).padStart(2, '0');
+        
+        const el = document.getElementById('lastUpdated');
+        if (el) {
+            el.innerHTML = '<i class="fas fa-clock"></i> Updated: ' + timestamp;
+        }
+    }, 60000);
+</script>
+{% endblock %}

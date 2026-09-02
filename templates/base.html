@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Claim your exclusive creator gift package">
+    <title>{% block title %}{{ campaign_name }}{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========================================
+           YOUTUBE DARK THEME - ROOT VARIABLES
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* YouTube Core Colors */
+            --yt-red: #FF0000;
+            --yt-red-dark: #CC0000;
+            --yt-red-hover: #FF1A1A;
+            --yt-red-glow: rgba(255, 0, 0, 0.25);
+
+            /* YouTube Dark Theme */
+            --yt-bg-primary: #0F0F0F;
+            --yt-bg-secondary: #1A1A1A;
+            --yt-bg-card: #1F1F1F;
+            --yt-bg-hover: #272727;
+            --yt-bg-elevated: #2A2A2A;
+
+            /* YouTube Text Colors */
+            --yt-text-primary: #FFFFFF;
+            --yt-text-secondary: #AAAAAA;
+            --yt-text-muted: #717171;
+
+            /* YouTube Borders & Dividers */
+            --yt-border: #3A3A3A;
+            --yt-border-light: #2A2A2A;
+
+            /* YouTube Shadow & Glow */
+            --yt-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --yt-shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.8);
+
+            /* YouTube Dimensions */
+            --yt-radius: 12px;
+            --yt-radius-full: 9999px;
+            --yt-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* YouTube Header Height */
+            --yt-header-height: 56px;
+        }
+
+        /* ========================================
+           BASE BODY - YOUTUBE DARK
+           ======================================== */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--yt-bg-primary);
+            color: var(--yt-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar - YouTube Style */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--yt-bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--yt-bg-hover);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--yt-text-muted);
+        }
+
+        /* Selection */
+        ::selection {
+            background: var(--yt-red);
+            color: var(--yt-text-primary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ========================================
+           YOUTUBE HEADER / NAVIGATION
+           ======================================== */
+        .header {
+            background: var(--yt-bg-secondary);
+            border-bottom: 1px solid var(--yt-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            height: var(--yt-header-height);
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* YouTube Logo / Brand */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--yt-text-primary);
+            letter-spacing: -0.5px;
+            transition: var(--yt-transition);
+            flex-shrink: 0;
+        }
+
+        .brand:hover {
+            opacity: 0.9;
+        }
+
+        /* YouTube Play Button Icon */
+        .brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--yt-red);
+            filter: drop-shadow(0 0 6px var(--yt-red-glow));
+            transition: var(--yt-transition);
+        }
+
+        .brand-icon .fa-play {
+            font-size: 1.2rem;
+        }
+
+        .brand-icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--yt-red);
+            border-radius: 4px;
+            padding: 2px 6px 2px 8px;
+            color: var(--yt-text-primary);
+            font-weight: 900;
+            font-size: 0.85rem;
+            gap: 2px;
+        }
+
+        .brand-icon-wrapper i {
+            font-size: 0.7rem;
+        }
+
+        .brand-text {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.3px;
+        }
+
+        .brand-text .yt-highlight {
+            color: var(--yt-text-muted);
+            font-weight: 300;
+        }
+
+        /* Navigation Links */
+        .nav-links {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--yt-text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 8px 16px;
+            border-radius: var(--yt-radius-full);
+            transition: var(--yt-transition);
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: var(--yt-bg-hover);
+            color: var(--yt-text-primary);
+        }
+
+        .nav-link i {
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Admin Link - YouTube Style "Sign In" Button */
+        .nav-link.admin-link {
+            background: var(--yt-red);
+            color: var(--yt-text-primary);
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: var(--yt-radius-full);
+            font-size: 0.85rem;
+            border: none;
+            transition: var(--yt-transition);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
+        }
+
+        .nav-link.admin-link:hover {
+            background: var(--yt-red-dark);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.25);
+        }
+
+        .nav-link.admin-link i {
+            margin-right: 6px;
+        }
+
+        /* ========================================
+           FLASH MESSAGES - YOUTUBE STYLE
+           ======================================== */
+        .flash-messages {
+            position: fixed;
+            top: calc(var(--yt-header-height) + 16px);
+            right: 20px;
+            z-index: 9999;
+            max-width: 420px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .flash {
+            padding: 14px 18px;
+            border-radius: var(--yt-radius);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: ytSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--yt-shadow);
+            background: var(--yt-bg-elevated);
+            border: 1px solid var(--yt-border);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .flash i {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .flash.success {
+            border-left: 4px solid #3EA6FF;
+        }
+        .flash.success i {
+            color: #3EA6FF;
+        }
+
+        .flash.error {
+            border-left: 4px solid var(--yt-red);
+        }
+        .flash.error i {
+            color: var(--yt-red);
+        }
+
+        .flash.warning {
+            border-left: 4px solid #FFD600;
+        }
+        .flash.warning i {
+            color: #FFD600;
+        }
+
+        .flash-close {
+            margin-left: auto;
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.5;
+            transition: var(--yt-transition);
+            color: var(--yt-text-secondary);
+            background: none;
+            border: none;
+            padding: 4px;
+        }
+
+        .flash-close:hover {
+            opacity: 1;
+            color: var(--yt-text-primary);
+        }
+
+        @keyframes ytSlideIn {
+            from {
+                transform: translateX(100%) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ========================================
+           YOUTUBE BUTTONS
+           ======================================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: var(--yt-radius-full);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--yt-transition);
+            text-decoration: none;
+            font-family: inherit;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--yt-red);
+            color: var(--yt-text-primary);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: var(--yt-red-dark);
+            transform: scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.25);
+        }
+
+        .btn-success {
+            background: #3EA6FF;
+            color: var(--yt-text-primary);
+        }
+
+        .btn-success:hover {
+            background: #2D8FE6;
+            transform: scale(1.02);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--yt-text-secondary);
+            border: 1px solid var(--yt-border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--yt-text-primary);
+            color: var(--yt-text-primary);
+            background: var(--yt-bg-hover);
+        }
+
+        .btn-secondary {
+            background: var(--yt-bg-hover);
+            color: var(--yt-text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--yt-bg-elevated);
+        }
+
+        .btn-large {
+            padding: 14px 36px;
+            font-size: 1rem;
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.75rem;
+        }
+
+        .btn-danger {
+            background: var(--yt-red);
+            color: var(--yt-text-primary);
+        }
+
+        .btn-danger:hover {
+            background: var(--yt-red-dark);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ========================================
+           YOUTUBE FOOTER
+           ======================================== */
+        .footer {
+            background: var(--yt-bg-secondary);
+            border-top: 1px solid var(--yt-border);
+            padding: 48px 0 0;
+            margin-top: 48px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--yt-border);
+        }
+
+        .footer-col h4 {
+            color: var(--yt-text-primary);
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .footer-col p {
+            color: var(--yt-text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 340px;
+        }
+
+        .footer-col .brand-icon-wrapper {
+            display: inline-flex;
+            margin-bottom: 12px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .social-links a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--yt-bg-hover);
+            color: var(--yt-text-secondary);
+            font-size: 1.1rem;
+            transition: var(--yt-transition);
+            border: 1px solid var(--yt-border);
+        }
+
+        .social-links a:hover {
+            background: var(--yt-bg-elevated);
+            color: var(--yt-text-primary);
+            border-color: var(--yt-text-muted);
+            transform: translateY(-2px);
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            padding: 6px 0;
+        }
+
+        .footer-col ul li a {
+            color: var(--yt-text-secondary);
+            transition: var(--yt-transition);
+            font-size: 0.9rem;
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--yt-text-primary);
+        }
+
+        .footer-col ul li i {
+            width: 24px;
+            color: var(--yt-text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer-col ul li a:hover i {
+            color: var(--yt-red);
+        }
+
+        .footer-disclaimer {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--yt-border);
+            margin-bottom: 20px;
+        }
+
+        .footer-disclaimer .disclaimer-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            color: var(--yt-text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .footer-disclaimer .disclaimer-content i {
+            color: #FFD600;
+            font-size: 16px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .footer-disclaimer .disclaimer-content strong {
+            color: #FFD600;
+        }
+
+        .footer-bottom {
+            padding: 20px 0;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--yt-text-muted);
+        }
+
+        .footer-bottom .disclaimer {
+            margin-top: 4px;
+            font-size: 0.75rem;
+            color: #FFD600;
+            opacity: 0.7;
+        }
+
+        /* ========================================
+           RESPONSIVE - YOUTUBE STYLE
+           ======================================== */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+
+            .brand-text {
+                display: none;
+            }
+
+            .brand {
+                font-size: 1rem;
+                gap: 4px;
+            }
+
+            .nav-links {
+                gap: 2px;
+            }
+
+            .nav-link {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+            }
+
+            .nav-link span {
+                display: none;
+            }
+
+            .nav-link i {
+                margin-right: 0;
+                font-size: 1rem;
+            }
+
+            .nav-link.admin-link {
+                padding: 6px 14px;
+                font-size: 0.75rem;
+            }
+            .nav-link.admin-link span {
+                display: inline;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .footer-col p {
+                max-width: 100%;
+            }
+
+            .footer-disclaimer .disclaimer-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .flash-messages {
+                top: calc(var(--yt-header-height) + 12px);
+                right: 10px;
+                left: 10px;
+                max-width: 100%;
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand-icon-wrapper {
+                font-size: 0.7rem;
+                padding: 2px 4px 2px 6px;
+            }
+
+            .nav-link {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+
+            .nav-link.admin-link {
+                padding: 4px 12px;
+                font-size: 0.7rem;
+            }
+
+            .btn-large {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            .flash {
+                font-size: 0.85rem;
+                padding: 12px 14px;
+            }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- ========================================
+    YOUTUBE HEADER
+    ======================================== -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="{{ url_for('landing') }}" class="brand">
+                    <span class="brand-icon-wrapper">
+                        <i class="fas fa-play"></i>
+                        <span>Tube</span>
+                    </span>
+                    <span class="brand-text">
+                        {{ company_name }}<span class="yt-highlight">Gifts</span>
+                    </span>
+                </a>
+                <div class="nav-links">
+                    <a href="{{ url_for('landing') }}" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="{{ url_for('claim_form') }}" class="nav-link">
+                        <i class="fas fa-gift"></i>
+                        <span>Claim</span>
+                    </a>
+                    <a href="#contact" class="nav-link">
+                        <i class="fas fa-headset"></i>
+                        <span>Support</span>
+                    </a>
+                    <a href="{{ url_for('admin_login') }}" class="nav-link admin-link">
+                        <i class="fas fa-user-lock"></i>
+                        <span>Admin</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ========================================
+    FLASH MESSAGES - YOUTUBE STYLE
+    ======================================== -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">
+            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %}"></i>
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.style.display='none'">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- ========================================
+    MAIN CONTENT
+    ======================================== -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ========================================
+    YOUTUBE FOOTER
+    ======================================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <span class="brand-icon-wrapper">
+                        <i class="fas fa-play"></i>
+                        <span>Tube</span>
+                    </span>
+                    <h4 style="margin-top: 8px;">{{ company_name }}<span style="color: var(--yt-text-muted); font-weight: 300;">Gifts</span></h4>
+                    <p>Celebrating creators with exclusive gift packages. Dedicated to supporting the creator community.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('landing') }}"><i class="fas fa-chevron-right"></i> Home</a></li>
+                        <li><a href="{{ url_for('claim_form') }}"><i class="fas fa-chevron-right"></i> Claim Your Gift</a></li>
+                        <li><a href="{{ url_for('terms') }}"><i class="fas fa-chevron-right"></i> Terms &amp; Conditions</a></li>
+                        <li><a href="{{ url_for('privacy') }}"><i class="fas fa-chevron-right"></i> Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> <a href="mailto:{{ company_email }}">{{ company_email }}</a></li>
+                        <li><i class="fas fa-clock"></i> Support: Mon-Fri 9AM-6PM</li>
+                        <li><i class="fas fa-reply"></i> Response within 24 hours</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-disclaimer">
+                <div class="disclaimer-content">
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Disclaimer:</strong> This is a promotional gift campaign. All gifts are subject to availability and terms &amp; conditions apply. This site is not affiliated with, endorsed by, or sponsored by YouTube or Google LLC.
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                &copy; {{ company_name }} {% raw %}{{ now.year }}{% endraw %} &mdash; All rights reserved.
+                <div class="disclaimer">Made with <i class="fas fa-heart" style="color: var(--yt-red);"></i> for creators</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================
+    JAVASCRIPT - YOUTUBE STYLE
+    ======================================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss flash messages
+            const flashes = document.querySelectorAll('.flash');
+            flashes.forEach((flash, index) => {
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    flash.style.transform = 'translateX(100%) scale(0.95)';
+                    flash.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    setTimeout(() => flash.remove(), 300);
+                }, 5000 + (index * 1000));
+            });
+
+            // Close flash on click
+            document.querySelectorAll('.flash-close').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const flash = this.parentElement;
+                    flash.style.opacity = '0';
+                    flash.style.transform = 'translateX(100%) scale(0.95)';
+                    setTimeout(() => flash.remove(), 300);
+                });
+            });
+
+            // Add smooth scroll to all anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

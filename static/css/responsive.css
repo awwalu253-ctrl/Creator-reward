@@ -1,0 +1,186 @@
+/* ====================
+   TABLET (768px - 1024px)
+   ==================== */
+@media (max-width: 1024px) {
+    .hero-title {
+        font-size: 2.8rem;
+    }
+    
+    .review-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ====================
+   MOBILE (up to 768px)
+   ==================== */
+@media (max-width: 768px) {
+    /* Navigation */
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .nav-links {
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    /* Hero */
+    .hero-section {
+        padding: 40px 0 60px;
+        min-height: auto;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    /* Reward Card */
+    .reward-header {
+        padding: 16px 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .reward-body {
+        padding: 20px;
+    }
+    
+    /* Trust Badges */
+    .trust-badges {
+        gap: 20px;
+    }
+    
+    /* Grids */
+    .about-grid,
+    .terms-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    /* Forms */
+    .form-wrapper {
+        padding: 24px 16px;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1;
+    }
+    
+    /* Review */
+    .review-card {
+        padding: 20px;
+    }
+    
+    .fee-amount .amount {
+        font-size: 3rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .info-item .value {
+        text-align: left;
+    }
+    
+    /* Confirmation */
+    .confirmation-wrapper h1 {
+        font-size: 1.8rem;
+    }
+    
+    .confirmation-card {
+        padding: 20px;
+    }
+    
+    .confirmation-number .number {
+        font-size: 1.5rem;
+    }
+    
+    /* Flash messages */
+    .flash-messages {
+        top: 100px;
+        right: 10px;
+        left: 10px;
+        max-width: 100%;
+    }
+    
+    .flash {
+        font-size: 0.9rem;
+        padding: 12px 16px;
+    }
+    
+    /* Buttons */
+    .btn-large {
+        padding: 14px 28px;
+        font-size: 1rem;
+    }
+    
+    .fee-actions .btn {
+        width: 100%;
+    }
+    
+    /* Progress bar */
+    .progress-line {
+        width: 30px;
+    }
+    
+    .progress-step {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}
+
+/* ====================
+   SMALL PHONES (up to 480px)
+   ==================== */
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.6rem;
+    }
+    
+    .reward-item {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+    
+    .privacy-notice {
+        padding: 16px;
+        font-size: 0.9rem;
+    }
+    
+    .checkbox {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .checkbox input[type="checkbox"] {
+        margin-top: 0;
+    }
+    
+    .footer {
+        padding: 40px 0 0;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 10px 20px;
+    }
+}
