@@ -27,6 +27,8 @@ from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 import requests
 import logging
+import redis
+from flask_session import Session
 from logging.handlers import RotatingFileHandler
 
 # SSL imports
@@ -57,6 +59,25 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
 app.static_folder = 'static'
 app.static_url_path = '/static'
 
+# Redis Configuration
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_KEY_PREFIX'] = 'admin_'
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
+
+# Connect to Redis
+try:
+    app.config['SESSION_REDIS'] = redis.from_url(REDIS_URL)
+    app.config['SESSION_REDIS'].ping()
+    print(f"✅ Connected to Redis at {REDIS_URL}")
+except Exception as e:
+    print(f"⚠️ Redis connection failed: {e}")
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+
+Session(app)
 # ============================================================
 # CONFIGURATION
 # ============================================================
