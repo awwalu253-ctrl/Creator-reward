@@ -13,7 +13,9 @@ pip-delete-this-directory.txt
 .env
 *.env
 .env.local
-
+get_tokens.py
+token.pickle
+credentials.json
 # IDE
 .vscode/
 .idea/

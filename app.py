@@ -108,27 +108,47 @@ app.logger.setLevel(logging.INFO)
 # GMAIL API HELPER FUNCTIONS
 # ============================================================
 def get_gmail_service():
-    """Get authenticated Gmail API service"""
+    """Get authenticated Gmail API service (local + production)"""
     creds = None
     
+    # Try environment variables first (for production on Render)
+    client_id = os.getenv('GMAIL_API_CLIENT_ID')
+    client_secret = os.getenv('GMAIL_API_CLIENT_SECRET')
+    refresh_token = os.getenv('GMAIL_API_REFRESH_TOKEN')
+    
+    if client_id and client_secret and refresh_token:
+        app.logger.info("📧 Using environment variables for Gmail API")
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            token_uri='https://oauth2.googleapis.com/token',
+            scopes=SCOPES
+        )
+        
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        
+        if creds.valid:
+            app.logger.info("✅ Gmail API ready (production mode)")
+            return build('gmail', 'v1', credentials=creds)
+    
+    # Fallback to token.pickle (local development)
     if os.path.exists('token.pickle'):
+        app.logger.info("📧 Using token.pickle for Gmail API")
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
-    
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            if not os.path.exists('credentials.json'):
-                app.logger.error("credentials.json not found!")
-                return None
-            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
         
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        
+        if creds.valid:
+            app.logger.info("✅ Gmail API ready (local mode)")
+            return build('gmail', 'v1', credentials=creds)
     
-    return build('gmail', 'v1', credentials=creds)
+    app.logger.error("❌ No valid Gmail API credentials found")
+    return None
 
 def send_email_via_api(recipient, subject, html_content, plain_text_content=None):
     """Send email using Gmail API"""
