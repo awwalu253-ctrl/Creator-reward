@@ -27,8 +27,6 @@ from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 import requests
 import logging
-import redis
-from flask_session import Session
 from logging.handlers import RotatingFileHandler
 
 # SSL imports
@@ -46,7 +44,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# SESSION CONFIGURATION - SIMPLE
+# SESSION CONFIGURATION - NO FLASK-SESSION
 # ============================================================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_COOKIE_NAME'] = 'admin_session'
@@ -59,25 +57,6 @@ app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
 app.static_folder = 'static'
 app.static_url_path = '/static'
 
-# Redis Configuration
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-app.config['SESSION_TYPE'] = 'redis'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'admin_'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
-
-# Connect to Redis
-try:
-    app.config['SESSION_REDIS'] = redis.from_url(REDIS_URL)
-    app.config['SESSION_REDIS'].ping()
-    print(f"✅ Connected to Redis at {REDIS_URL}")
-except Exception as e:
-    print(f"⚠️ Redis connection failed: {e}")
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
-
-Session(app)
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -661,8 +640,17 @@ def admin_logout():
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin first', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ============================================================
-# ADMIN DASHBOARD - FIXED
+# ADMIN DASHBOARD
 # ============================================================
 @app.route('/admin/dashboard')
 @admin_required
@@ -725,7 +713,7 @@ def admin_dashboard():
                              current_year=datetime.datetime.now().year)
 
 # ============================================================
-# ADMIN CLAIMS - FIXED
+# ADMIN CLAIMS
 # ============================================================
 @app.route('/admin/claims')
 @admin_required
@@ -777,7 +765,7 @@ def admin_claims():
                              current_year=datetime.datetime.now().year)
 
 # ============================================================
-# ADMIN CLAIM DETAIL - FIXED
+# ADMIN CLAIM DETAIL
 # ============================================================
 @app.route('/admin/claim/<claim_id>')
 @admin_required
@@ -810,7 +798,7 @@ def admin_claim_detail(claim_id):
         return redirect(url_for('admin_claims'))
 
 # ============================================================
-# ADMIN UPDATE CLAIM - FIXED
+# ADMIN UPDATE CLAIM
 # ============================================================
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
@@ -855,7 +843,7 @@ def admin_update_claim(claim_id):
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
 
 # ============================================================
-# ADMIN CODES - FIXED
+# ADMIN CODES
 # ============================================================
 @app.route('/admin/codes')
 @admin_required
@@ -901,7 +889,7 @@ def admin_codes():
                              current_year=datetime.datetime.now().year)
 
 # ============================================================
-# ADMIN GENERATE CODES - FIXED
+# ADMIN GENERATE CODES
 # ============================================================
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
@@ -941,7 +929,7 @@ def admin_generate_codes():
         return redirect(url_for('admin_codes'))
 
 # ============================================================
-# ADMIN BULK DELETE CODES - FIXED
+# ADMIN BULK DELETE CODES
 # ============================================================
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
@@ -981,7 +969,7 @@ def admin_bulk_delete_codes():
         return redirect(url_for('admin_codes'))
 
 # ============================================================
-# ADMIN EXPORT - FIXED
+# ADMIN EXPORT
 # ============================================================
 @app.route('/admin/export')
 @admin_required
