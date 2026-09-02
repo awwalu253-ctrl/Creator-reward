@@ -46,6 +46,12 @@ if sys.platform == 'win32':
 
 load_dotenv()
 
+# Check if .env loaded correctly
+if not os.getenv('SUPABASE_URL'):
+    print("⚠️ WARNING: .env file not found or not loaded correctly!")
+    print("   Make sure .env file exists in the project root.")
+    print("   Copy .env.example to .env and fill in your credentials.")
+
 # Print Supabase config for debugging
 print("=" * 50)
 print("🔍 Checking Supabase Configuration")
