@@ -204,6 +204,13 @@
         }
 
         /* ========================================
+           CSRF TOKEN HELPER
+           ======================================== */
+        .csrf-token-field {
+            display: none;
+        }
+
+        /* ========================================
            BUTTONS
            ======================================== */
         .btn {
@@ -372,6 +379,9 @@
             color: #f6ad55;
         }
 
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
         @media (max-width: 768px) {
             .navbar {
                 flex-direction: column;
@@ -408,6 +418,17 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+    <!-- Top Disclaimer Bar -->
+    <div class="top-disclaimer">
+        <div class="container">
+            <p>
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>DISCLAIMER:</strong> This promotion is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.
+                This is an independent promotional campaign.
+            </p>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -419,8 +440,6 @@
                 <div class="nav-links">
                     <a href="{{ url_for('landing') }}" class="nav-link">Home</a>
                     <a href="{{ url_for('claim_form') }}" class="nav-link">Claim Gift</a>
-                    <a href="#about" class="nav-link">About</a>
-                    <a href="#contact" class="nav-link">Contact</a>
                     <a href="{{ url_for('admin_login') }}" class="nav-link admin-link">
                         <i class="fas fa-shield-alt"></i> Admin
                     </a>
@@ -469,7 +488,7 @@
                 <div class="footer-col">
                     <h4>Contact</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> <a href="mailto:{{ company_email }}">{{ company_email }}</a></li>
+                        <li><i class="fas fa-envelope"></i> <a href="mailto:{{ company_email }}" style="color: #cbd5e0;">{{ company_email }}</a></li>
                         <li><i class="fas fa-clock"></i> Support: Mon-Fri 9AM-6PM</li>
                         <li><i class="fas fa-reply"></i> Response within 24 hours</li>
                     </ul>
@@ -478,6 +497,10 @@
             
             <div class="footer-bottom">
                 <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+                <p class="disclaimer">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Not affiliated with YouTube or Google
+                </p>
             </div>
         </div>
     </footer>
@@ -495,7 +518,41 @@
                 }, 5000 + (index * 1000));
             });
         });
+
+        // Helper function to add CSRF token to any form
+        function addCSRFTokenToForm(form) {
+            if (!form.querySelector('input[name="csrf_token"]')) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.prepend(csrfInput);
+            }
+        }
+
+        // Auto-add CSRF token to all forms on the page
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form[method="POST"]');
+            forms.forEach(function(form) {
+                addCSRFTokenToForm(form);
+            });
+        });
+
+        // Also handle dynamically created forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.tagName === 'FORM' && node.method === 'post') {
+                            addCSRFTokenToForm(node);
+                        }
+                    });
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
     </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html>

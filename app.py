@@ -7,21 +7,19 @@ import io
 import uuid
 import datetime
 import re
-import secrets
-import json
+import hmac
 import threading
 import time
 import base64
-import pickle
 import csv
 import random
 import string
-import urllib3
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response
+from flask_wtf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -32,10 +30,7 @@ from logging.handlers import RotatingFileHandler
 # Google API imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 if sys.platform == 'win32':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -46,14 +41,30 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
+# DISCLAIMER - SHOWN ON ALL PAGES
+# ============================================================
+DISCLAIMER_TEXT = """⚠️ DISCLAIMER: This promotion is organized by Creator Rewards and is NOT affiliated with, endorsed by, or sponsored by YouTube or Google. This is an independent promotional campaign. All product names, logos, and brands are property of their respective owners."""
+
+# ============================================================
 # SECRET KEY & SESSION
 # ============================================================
 app.secret_key = os.getenv('SECRET_KEY', 'change-me-in-render-env-vars')
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV', 'production') == 'production'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+
+# CSRF protection
+csrf = CSRFProtect(app)
+
+# Rate limiting
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
+)
 
 # ============================================================
 # CONFIGURATION
@@ -65,30 +76,24 @@ PAYSTACK_PUBLIC = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_SECRET = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'https://creator-reward.onrender.com/payment/callback')
 
+SHIPPING_FEE_USD = 120.00
+USD_TO_NGN_RATE = 1500
+
 # Gmail API Scopes
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'Creator Rewards')
 COMPANY_EMAIL = os.getenv('COMPANY_EMAIL', 'support@creatorrewards.com')
-ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'awwalu253@gmail.com')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 
 # Gmail API credentials
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'awwalu253@gmail.com')
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER')
 GMAIL_API_CLIENT_ID = os.getenv('GMAIL_API_CLIENT_ID')
 GMAIL_API_CLIENT_SECRET = os.getenv('GMAIL_API_CLIENT_SECRET')
 GMAIL_API_REFRESH_TOKEN = os.getenv('GMAIL_API_REFRESH_TOKEN')
-
-# Debug: Check credentials
-print("=" * 60)
-print("🔍 GMAIL API CREDENTIALS CHECK")
-print("=" * 60)
-print(f"GMAIL_API_CLIENT_ID: {GMAIL_API_CLIENT_ID[:30] if GMAIL_API_CLIENT_ID else '❌ NOT SET'}...")
-print(f"GMAIL_API_CLIENT_SECRET: {'✅ SET' if GMAIL_API_CLIENT_SECRET else '❌ NOT SET'}")
-print(f"GMAIL_API_REFRESH_TOKEN: {'✅ SET' if GMAIL_API_REFRESH_TOKEN else '❌ NOT SET'}")
-print("=" * 60)
 
 # Setup logging
 if not os.path.exists('logs'):
@@ -97,6 +102,13 @@ file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=1
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
+
+app.logger.info("=" * 60)
+app.logger.info("GMAIL API CREDENTIALS CHECK")
+app.logger.info(f"CLIENT_ID set: {bool(GMAIL_API_CLIENT_ID)}")
+app.logger.info(f"CLIENT_SECRET set: {bool(GMAIL_API_CLIENT_SECRET)}")
+app.logger.info(f"REFRESH_TOKEN set: {bool(GMAIL_API_REFRESH_TOKEN)}")
+app.logger.info("=" * 60)
 
 # ============================================================
 # SAFE LOG MESSAGE
@@ -118,14 +130,14 @@ def safe_log_message(msg):
 def supabase_select(table, filters=None, order_by=None, limit=None):
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
-    
+
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json"
     }
-    
+
     params = {}
     if filters:
         for key, value in filters.items():
@@ -134,9 +146,9 @@ def supabase_select(table, filters=None, order_by=None, limit=None):
         params['order'] = order_by
     if limit:
         params['limit'] = limit
-    
+
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30, verify=False)
+        response = requests.get(url, headers=headers, params=params, timeout=15)
         if response.status_code == 200:
             return response.json()
         else:
@@ -147,7 +159,7 @@ def supabase_select(table, filters=None, order_by=None, limit=None):
 def supabase_insert(table, data):
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
-    
+
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -155,9 +167,9 @@ def supabase_insert(table, data):
         "Content-Type": "application/json",
         "Prefer": "return=representation"
     }
-    
+
     try:
-        response = requests.post(url, headers=headers, json=data, timeout=30, verify=False)
+        response = requests.post(url, headers=headers, json=data, timeout=15)
         if response.status_code in [200, 201]:
             return response.json()
         else:
@@ -168,7 +180,7 @@ def supabase_insert(table, data):
 def supabase_update(table, data, filters):
     if not SUPABASE_URL or not SUPABASE_KEY:
         return {'error': 'Supabase not configured'}
-    
+
     url = f"{SUPABASE_URL}/rest/v1/{table}"
     headers = {
         "apikey": SUPABASE_KEY,
@@ -176,19 +188,38 @@ def supabase_update(table, data, filters):
         "Content-Type": "application/json",
         "Prefer": "return=representation"
     }
-    
+
     params = {}
     for key, value in filters.items():
         params[key] = f"eq.{value}"
-    
+
     try:
-        response = requests.patch(url, headers=headers, params=params, json=data, timeout=30, verify=False)
+        response = requests.patch(url, headers=headers, params=params, json=data, timeout=15)
         if response.status_code in [200, 201]:
             return response.json()
         else:
             return {'error': f'HTTP {response.status_code}', 'detail': response.text}
     except Exception as e:
         return {'error': str(e)}
+
+def supabase_delete(table, record_id):
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return {'error': 'Supabase not configured'}
+
+    url = f"{SUPABASE_URL}/rest/v1/{table}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+    params = {"id": f"eq.{record_id}"}
+
+    try:
+        response = requests.delete(url, headers=headers, params=params, timeout=15)
+        return response.status_code in [200, 204]
+    except Exception as e:
+        app.logger.error(f"Delete error: {str(e)}")
+        return False
 
 # ============================================================
 # CLAIM CODE GENERATION
@@ -222,81 +253,67 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# GMAIL API EMAIL SYSTEM (Works on Render Free - port 443)
+# GMAIL API EMAIL SYSTEM
 # ============================================================
 def get_gmail_service():
-    """Get authenticated Gmail API service.
-
-    NOTE: we are constructed with token=None (we only ever store the
-    refresh_token, never a live access token). google-auth's `expired`
-    property is driven off `expiry`, which is never set here, so
-    `creds.expired` evaluates to False even though there is no valid
-    access token yet. That made the old `if creds.expired:` guard skip
-    the refresh entirely, leaving creds.valid False forever. Fix: just
-    always refresh - it's a cheap, standard OAuth token exchange.
-    """
+    """Get authenticated Gmail API service."""
     try:
-        client_id = GMAIL_API_CLIENT_ID
-        client_secret = GMAIL_API_CLIENT_SECRET
-        refresh_token = GMAIL_API_REFRESH_TOKEN
-        
-        if not client_id or not client_secret or not refresh_token:
-            app.logger.error("❌ Missing Gmail API credentials")
-            app.logger.error(f"   CLIENT_ID: {'✅' if client_id else '❌'}")
-            app.logger.error(f"   CLIENT_SECRET: {'✅' if client_secret else '❌'}")
-            app.logger.error(f"   REFRESH_TOKEN: {'✅' if refresh_token else '❌'}")
+        if not GMAIL_API_CLIENT_ID or not GMAIL_API_CLIENT_SECRET or not GMAIL_API_REFRESH_TOKEN:
+            app.logger.error("Missing Gmail API credentials")
             return None
-        
-        app.logger.info("📧 Creating Gmail API credentials...")
-        
+
         creds = Credentials(
             token=None,
-            refresh_token=refresh_token,
-            client_id=client_id,
-            client_secret=client_secret,
+            refresh_token=GMAIL_API_REFRESH_TOKEN,
+            client_id=GMAIL_API_CLIENT_ID,
+            client_secret=GMAIL_API_CLIENT_SECRET,
             token_uri='https://oauth2.googleapis.com/token',
             scopes=SCOPES
         )
-        
-        # Always refresh: we never carry a live access token, only the
-        # refresh token, so `creds.expired` can't be trusted to tell us
-        # whether we need a fresh access token.
-        app.logger.info("🔄 Refreshing token...")
+
         creds.refresh(Request())
-        
+
         if creds.valid:
-            app.logger.info("✅ Gmail API ready")
             return build('gmail', 'v1', credentials=creds)
         else:
-            app.logger.error("❌ Credentials not valid after refresh")
+            app.logger.error("Credentials not valid after refresh")
             return None
-            
+
     except Exception as e:
-        app.logger.error(f"❌ Gmail API error: {str(e)}")
+        app.logger.error(f"Gmail API error: {str(e)}")
         return None
 
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send email using Gmail API"""
-    try:
-        service = get_gmail_service()
-        if not service:
-            app.logger.error("❌ Cannot send email - no Gmail service")
-            return False
-        
-        # Render HTML content
-        with app.app_context():
-            html_content = render_template(f'emails/{template_name}.html', **kwargs)
-        
-        # Create message
-        message = MIMEMultipart('alternative')
-        message['to'] = recipient
-        message['subject'] = subject
-        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        message['reply-to'] = COMPANY_EMAIL
-        
-        # Plain text version
-        claim = kwargs.get('claim', {})
-        plain_text = f"""
+    """Send email using Gmail API with retry logic"""
+    max_retries = 3
+    retry_delay = 2
+    
+    app.logger.info(f"Attempting to send email to: {recipient}")
+    app.logger.info(f"Subject: {subject}")
+    app.logger.info(f"Template: {template_name}")
+    
+    for attempt in range(max_retries):
+        try:
+            service = get_gmail_service()
+            if not service:
+                app.logger.error(f"No Gmail service (attempt {attempt + 1})")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                return False
+            
+            with app.app_context():
+                html_content = render_template(f'emails/{template_name}.html', **kwargs)
+                app.logger.info(f"HTML rendered: {len(html_content)} characters")
+
+            message = MIMEMultipart('alternative')
+            message['to'] = recipient
+            message['subject'] = subject
+            message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+            message['reply-to'] = COMPANY_EMAIL
+
+            claim = kwargs.get('claim', {})
+            plain_text = f"""
 {subject}
 
 Claim Number: {claim.get('claim_number', 'N/A')}
@@ -306,35 +323,45 @@ Email: {claim.get('email', 'N/A')}
 This is an automated message from {COMPANY_NAME}.
 
 For support: {COMPANY_EMAIL}
-        """
-        text_part = MIMEText(plain_text, 'plain')
-        html_part = MIMEText(html_content, 'html')
-        message.attach(text_part)
-        message.attach(html_part)
-        
-        # Encode and send
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
-        
-        service.users().messages().send(
-            userId='me',
-            body={'raw': raw_message}
-        ).execute()
-        
-        app.logger.info(f"✅ Email sent via Gmail API to {recipient}: {subject}")
-        return True
-        
-    except Exception as e:
-        app.logger.error(f"❌ Gmail API error: {str(e)}")
-        return False
+            """
+            text_part = MIMEText(plain_text, 'plain')
+            html_part = MIMEText(html_content, 'html')
+            message.attach(text_part)
+            message.attach(html_part)
+
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+            
+            app.logger.info(f"Sending via Gmail API...")
+            service.users().messages().send(
+                userId='me',
+                body={'raw': raw_message}
+            ).execute()
+
+            app.logger.info(f"Email sent successfully to {recipient}")
+            return True
+
+        except Exception as e:
+            app.logger.error(f"Email error (attempt {attempt + 1}): {str(e)}")
+            if attempt < max_retries - 1:
+                app.logger.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+                continue
+
+    app.logger.error(f"Failed to send email after {max_retries} attempts")
+    return False
 
 # ============================================================
 # EMAIL TEMPLATE FUNCTIONS
 # ============================================================
 def send_claim_confirmation(claim_data):
+    """Send claim confirmation to the user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
-    return send_email(
+    
+    app.logger.info(f"Sending confirmation email to user: {claim_data['email']}")
+    
+    result = send_email(
         recipient=claim_data['email'],
-        subject=f"🎁 Your Gift Claim Confirmation - {claim_data['claim_number']}",
+        subject=f"Your Gift Claim Confirmation - {claim_data['claim_number']}",
         template_name='claim_confirmation',
         claim=claim_data,
         payment_url=payment_url,
@@ -343,22 +370,40 @@ def send_claim_confirmation(claim_data):
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
+    
+    if result:
+        app.logger.info(f"Confirmation email sent to {claim_data['email']}")
+    else:
+        app.logger.error(f"Failed to send confirmation email to {claim_data['email']}")
+    
+    return result
 
 def send_admin_notification(claim_data):
-    return send_email(
+    """Send admin notification when new claim is submitted"""
+    app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
+    
+    result = send_email(
         recipient=ADMIN_EMAIL,
-        subject=f"📋 New Gift Claim Submitted - {claim_data['claim_number']}",
+        subject=f"New Gift Claim Submitted - {claim_data['claim_number']}",
         template_name='admin_notification',
         claim=claim_data,
         company_name=COMPANY_NAME,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
+    
+    if result:
+        app.logger.info(f"Admin notification sent for claim {claim_data['claim_number']}")
+    else:
+        app.logger.error(f"Failed to send admin notification for claim {claim_data['claim_number']}")
+    
+    return result
 
 def send_payment_receipt(claim_data, payment_data):
-    return send_email(
+    """Send payment receipt to the user"""
+    result = send_email(
         recipient=claim_data['email'],
-        subject=f"✅ Payment Confirmed - {claim_data['claim_number']}",
+        subject=f"Payment Confirmed - {claim_data['claim_number']}",
         template_name='payment_receipt',
         claim=claim_data,
         payment=payment_data,
@@ -366,12 +411,18 @@ def send_payment_receipt(claim_data, payment_data):
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
+    if result:
+        app.logger.info(f"Payment receipt sent to {claim_data['email']}")
+    else:
+        app.logger.error(f"Failed to send payment receipt to {claim_data['email']}")
+    return result
 
 def send_payment_failed(claim_data, error_message=None):
+    """Send payment failure notification to the user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
-    return send_email(
+    result = send_email(
         recipient=claim_data['email'],
-        subject=f"❌ Payment Failed - {claim_data['claim_number']}",
+        subject=f"Payment Failed - {claim_data['claim_number']}",
         template_name='payment_failed',
         claim=claim_data,
         payment_url=payment_url,
@@ -380,6 +431,11 @@ def send_payment_failed(claim_data, error_message=None):
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
+    if result:
+        app.logger.info(f"Payment failed email sent to {claim_data['email']}")
+    else:
+        app.logger.error(f"Failed to send payment failed email to {claim_data['email']}")
+    return result
 
 # ============================================================
 # ADMIN AUTHENTICATION
@@ -392,6 +448,12 @@ def admin_required(f):
             return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated_function
+
+def check_admin_password(candidate):
+    """Timing-safe comparison against the configured admin password."""
+    if not ADMIN_PASSWORD or not candidate:
+        return False
+    return hmac.compare_digest(candidate, ADMIN_PASSWORD)
 
 # ============================================================
 # UTILITY FUNCTIONS
@@ -407,8 +469,8 @@ def generate_claim_number():
             check = supabase_select('gift_claims', filters={'claim_number': claim_number})
             if check and isinstance(check, list) and len(check) == 0:
                 return claim_number
-    except:
-        pass
+    except Exception as e:
+        app.logger.error(f"generate_claim_number error: {str(e)}")
     return f"GC-{year}-{random.randint(1000, 9999):04d}"
 
 def generate_payment_reference():
@@ -427,10 +489,11 @@ def validate_phone(phone):
 # ============================================================
 @app.route('/')
 def landing():
-    return render_template('landing.html', 
+    return render_template('landing.html',
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
                          reward_name=REWARD_NAME,
+                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/terms')
@@ -438,6 +501,7 @@ def terms():
     return render_template('terms.html',
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
+                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/privacy')
@@ -446,52 +510,55 @@ def privacy():
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
                          company_email=COMPANY_EMAIL,
+                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/claim', methods=['GET', 'POST'])
+@limiter.limit("10 per hour", methods=['POST'])
 def claim_form():
     if request.method == 'GET':
         return render_template('claim_form.html',
                              company_name=COMPANY_NAME,
                              campaign_name=CAMPAIGN_NAME,
-                             reward_name=REWARD_NAME)
-    
+                             reward_name=REWARD_NAME,
+                             disclaimer=DISCLAIMER_TEXT)
+
     data = request.form
-    app.logger.info(f"📝 Form data received: {dict(data)}")
-    
+    app.logger.info(f"Form data received for claim from {request.remote_addr}")
+
     required = ['full_name', 'email', 'channel_name', 'phone', 'country', 'address', 'city', 'postal_code', 'clothing_size', 'claim_code']
     for field in required:
         if not data.get(field, '').strip():
             flash(f'Please fill in {field.replace("_", " ")}', 'error')
             return render_template('claim_form.html', company_name=COMPANY_NAME,
-                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-    
+                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
     if not validate_email(data['email']):
         flash('Please enter a valid email address', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-    
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
     if not validate_phone(data['phone']):
         flash('Please enter a valid phone number', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-    
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
     # Validate claim code
     code_result = supabase_select('claim_codes', {'code': data['claim_code'].upper()})
     if not code_result or (isinstance(code_result, dict) and 'error' in code_result) or len(code_result) == 0:
         flash('Invalid claim code. Please check your code and try again.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-    
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
     code_data = code_result[0]
     if code_data.get('status') != 'active':
         flash('This claim code has already been used or expired.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-    
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
     claim_code_id = code_data['id']
     claim_number = generate_claim_number()
-    
+
     claim_data = {
         'claim_number': claim_number,
         'full_name': data['full_name'].strip(),
@@ -510,54 +577,72 @@ def claim_form():
         'claim_date': datetime.datetime.now().isoformat(),
         'updated_at': datetime.datetime.now().isoformat()
     }
-    
+
     try:
         result = supabase_insert('gift_claims', claim_data)
         if isinstance(result, dict) and 'error' in result:
             flash('Database error. Please try again.', 'error')
             return render_template('claim_form.html', company_name=COMPANY_NAME,
-                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
-        
+                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+
         claim_id = result[0]['id'] if result and isinstance(result, list) and len(result) > 0 else str(uuid.uuid4())
         claim_data['id'] = claim_id
-        
-        # Mark code as used
+
         supabase_update('claim_codes', {
             'status': 'used',
             'used_by_claim_id': claim_id,
             'used_at': datetime.datetime.now().isoformat(),
             'current_uses': code_data.get('current_uses', 0) + 1
         }, {'id': claim_code_id})
-        
+
         session['claim_id'] = claim_id
         session['claim_number'] = claim_number
-        
+
+        # Send emails in background
         def send_emails_in_background():
             with app.app_context():
                 try:
+                    app.logger.info(f"Starting background email sending for claim {claim_number}")
+                    
+                    # Email 1: Send confirmation to user
+                    app.logger.info(f"Sending confirmation to user: {claim_data['email']}")
                     confirmation_sent = send_claim_confirmation(claim_data)
-                    admin_sent = send_admin_notification(claim_data)
-                    if confirmation_sent and admin_sent:
-                        app.logger.info(f"✅ Emails sent for claim {claim_number}")
+                    if confirmation_sent:
+                        app.logger.info(f"User confirmation sent")
                     else:
-                        app.logger.error(
-                            f"⚠️ Email send incomplete for claim {claim_number} "
-                            f"(confirmation={confirmation_sent}, admin={admin_sent})"
-                        )
+                        app.logger.error(f"User confirmation FAILED")
+                    
+                    # Email 2: Send admin notification
+                    app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
+                    admin_sent = send_admin_notification(claim_data)
+                    if admin_sent:
+                        app.logger.info(f"Admin notification sent")
+                    else:
+                        app.logger.error(f"Admin notification FAILED")
+                    
+                    # Summary
+                    if confirmation_sent and admin_sent:
+                        app.logger.info(f"All emails sent for claim {claim_number}")
+                    else:
+                        app.logger.warning(f"Partial email success for claim {claim_number}: user={confirmation_sent}, admin={admin_sent}")
+                        
                 except Exception as e:
-                    app.logger.error(f"❌ Background email error: {str(e)}")
-        
+                    app.logger.error(f"Background email error: {str(e)}")
+                    import traceback
+                    app.logger.error(traceback.format_exc())
+
         email_thread = threading.Thread(target=send_emails_in_background, daemon=True)
         email_thread.start()
-        
+        app.logger.info(f"Background email thread started for claim {claim_number}")
+
         flash('Your gift claim has been submitted successfully!', 'success')
         return redirect(url_for('review_claim', claim_id=claim_id))
-        
+
     except Exception as e:
-        app.logger.error(f"❌ Exception in claim submission: {str(e)}", exc_info=True)
+        app.logger.error(f"Exception in claim submission: {str(e)}", exc_info=True)
         flash('An error occurred. Please try again.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
 
 @app.route('/review/<claim_id>')
 def review_claim(claim_id):
@@ -565,16 +650,17 @@ def review_claim(claim_id):
     if not result or (isinstance(result, dict) and 'error' in result):
         flash('Claim not found.', 'error')
         return redirect(url_for('claim_form'))
-    
+
     claim = result[0] if isinstance(result, list) else result
     return render_template('review.html',
                          claim=claim,
-                         shipping_fee=120.00,
+                         shipping_fee=SHIPPING_FEE_USD,
                          currency='USD',
                          company_name=COMPANY_NAME,
                          company_email=COMPANY_EMAIL,
                          campaign_name=CAMPAIGN_NAME,
-                         reward_name=REWARD_NAME)
+                         reward_name=REWARD_NAME,
+                         disclaimer=DISCLAIMER_TEXT)
 
 @app.route('/payment/<claim_id>')
 def initiate_payment(claim_id):
@@ -583,24 +669,24 @@ def initiate_payment(claim_id):
         if not result or (isinstance(result, dict) and 'error' in result):
             flash('Claim not found.', 'error')
             return redirect(url_for('landing'))
-        
+
         claim = result[0] if isinstance(result, list) else result
         if claim.get('shipping_fee_paid') == 'true':
             flash('Shipping fee already paid.', 'info')
             return redirect(url_for('confirmation', claim_id=claim_id))
-        
+
         if not PAYSTACK_SECRET:
             flash('Payment system not configured.', 'error')
             return redirect(url_for('review_claim', claim_id=claim_id))
-        
+
         payment_ref = generate_payment_reference()
         supabase_update('gift_claims', {
             'payment_reference': payment_ref,
             'status': 'payment_pending',
             'updated_at': datetime.datetime.now().isoformat()
         }, {'id': claim_id})
-        
-        amount_in_kobo = int(120.00 * 1500 * 100)
+
+        amount_in_kobo = int(SHIPPING_FEE_USD * USD_TO_NGN_RATE * 100)
         paystack_data = {
             'email': claim['email'],
             'amount': amount_in_kobo,
@@ -611,26 +697,26 @@ def initiate_payment(claim_id):
                 'claim_id': claim_id,
                 'claim_number': claim['claim_number'],
                 'customer_name': claim['full_name'],
-                'usd_amount': 120.00,
-                'exchange_rate': 1500
+                'usd_amount': SHIPPING_FEE_USD,
+                'exchange_rate': USD_TO_NGN_RATE
             }
         }
-        
+
         url = "https://api.paystack.co/transaction/initialize"
         headers = {
             "Authorization": f"Bearer {PAYSTACK_SECRET}",
             "Content-Type": "application/json"
         }
-        
+
         response = requests.post(url, json=paystack_data, headers=headers, timeout=30)
         response_data = response.json()
-        
+
         if response_data['status']:
             return redirect(response_data['data']['authorization_url'])
         else:
             flash(f'Payment error: {response_data.get("message", "Please try again")}', 'error')
             return redirect(url_for('review_claim', claim_id=claim_id))
-            
+
     except Exception as e:
         app.logger.error(f"Payment error: {str(e)}")
         flash('Payment error. Please try again.', 'error')
@@ -642,40 +728,55 @@ def payment_callback():
     if not reference:
         flash('Payment reference missing.', 'error')
         return redirect(url_for('landing'))
-    
+
     url = f"https://api.paystack.co/transaction/verify/{reference}"
     headers = {
         "Authorization": f"Bearer {PAYSTACK_SECRET}",
         "Content-Type": "application/json"
     }
-    
+
     try:
         response = requests.get(url, headers=headers, timeout=30)
         data = response.json()
-        
+
         if data['status'] and data['data']['status'] == 'success':
             metadata = data['data'].get('metadata', {})
             claim_id_from_metadata = metadata.get('claim_id')
-            
+
             claim = None
             if claim_id_from_metadata:
                 result = supabase_select('gift_claims', {'id': claim_id_from_metadata})
                 if result and isinstance(result, list) and len(result) > 0:
                     claim = result[0]
-            
+
             if not claim:
                 result = supabase_select('gift_claims', {'payment_reference': reference})
                 if result and isinstance(result, list) and len(result) > 0:
                     claim = result[0]
-            
+
             if claim:
                 claim_id = claim['id']
+
+                if claim.get('shipping_fee_paid') == 'true':
+                    flash('Payment already processed.', 'info')
+                    return redirect(url_for('confirmation', claim_id=claim_id))
+
+                expected_kobo = int(SHIPPING_FEE_USD * USD_TO_NGN_RATE * 100)
+                paid_kobo = data['data'].get('amount', 0)
+                if paid_kobo != expected_kobo:
+                    app.logger.error(
+                        f"Amount mismatch for claim {claim_id}: "
+                        f"expected {expected_kobo}, got {paid_kobo}"
+                    )
+                    flash('Payment amount mismatch. Please contact support.', 'error')
+                    return redirect(url_for('landing'))
+
                 supabase_update('gift_claims', {
                     'status': 'paid',
                     'shipping_fee_paid': 'true',
                     'updated_at': datetime.datetime.now().isoformat()
                 }, {'id': claim_id})
-                
+
                 payment_data = {
                     'claim_id': claim_id,
                     'transaction_id': data['data']['reference'],
@@ -686,24 +787,40 @@ def payment_callback():
                     'payment_date': datetime.datetime.now().isoformat()
                 }
                 supabase_insert('payments', payment_data)
-                
+
                 def send_receipt_in_background():
                     with app.app_context():
                         try:
                             send_payment_receipt(claim, payment_data)
                         except Exception as e:
                             app.logger.error(f"Receipt email error: {str(e)}")
-                
+
                 threading.Thread(target=send_receipt_in_background, daemon=True).start()
+
                 flash('Payment successful! Your gift package is being prepared.', 'success')
                 return redirect(url_for('confirmation', claim_id=claim_id))
             else:
                 flash('Claim not found for this payment.', 'error')
                 return redirect(url_for('landing'))
         else:
+            claim = None
+            result = supabase_select('gift_claims', {'payment_reference': reference})
+            if result and isinstance(result, list) and len(result) > 0:
+                claim = result[0]
+                error_message = data.get('message', 'Payment verification failed')
+
+                def send_failed_in_background():
+                    with app.app_context():
+                        try:
+                            send_payment_failed(claim, error_message)
+                        except Exception as e:
+                            app.logger.error(f"Payment failed email error: {str(e)}")
+
+                threading.Thread(target=send_failed_in_background, daemon=True).start()
+
             flash('Payment verification failed. Please try again.', 'error')
             return redirect(url_for('landing'))
-            
+
     except Exception as e:
         app.logger.error(f"Callback error: {str(e)}")
         flash('Payment verification error. Please contact support.', 'error')
@@ -715,7 +832,7 @@ def confirmation(claim_id):
     if not result or (isinstance(result, dict) and 'error' in result):
         flash('Claim not found.', 'error')
         return redirect(url_for('landing'))
-    
+
     claim = result[0] if isinstance(result, list) else result
     return render_template('confirmation.html',
                          claim=claim,
@@ -723,6 +840,7 @@ def confirmation(claim_id):
                          company_email=COMPANY_EMAIL,
                          campaign_name=CAMPAIGN_NAME,
                          reward_name=REWARD_NAME,
+                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/health')
@@ -739,13 +857,14 @@ def health():
 # ROUTES - ADMIN
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
+@limiter.limit("10 per hour", methods=['POST'])
 def admin_login():
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
-    
+
     if request.method == 'POST':
-        password = request.form.get('password')
-        if password == ADMIN_PASSWORD:
+        password = request.form.get('password', '')
+        if check_admin_password(password):
             session.clear()
             session['admin_logged_in'] = True
             session['admin_user'] = 'Administrator'
@@ -754,8 +873,8 @@ def admin_login():
             return redirect(url_for('admin_dashboard'))
         else:
             flash('Invalid password', 'error')
-    
-    return render_template('admin/login.html', company_name=COMPANY_NAME)
+
+    return render_template('admin/login.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT)
 
 @app.route('/admin/logout')
 def admin_logout():
@@ -767,14 +886,26 @@ def admin_logout():
 @admin_required
 def admin_dashboard():
     try:
-        claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
-        claims = claims_result if isinstance(claims_result, list) else []
-        
+        claims_result = supabase_select('gift_claims', order_by='updated_at.desc', limit=50)
+
+        if isinstance(claims_result, dict) and 'error' in claims_result:
+            app.logger.error(f"Supabase error: {claims_result.get('detail', 'Unknown error')}")
+            claims = []
+        else:
+            claims = claims_result if isinstance(claims_result, list) else []
+
         total_claims = len(claims)
-        total_paid = len([c for c in claims if c.get('shipping_fee_paid') == 'true'])
-        total_pending = len([c for c in claims if c.get('status') == 'pending'])
-        total_revenue = sum([120.00 for c in claims if c.get('shipping_fee_paid') == 'true'])
-        
+        total_paid = 0
+        total_pending = 0
+        total_revenue = 0.0
+
+        for claim in claims:
+            if claim.get('shipping_fee_paid') == 'true':
+                total_paid += 1
+                total_revenue += SHIPPING_FEE_USD
+            if claim.get('status') == 'pending':
+                total_pending += 1
+
         return render_template('admin/dashboard.html',
                              company_name=COMPANY_NAME,
                              total_claims=total_claims,
@@ -782,13 +913,14 @@ def admin_dashboard():
                              total_pending=total_pending,
                              total_revenue=total_revenue,
                              recent_claims=claims[:10],
+                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
         flash('Error loading dashboard', 'error')
         return render_template('admin/dashboard.html', company_name=COMPANY_NAME,
                              total_claims=0, total_paid=0, total_pending=0, total_revenue=0,
-                             recent_claims=[], current_year=datetime.datetime.now().year)
+                             recent_claims=[], disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
 
 @app.route('/admin/claims')
 @admin_required
@@ -796,19 +928,19 @@ def admin_claims():
     try:
         status = request.args.get('status', '')
         search = request.args.get('search', '')
-        
-        claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
+
+        claims_result = supabase_select('gift_claims', order_by='updated_at.desc', limit=200)
         claims = claims_result if isinstance(claims_result, list) else []
-        
+
         if status:
             claims = [c for c in claims if c.get('status') == status]
         if search:
             search_lower = search.lower()
-            claims = [c for c in claims if 
-                     search_lower in c.get('full_name', '').lower() or 
+            claims = [c for c in claims if
+                     search_lower in c.get('full_name', '').lower() or
                      search_lower in c.get('email', '').lower() or
                      search_lower in c.get('claim_number', '').lower()]
-        
+
         status_counts = {
             'all': len(claims),
             'pending': len([c for c in claims if c.get('status') == 'pending']),
@@ -817,18 +949,20 @@ def admin_claims():
             'delivered': len([c for c in claims if c.get('status') == 'delivered']),
             'cancelled': len([c for c in claims if c.get('status') == 'cancelled'])
         }
-        
+
         return render_template('admin/claims.html',
                              company_name=COMPANY_NAME,
-                             claims=claims,
+                             claims=claims[:100],
                              status_counts=status_counts,
                              current_status=status,
+                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Claims error: {str(e)}")
         flash('Error loading claims', 'error')
         return render_template('admin/claims.html', company_name=COMPANY_NAME,
-                             claims=[], status_counts={}, current_status='', current_year=datetime.datetime.now().year)
+                             claims=[], status_counts={}, current_status='',
+                             disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
 
 @app.route('/admin/claim/<claim_id>')
 @admin_required
@@ -838,17 +972,18 @@ def admin_claim_detail(claim_id):
         if not result or (isinstance(result, dict) and 'error' in result):
             flash('Claim not found', 'error')
             return redirect(url_for('admin_claims'))
-        
+
         claim = result[0] if isinstance(result, list) else result
         payment = None
         payment_result = supabase_select('payments', {'claim_id': claim_id})
         if payment_result and isinstance(payment_result, list) and len(payment_result) > 0:
             payment = payment_result[0]
-        
+
         return render_template('admin/claim_detail.html',
                              company_name=COMPANY_NAME,
                              claim=claim,
                              payment=payment,
+                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Claim detail error: {str(e)}")
@@ -861,7 +996,7 @@ def admin_update_claim(claim_id):
     try:
         action = request.form.get('action')
         tracking_number = request.form.get('tracking_number', '')
-        
+
         update_data = {'updated_at': datetime.datetime.now().isoformat()}
         if action == 'mark_shipped':
             update_data['status'] = 'shipped'
@@ -877,10 +1012,9 @@ def admin_update_claim(claim_id):
         elif action == 'mark_cancelled':
             update_data['status'] = 'cancelled'
             flash('Claim cancelled', 'warning')
-        
-        if update_data:
-            supabase_update('gift_claims', update_data, {'id': claim_id})
-        
+
+        supabase_update('gift_claims', update_data, {'id': claim_id})
+
         return redirect(url_for('admin_claim_detail', claim_id=claim_id))
     except Exception as e:
         app.logger.error(f"Update claim error: {str(e)}")
@@ -893,11 +1027,11 @@ def admin_export():
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
-        
+
         si = StringIO()
         cw = csv.writer(si)
         cw.writerow(['Claim Number', 'Name', 'Email', 'Channel', 'Phone', 'Country', 'Address', 'City', 'Postal Code', 'Clothing Size', 'Status', 'Payment', 'Created At'])
-        
+
         for claim in claims:
             cw.writerow([
                 claim.get('claim_number', ''),
@@ -914,7 +1048,7 @@ def admin_export():
                 claim.get('shipping_fee_paid', ''),
                 claim.get('claim_date', '')[:10] if claim.get('claim_date') else ''
             ])
-        
+
         output = si.getvalue()
         return Response(output, mimetype='text/csv',
                        headers={'Content-Disposition': f'attachment; filename=gift_claims_{datetime.datetime.now().strftime("%Y%m%d")}.csv'})
@@ -927,39 +1061,36 @@ def admin_export():
 @admin_required
 def admin_codes():
     try:
-        codes_result = supabase_select('claim_codes', order_by='created_at.desc')
-        
-        if codes_result and isinstance(codes_result, list):
-            codes = codes_result
-            app.logger.info(f"✅ Found {len(codes)} codes")
-        else:
-            codes = []
-        
-        for code in codes:
+        codes_result = supabase_select('claim_codes', order_by='created_at.desc', limit=200)
+
+        codes = codes_result if codes_result and isinstance(codes_result, list) else []
+
+        for code in codes[:50]:
             if code.get('used_by_claim_id'):
                 claim_result = supabase_select('gift_claims', {'id': code.get('used_by_claim_id')})
                 if claim_result and isinstance(claim_result, list) and len(claim_result) > 0:
                     code['used_by_claim'] = claim_result[0]
-        
+
         total_codes = len(codes)
         active_codes = len([c for c in codes if c.get('status') == 'active'])
         used_codes = len([c for c in codes if c.get('status') == 'used'])
         expired_codes = len([c for c in codes if c.get('status') == 'expired'])
-        
+
         return render_template('admin/codes.html',
                              company_name=COMPANY_NAME,
-                             codes=codes,
+                             codes=codes[:100],
                              total_codes=total_codes,
                              active_codes=active_codes,
                              used_codes=used_codes,
                              expired_codes=expired_codes,
+                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Codes error: {str(e)}")
         flash('Error loading codes', 'error')
         return render_template('admin/codes.html', company_name=COMPANY_NAME,
                              codes=[], total_codes=0, active_codes=0, used_codes=0, expired_codes=0,
-                             current_year=datetime.datetime.now().year)
+                             disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
 
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
@@ -968,21 +1099,21 @@ def admin_generate_codes():
         count = min(int(request.form.get('count', 10)), 100)
         description = request.form.get('description', '')
         expires_days = int(request.form.get('expires_days', 0))
-        
+
         codes = generate_bulk_codes(count)
         inserted = 0
-        
+
         for code_data in codes:
             if description:
                 code_data['description'] = description
             if expires_days > 0:
                 code_data['expires_at'] = (datetime.datetime.now() + datetime.timedelta(days=expires_days)).isoformat()
-            
+
             result = supabase_insert('claim_codes', code_data)
             if not (isinstance(result, dict) and 'error' in result):
                 inserted += 1
-        
-        flash(f'✅ {inserted} claim codes generated successfully!', 'success')
+
+        flash(f'{inserted} claim codes generated successfully!', 'success')
         return redirect(url_for('admin_codes'))
     except Exception as e:
         app.logger.error(f"Generate codes error: {str(e)}")
@@ -999,22 +1130,14 @@ def admin_delete_code(code_id):
             if code.get('status') == 'used':
                 flash('Cannot delete a used code', 'error')
                 return redirect(url_for('admin_codes'))
-            
-            url = f"{SUPABASE_URL}/rest/v1/claim_codes?id=eq.{code_id}"
-            headers = {
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Content-Type": "application/json"
-            }
-            response = requests.delete(url, headers=headers, timeout=30)
-            
-            if response.status_code in [200, 204]:
+
+            if supabase_delete('claim_codes', code_id):
                 flash('Code deleted successfully', 'success')
             else:
                 flash('Error deleting code', 'error')
         else:
             flash('Code not found', 'error')
-        
+
         return redirect(url_for('admin_codes'))
     except Exception as e:
         app.logger.error(f"Delete code error: {str(e)}")
@@ -1027,23 +1150,15 @@ def admin_bulk_delete_codes():
     try:
         code_ids = request.form.getlist('code_ids')
         deleted = 0
-        
+
         for code_id in code_ids:
             result = supabase_select('claim_codes', {'id': code_id})
             if result and isinstance(result, list) and len(result) > 0:
                 code = result[0]
-                if code.get('status') != 'used':
-                    url = f"{SUPABASE_URL}/rest/v1/claim_codes?id=eq.{code_id}"
-                    headers = {
-                        "apikey": SUPABASE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_KEY}",
-                        "Content-Type": "application/json"
-                    }
-                    response = requests.delete(url, headers=headers, timeout=30)
-                    if response.status_code in [200, 204]:
-                        deleted += 1
-        
-        flash(f'✅ {deleted} code(s) deleted successfully', 'success')
+                if code.get('status') != 'used' and supabase_delete('claim_codes', code_id):
+                    deleted += 1
+
+        flash(f'{deleted} code(s) deleted successfully', 'success')
         return redirect(url_for('admin_codes'))
     except Exception as e:
         app.logger.error(f"Bulk delete error: {str(e)}")
@@ -1056,7 +1171,7 @@ def admin_test_email():
     try:
         result = send_email(
             recipient=ADMIN_EMAIL,
-            subject=f"✅ Test Email - {CAMPAIGN_NAME}",
+            subject=f"Test Email - {CAMPAIGN_NAME}",
             template_name='claim_confirmation',
             claim={
                 'full_name': 'Test User',
@@ -1070,36 +1185,70 @@ def admin_test_email():
             reward_name=REWARD_NAME,
             current_year=datetime.datetime.now().year
         )
-        
+
         if result:
-            flash('✅ Test email sent! Check your inbox.', 'success')
+            flash('Test email sent! Check your inbox.', 'success')
         else:
-            flash('❌ Email failed. Check logs.', 'error')
-        
+            flash('Email failed. Check logs.', 'error')
+
         return redirect(url_for('admin_dashboard'))
     except Exception as e:
-        flash(f'❌ Error: {str(e)}', 'error')
+        flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/check-session')
+@admin_required
 def admin_check_session():
     return jsonify({
         'logged_in': session.get('admin_logged_in', False),
-        'session_keys': list(session.keys()),
-        'session': dict(session)
+        'session_keys': list(session.keys())
     })
+
+# ============================================================
+# RESEND EMAILS (Manual Trigger)
+# ============================================================
+@app.route('/admin/resend-emails/<claim_id>')
+@admin_required
+def admin_resend_emails(claim_id):
+    """Manually resend emails for a claim"""
+    try:
+        result = supabase_select('gift_claims', {'id': claim_id})
+        if not result or (isinstance(result, dict) and 'error' in result):
+            flash('Claim not found', 'error')
+            return redirect(url_for('admin_claims'))
+
+        claim = result[0] if isinstance(result, list) else result
+
+        confirmation_sent = send_claim_confirmation(claim)
+        admin_sent = send_admin_notification(claim)
+
+        if confirmation_sent and admin_sent:
+            flash('Emails resent successfully!', 'success')
+        elif confirmation_sent:
+            flash('Confirmation email sent, but admin notification failed.', 'warning')
+        elif admin_sent:
+            flash('Admin notification sent, but confirmation email failed.', 'warning')
+        else:
+            flash('Both emails failed to send. Check logs.', 'error')
+
+        return redirect(url_for('admin_claim_detail', claim_id=claim_id))
+
+    except Exception as e:
+        app.logger.error(f"Resend emails error: {str(e)}")
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('admin_claims'))
 
 # ============================================================
 # ERROR HANDLERS
 # ============================================================
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('landing.html', company_name=COMPANY_NAME), 404
+    return render_template('landing.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT), 404
 
 @app.errorhandler(500)
 def internal_error(e):
     app.logger.error(f"500 error: {str(e)}")
-    return render_template('error.html', company_name=COMPANY_NAME), 500
+    return render_template('error.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT), 500
 
 # ============================================================
 # CONTEXT PROCESSOR
@@ -1111,6 +1260,7 @@ def inject_globals():
         'company_email': COMPANY_EMAIL,
         'campaign_name': CAMPAIGN_NAME,
         'reward_name': REWARD_NAME,
+        'disclaimer': DISCLAIMER_TEXT,
         'current_year': datetime.datetime.now().year
     }
 
@@ -1119,14 +1269,13 @@ def inject_globals():
 # ============================================================
 if __name__ == '__main__':
     print("=" * 50)
-    print(f"🎁 YouTube Creator Gift Box Campaign")
-    print(f"📍 http://localhost:5000")
-    print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
-    print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Gmail API: {'✅ Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else '❌ Not Configured'}")
-    print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
+    print("YouTube Creator Gift Box Campaign")
+    print("http://localhost:5000")
+    print(f"Supabase: {'Configured' if SUPABASE_URL and SUPABASE_KEY else 'Not Configured'}")
+    print(f"Paystack: {'Configured' if PAYSTACK_SECRET else 'Not Configured'}")
+    print(f"Gmail API: {'Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else 'Not Configured'}")
     print("=" * 50)
-    print("\n⚠️ IMPORTANT DISCLAIMER:")
+    print("\nDISCLAIMER:")
     print("   This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.")
     print("=" * 50)
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=(os.getenv('FLASK_ENV') != 'production'), host='0.0.0.0', port=int(os.getenv('PORT', 5000)))

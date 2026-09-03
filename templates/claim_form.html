@@ -489,6 +489,8 @@
             </div>
 
             <form method="POST" action="{{ url_for('claim_form') }}" class="claim-form" id="claimForm" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
                 <div class="form-grid">
                     <!-- Full Name -->
                     <div class="form-group">
@@ -653,7 +655,6 @@
             const privacyCheck = document.getElementById('privacy_consent');
             if (!privacyCheck.checked) {
                 e.preventDefault();
-                // Show error feedback
                 privacyCheck.focus();
                 privacyCheck.style.outline = '2px solid var(--error)';
                 privacyCheck.style.outlineOffset = '2px';
@@ -664,7 +665,6 @@
                 return;
             }
             
-            // Disable button and show loading state
             submitBtn.disabled = true;
             submitBtn.classList.add('btn-loading');
             submitBtn.innerHTML = '<i class="fas fa-spinner"></i> Submitting...';

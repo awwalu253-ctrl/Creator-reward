@@ -96,6 +96,7 @@
             <p>Enter your password to access the dashboard</p>
         </div>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="password"><i class="fas fa-lock"></i> Admin Password</label>
                 <input type="password" id="password" name="password" placeholder="Enter admin password" required>

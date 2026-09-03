@@ -84,6 +84,8 @@
         </div>
 
         <form method="POST" action="{{ url_for('admin_generate_codes') }}" class="generate-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <div class="form-group"><label for="count">Number of Codes</label><input type="number" id="count" name="count" value="10" min="1" max="100" required></div>
             <div class="form-group"><label for="description">Description</label><input type="text" id="description" name="description" placeholder="e.g., VIP Campaign 2026"></div>
             <div class="form-group"><label for="expires_days">Expires After</label><select id="expires_days" name="expires_days"><option value="0">Never Expires</option><option value="7">7 Days</option><option value="14">14 Days</option><option value="30">30 Days</option><option value="60">60 Days</option><option value="90">90 Days</option></select></div>
@@ -101,6 +103,8 @@
 
         <div class="table-responsive">
             <form id="bulkDeleteForm" method="POST" action="{{ url_for('admin_bulk_delete_codes') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                 <table class="admin-table">
                     <thead><tr><th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes()"></th><th>Code</th><th>Status</th><th>Description</th><th>Created</th><th>Used By</th><th>Actions</th></tr></thead>
                     <tbody>
@@ -140,6 +144,7 @@
                             <td>
                                 {% if code.status != 'used' %}
                                 <form method="POST" action="{{ url_for('admin_delete_code', code_id=code.id) }}" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="action-btn delete" onclick="return confirm('Delete this code?')">
                                         <i class="fas fa-trash"></i>
                                     </button>
