@@ -309,8 +309,15 @@ def send_email(recipient, subject, template_name, **kwargs):
             message = MIMEMultipart('alternative')
             message['to'] = recipient
             message['subject'] = subject
-            message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+            
+            # Use the MAIL_DEFAULT_SENDER directly (already includes display name)
+            message['from'] = MAIL_DEFAULT_SENDER
             message['reply-to'] = COMPANY_EMAIL
+            
+            # Add headers to improve deliverability
+            message['X-Mailer'] = 'Creator Rewards Platform'
+            message['X-Priority'] = '3'
+            message['List-Unsubscribe'] = f'<mailto:{COMPANY_EMAIL}?subject=Unsubscribe>'
 
             claim = kwargs.get('claim', {})
             plain_text = f"""
@@ -322,7 +329,13 @@ Email: {claim.get('email', 'N/A')}
 
 This is an automated message from {COMPANY_NAME}.
 
+If you did not request this email, please ignore it.
+
 For support: {COMPANY_EMAIL}
+
+---
+{COMPANY_NAME}
+Not affiliated with YouTube or Google
             """
             text_part = MIMEText(plain_text, 'plain')
             html_part = MIMEText(html_content, 'html')
@@ -365,7 +378,8 @@ def send_claim_confirmation(claim_data):
         template_name='claim_confirmation',
         claim=claim_data,
         payment_url=payment_url,
-        company_name=COMPANY_NAME,
+        company_name=COMPANY_NAME,  # This will be used in the email template
+        company_email=COMPANY_EMAIL,
         campaign_name=CAMPAIGN_NAME,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year

@@ -2,50 +2,74 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎁 Gift Claim Confirmation</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-        .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .claim-number { background: #dc2626; color: white; padding: 15px; border-radius: 8px; text-align: center; font-size: 24px; margin: 20px 0; letter-spacing: 2px; }
-        .btn { display: inline-block; background: #dc2626; color: white; padding: 14px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
-        .btn:hover { opacity: 0.9; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #888; font-size: 12px; }
-        .disclaimer { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #991b1b; }
-        .support { text-align: center; margin-top: 20px; padding: 15px; background: #fef2f2; border-radius: 8px; }
-    </style>
+    <title>Claim Confirmation</title>
 </head>
-<body>
-    <div class="header">
-        <h1>🎉 Gift Claim Confirmation</h1>
-        <p>Your creator gift package claim has been received!</p>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    <div style="background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">🎁 {{ company_name }}</h1>
+        <p style="margin: 5px 0 0; opacity: 0.9;">Your Gift Claim Confirmation</p>
     </div>
-    <div class="content">
-        <h2>Hello {{ claim.full_name }},</h2>
-        <p>Thank you for claiming your <strong>{{ reward_name }}</strong> from <strong>{{ company_name }}</strong>.</p>
-        <div class="claim-number">
-            <span style="font-size: 14px; display: block; opacity: 0.8;">Your Claim Number:</span>
-            {{ claim.claim_number }}
+    
+    <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none;">
+        <h2 style="color: #1a1a2e; margin-top: 0;">Thank You, {{ claim.full_name }}!</h2>
+        
+        <p style="color: #555; line-height: 1.6;">Your claim has been received and is being processed. Here are your claim details:</p>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e5e7eb;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Claim Number</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-weight: 700; color: #dc2626;">{{ claim.claim_number }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Full Name</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">{{ claim.full_name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Channel</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">{{ claim.channel_name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Country</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">{{ claim.country }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Clothing Size</td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;"><strong>{{ claim.clothing_size }}</strong></td>
+                </tr>
+            </table>
         </div>
-        <p><strong>Channel:</strong> {{ claim.channel_name }}</p>
-        <p><strong>Clothing Size:</strong> {{ claim.clothing_size }}</p>
-        <h3>📋 What's Next?</h3>
-        <ol>
-            <li><strong>Pay Shipping Fee:</strong> $120.00</li>
-            <li><strong>Click below</strong> to complete your payment</li>
-            <li>Delivery: <strong>5-7 business days</strong></li>
-        </ol>
-        <div style="text-align: center;">
-            <a href="{{ payment_url }}" class="btn">💳 Pay Shipping Fee ($120.00)</a>
+
+        <div style="background: #fef3c7; padding: 16px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; color: #92400e; font-size: 14px;">
+                <strong>📦 What's Next?</strong> To receive your gift package, please pay the shipping fee of 
+                <strong>${{ shipping_fee }}</strong>. Your package will be shipped once payment is confirmed.
+            </p>
         </div>
-        <div class="support">
-            <p><strong>❓ Need Help?</strong><br>
-            <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ payment_url }}" 
+               style="background: #dc2626; color: white; padding: 14px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-block; font-size: 16px;">
+                Pay Shipping Fee Now
+            </a>
         </div>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <p style="color: #666; font-size: 14px; line-height: 1.6;">
+            <strong>Need help?</strong> Contact us at 
+            <a href="mailto:{{ company_email }}" style="color: #dc2626;">{{ company_email }}</a>
+        </p>
+        
+        <p style="color: #999; font-size: 12px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+            💡 <strong>Tip:</strong> Add <strong>{{ company_email }}</strong> to your address book to ensure you receive all future updates about your gift.
+        </p>
     </div>
-    <div class="footer">
-        <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+    
+    <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
+        <p style="margin: 0;">{{ company_name }} | {{ company_email }}</p>
+        <p style="margin: 5px 0 0;">© {{ current_year }} {{ company_name }}. All rights reserved.</p>
+        <p style="margin: 5px 0 0; color: #ccc; font-size: 10px;">This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.</p>
     </div>
 </body>
 </html>
