@@ -1,138 +1,382 @@
 {% extends "base.html" %}
 
-{% block title %}🎁 Claim Your Creator Gift Package{% endblock %}
+{% block title %}Claim Your Creator Gift Package{% endblock %}
 
 {% block content %}
 <style>
+    /* ========================================
+       VIDEO-PLATFORM INSPIRED COLOR SCHEME
+       ======================================== */
+    :root {
+        /* Primary Accent - Bold Red (YouTube inspired) */
+        --primary: #E62117;
+        --primary-hover: #CC0000;
+        --primary-light: #FFE5E5;
+        
+        /* Backgrounds */
+        --bg-primary: #FFFFFF;
+        --bg-secondary: #F1F1F1;
+        --bg-dark: #0F0F0F;
+        
+        /* Text Colors */
+        --text-primary: #0F0F0F;
+        --text-secondary: #606060;
+        --text-white: #FFFFFF;
+        
+        /* Borders & Dividers */
+        --border-light: #E5E5E5;
+        --border-dark: #3D3D3D;
+        
+        /* Status Colors */
+        --success: #28A745;
+        --error: #E62117;
+        --warning: #F9A825;
+        --info: #1A73E8;
+        
+        /* Shadows & Effects */
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+        --shadow-hover: 0 12px 40px rgba(230, 33, 23, 0.15);
+        
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+        
+        /* Transitions */
+        --transition-fast: 0.15s ease;
+        --transition-base: 0.25s ease;
+        --transition-slow: 0.4s ease;
+    }
+
+    /* ========================================
+       HERO SECTION
+       ======================================== */
     .hero-section {
-        padding: 80px 0;
-        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #fef2f2 100%);
+        padding: 100px 0 80px;
+        background: var(--bg-primary);
         min-height: 80vh;
         display: flex;
         align-items: center;
+        position: relative;
+        overflow: hidden;
     }
+    
+    /* Subtle background accent */
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(230, 33, 23, 0.03) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    
+    .hero-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(230, 33, 23, 0.02) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    
     .hero-content {
         text-align: center;
         max-width: 900px;
         margin: 0 auto;
+        position: relative;
+        z-index: 1;
     }
+    
+    /* ========================================
+       HERO BADGE
+       ======================================== */
     .hero-badge {
-        display: inline-block;
-        background: var(--primary);
-        color: white;
-        padding: 8px 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--primary-light);
+        color: var(--primary);
+        padding: 6px 20px;
         border-radius: 50px;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         font-weight: 600;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
+        border: 1px solid rgba(230, 33, 23, 0.15);
     }
+    
+    .hero-badge i {
+        font-size: 0.85rem;
+    }
+    
+    /* ========================================
+       HERO TITLE
+       ======================================== */
     .hero-title {
-        font-size: 3.5rem;
-        font-weight: 900;
-        line-height: 1.1;
+        font-size: 3.8rem;
+        font-weight: 800;
+        line-height: 1.08;
         margin-bottom: 20px;
-        color: var(--secondary);
+        color: var(--text-primary);
+        letter-spacing: -1.5px;
     }
+    
     .hero-title .highlight {
         color: var(--primary);
+        position: relative;
     }
+    
+    .hero-title .highlight::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        right: 0;
+        height: 8px;
+        background: rgba(230, 33, 23, 0.12);
+        border-radius: 4px;
+        z-index: -1;
+    }
+    
+    /* ========================================
+       HERO SUBTITLE
+       ======================================== */
     .hero-subtitle {
         font-size: 1.2rem;
-        color: var(--text-light);
-        max-width: 650px;
+        color: var(--text-secondary);
+        max-width: 620px;
         margin: 0 auto 40px;
         line-height: 1.8;
+        font-weight: 400;
     }
+    
+    /* ========================================
+       GIFT GRID
+       ======================================== */
     .gift-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin: 40px 0;
+        gap: 16px;
+        margin: 48px 0 40px;
         text-align: left;
     }
+    
     .gift-item {
-        background: white;
-        padding: 20px 24px;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--gray);
-        transition: var(--transition);
+        background: var(--bg-secondary);
+        padding: 18px 20px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+        transition: var(--transition-base);
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
+        cursor: default;
     }
+    
     .gift-item:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-hover);
+        transform: translateY(-2px);
         border-color: var(--primary);
+        box-shadow: var(--shadow-hover);
+        background: var(--bg-primary);
     }
+    
     .gift-item i {
-        font-size: 2rem;
+        font-size: 1.5rem;
         color: var(--primary);
-        min-width: 40px;
+        min-width: 36px;
         text-align: center;
+        flex-shrink: 0;
     }
+    
     .gift-item .gift-text {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 400;
+        color: var(--text-secondary);
+        line-height: 1.4;
     }
+    
     .gift-item .gift-text strong {
         display: block;
         font-weight: 700;
-        color: var(--secondary);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        margin-bottom: 2px;
     }
+    
+    /* ========================================
+       CTA BUTTON
+       ======================================== */
     .cta-section {
         margin-top: 40px;
     }
+    
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 40px;
+        background: var(--primary);
+        color: var(--text-white);
+        border: none;
+        border-radius: 50px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition-base);
+        text-decoration: none;
+        box-shadow: 0 4px 16px rgba(230, 33, 23, 0.25);
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(230, 33, 23, 0.35);
+    }
+    
+    .btn-primary i {
+        font-size: 1.1rem;
+    }
+    
+    .btn-large {
+        padding: 18px 48px;
+        font-size: 1.1rem;
+    }
+    
+    /* ========================================
+       TRUST BADGES
+       ======================================== */
     .trust-badges {
         display: flex;
         justify-content: center;
-        gap: 40px;
+        gap: 48px;
         flex-wrap: wrap;
-        margin-top: 30px;
+        margin-top: 40px;
+        padding-top: 32px;
+        border-top: 1px solid var(--border-light);
     }
+    
     .trust-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        color: var(--text-light);
-        font-size: 0.9rem;
+        gap: 10px;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
         font-weight: 500;
+        transition: var(--transition-fast);
     }
+    
+    .trust-item:hover {
+        color: var(--text-primary);
+    }
+    
     .trust-item i {
         color: var(--primary);
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        opacity: 0.8;
     }
+    
+    /* ========================================
+       RESPONSIVE BREAKPOINTS
+       ======================================== */
+    @media (max-width: 1024px) {
+        .hero-title {
+            font-size: 3rem;
+        }
+    }
+    
     @media (max-width: 768px) {
+        .hero-section {
+            padding: 60px 0 50px;
+        }
+        
         .hero-title {
             font-size: 2.2rem;
+            letter-spacing: -0.5px;
         }
+        
         .hero-subtitle {
             font-size: 1rem;
+            padding: 0 10px;
         }
+        
         .gift-grid {
             grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
+        
         .gift-item {
             padding: 14px 16px;
         }
+        
         .gift-item i {
-            font-size: 1.5rem;
-            min-width: 30px;
+            font-size: 1.25rem;
+            min-width: 28px;
+        }
+        
+        .gift-item .gift-text {
+            font-size: 0.8rem;
+        }
+        
+        .gift-item .gift-text strong {
+            font-size: 0.85rem;
+        }
+        
+        .btn-primary {
+            padding: 14px 32px;
+            font-size: 0.95rem;
+        }
+        
+        .btn-large {
+            padding: 16px 36px;
+            font-size: 1rem;
+        }
+        
+        .trust-badges {
+            gap: 24px;
+        }
+        
+        .trust-item {
+            font-size: 0.8rem;
         }
     }
+    
     @media (max-width: 480px) {
+        .hero-title {
+            font-size: 1.7rem;
+        }
+        
         .gift-grid {
             grid-template-columns: 1fr;
+            gap: 10px;
         }
+        
         .trust-badges {
             gap: 16px;
+            flex-direction: column;
+            align-items: center;
         }
-        .hero-title {
-            font-size: 1.8rem;
+        
+        .hero-badge {
+            font-size: 0.65rem;
+            padding: 4px 14px;
+        }
+        
+        .btn-primary {
+            padding: 14px 28px;
+            font-size: 0.9rem;
+            width: 100%;
+            justify-content: center;
         }
     }
 </style>
@@ -141,11 +385,12 @@
     <div class="container">
         <div class="hero-content">
             <div class="hero-badge">
-                <i class="fas fa-gift"></i> Creator Appreciation Program
+                <i class="fas fa-gift"></i>
+                Creator Appreciation Program
             </div>
             
             <h1 class="hero-title">
-                🎁 A Special <span class="highlight">Gift Package</span> Awaits You!
+                A Special <span class="highlight">Gift Package</span> Awaits You
             </h1>
             
             <p class="hero-subtitle">
@@ -199,23 +444,24 @@
             </div>
 
             <div class="cta-section">
-                <a href="{{ url_for('claim_form') }}" class="btn btn-primary btn-large">
-                    <i class="fas fa-gift"></i> Claim Your Gift Package
+                <a href="{{ url_for('claim_form') }}" class="btn-primary btn-large">
+                    <i class="fas fa-gift"></i>
+                    Claim Your Gift Package
                 </a>
             </div>
 
             <div class="trust-badges">
                 <div class="trust-item">
                     <i class="fas fa-lock"></i>
-                    <span>Secure & Encrypted</span>
+                    Secure & Encrypted
                 </div>
                 <div class="trust-item">
                     <i class="fas fa-shield-alt"></i>
-                    <span>100% Legitimate</span>
+                    100% Legitimate
                 </div>
                 <div class="trust-item">
                     <i class="fas fa-headset"></i>
-                    <span>24/7 Support</span>
+                    24/7 Support
                 </div>
             </div>
         </div>
