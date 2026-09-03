@@ -18,6 +18,7 @@ import random
 import string
 import urllib3
 from io import StringIO
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
@@ -281,11 +282,17 @@ def get_gmail_service():
     return None
 
 def send_email(recipient, subject, template_name, **kwargs):
-    """Send email using Gmail API (No SMTP)"""
+    """Send email using Gmail App Password (SMTP SSL)"""
     try:
-        service = get_gmail_service()
-        if not service:
-            app.logger.error("❌ Cannot send email - no Gmail service")
+        # Get SMTP config from environment
+        MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+        MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
+        MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+        MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+        MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
+        
+        if not MAIL_USERNAME or not MAIL_PASSWORD:
+            app.logger.error("❌ Email credentials not configured")
             return False
         
         # Render HTML content
@@ -293,11 +300,11 @@ def send_email(recipient, subject, template_name, **kwargs):
             html_content = render_template(f'emails/{template_name}.html', **kwargs)
         
         # Create message
-        message = MIMEMultipart('alternative')
-        message['to'] = recipient
-        message['subject'] = subject
-        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        message['reply-to'] = COMPANY_EMAIL
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        msg['To'] = recipient
+        msg['Reply-To'] = COMPANY_EMAIL
         
         # Plain text version
         claim = kwargs.get('claim', {})
@@ -314,23 +321,30 @@ For support: {COMPANY_EMAIL}
         """
         text_part = MIMEText(plain_text, 'plain')
         html_part = MIMEText(html_content, 'html')
-        message.attach(text_part)
-        message.attach(html_part)
+        msg.attach(text_part)
+        msg.attach(html_part)
         
-        # Encode and send
-        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+        app.logger.info(f"📧 Sending email to {recipient} via SMTP SSL (port 465)")
         
-        service.users().messages().send(
-            userId='me',
-            body={'raw': raw_message}
-        ).execute()
+        # Use SSL connection (port 465)
+        server = smtplib.SMTP_SSL(MAIL_SERVER, MAIL_PORT, timeout=30)
+        server.login(MAIL_USERNAME, MAIL_PASSWORD)
+        server.send_message(msg)
+        server.quit()
         
-        app.logger.info(f"✅ Email sent via Gmail API to {recipient}: {subject}")
+        app.logger.info(f"✅ Email sent to {recipient}: {subject}")
         return True
         
-    except Exception as e:
-        app.logger.error(f"❌ Gmail API error: {str(e)}")
+    except smtplib.SMTPAuthenticationError as e:
+        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
         return False
+    except smtplib.SMTPServerDisconnected as e:
+        app.logger.error(f"❌ SMTP Server disconnected: {str(e)}")
+        return False
+    except Exception as e:
+        app.logger.error(f"❌ SMTP error: {str(e)}")
+        return False
+
 
 # ============================================================
 # EMAIL TEMPLATE FUNCTIONS
