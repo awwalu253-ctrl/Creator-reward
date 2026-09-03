@@ -17,7 +17,6 @@ import csv
 import random
 import string
 import urllib3
-import smtplib
 from io import StringIO
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -30,7 +29,7 @@ import requests
 import logging
 from logging.handlers import RotatingFileHandler
 
-# Google API imports (keep for potential future use, but not used)
+# Google API imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -64,7 +63,10 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
 PAYSTACK_PUBLIC = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_SECRET = os.getenv('PAYSTACK_SECRET_KEY')
-PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'http://localhost:5000/payment/callback')
+PAYSTACK_CALLBACK = os.getenv('PAYSTACK_CALLBACK_URL', 'https://creator-reward.onrender.com/payment/callback')
+
+# Gmail API Scopes
+SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'Creator Rewards')
 COMPANY_EMAIL = os.getenv('COMPANY_EMAIL', 'support@creatorrewards.com')
@@ -73,19 +75,20 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
 CAMPAIGN_NAME = os.getenv('CAMPAIGN_NAME', 'YouTube Creator Gift Box 2026')
 REWARD_NAME = os.getenv('REWARD_NAME', 'Creator Gift Package')
 
-# ============================================================
-# EMAIL CONFIGURATION (SMTP SSL - App Password)
-# ============================================================
-MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
-MAIL_USERNAME = os.getenv('MAIL_USERNAME')
-MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
-
-# Gmail API credentials (not used, but keep for debugging)
+# Gmail API credentials
+MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'awwalu253@gmail.com')
 GMAIL_API_CLIENT_ID = os.getenv('GMAIL_API_CLIENT_ID')
 GMAIL_API_CLIENT_SECRET = os.getenv('GMAIL_API_CLIENT_SECRET')
 GMAIL_API_REFRESH_TOKEN = os.getenv('GMAIL_API_REFRESH_TOKEN')
+
+# Debug: Check credentials
+print("=" * 60)
+print("🔍 GMAIL API CREDENTIALS CHECK")
+print("=" * 60)
+print(f"GMAIL_API_CLIENT_ID: {GMAIL_API_CLIENT_ID[:30] if GMAIL_API_CLIENT_ID else '❌ NOT SET'}...")
+print(f"GMAIL_API_CLIENT_SECRET: {'✅ SET' if GMAIL_API_CLIENT_SECRET else '❌ NOT SET'}")
+print(f"GMAIL_API_REFRESH_TOKEN: {'✅ SET' if GMAIL_API_REFRESH_TOKEN else '❌ NOT SET'}")
+print("=" * 60)
 
 # Setup logging
 if not os.path.exists('logs'):
@@ -94,16 +97,6 @@ file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=1
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s'))
 app.logger.addHandler(file_handler)
 app.logger.setLevel(logging.INFO)
-
-# Debug: Check credentials
-print("=" * 60)
-print("🔍 EMAIL CONFIGURATION CHECK")
-print("=" * 60)
-print(f"MAIL_SERVER: {MAIL_SERVER}")
-print(f"MAIL_PORT: {MAIL_PORT}")
-print(f"MAIL_USERNAME: {'✅ SET' if MAIL_USERNAME else '❌ NOT SET'}")
-print(f"MAIL_PASSWORD: {'✅ SET' if MAIL_PASSWORD else '❌ NOT SET'}")
-print("=" * 60)
 
 # ============================================================
 # SAFE LOG MESSAGE
@@ -229,13 +222,54 @@ def generate_bulk_codes(count):
     return codes
 
 # ============================================================
-# EMAIL SYSTEM (SMTP SSL - App Password)
+# GMAIL API EMAIL SYSTEM (Works on Render Free - port 443)
 # ============================================================
-def send_email(recipient, subject, template_name, **kwargs):
-    """Send email using Gmail App Password (SMTP SSL)"""
+def get_gmail_service():
+    """Get authenticated Gmail API service"""
     try:
-        if not MAIL_USERNAME or not MAIL_PASSWORD:
-            app.logger.error("❌ Email credentials not configured")
+        client_id = GMAIL_API_CLIENT_ID
+        client_secret = GMAIL_API_CLIENT_SECRET
+        refresh_token = GMAIL_API_REFRESH_TOKEN
+        
+        if not client_id or not client_secret or not refresh_token:
+            app.logger.error("❌ Missing Gmail API credentials")
+            app.logger.error(f"   CLIENT_ID: {'✅' if client_id else '❌'}")
+            app.logger.error(f"   CLIENT_SECRET: {'✅' if client_secret else '❌'}")
+            app.logger.error(f"   REFRESH_TOKEN: {'✅' if refresh_token else '❌'}")
+            return None
+        
+        app.logger.info("📧 Creating Gmail API credentials...")
+        
+        creds = Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            client_id=client_id,
+            client_secret=client_secret,
+            token_uri='https://oauth2.googleapis.com/token',
+            scopes=SCOPES
+        )
+        
+        if creds.expired and creds.refresh_token:
+            app.logger.info("🔄 Refreshing token...")
+            creds.refresh(Request())
+        
+        if creds.valid:
+            app.logger.info("✅ Gmail API ready")
+            return build('gmail', 'v1', credentials=creds)
+        else:
+            app.logger.error("❌ Credentials not valid")
+            return None
+            
+    except Exception as e:
+        app.logger.error(f"❌ Gmail API error: {str(e)}")
+        return None
+
+def send_email(recipient, subject, template_name, **kwargs):
+    """Send email using Gmail API"""
+    try:
+        service = get_gmail_service()
+        if not service:
+            app.logger.error("❌ Cannot send email - no Gmail service")
             return False
         
         # Render HTML content
@@ -243,11 +277,11 @@ def send_email(recipient, subject, template_name, **kwargs):
             html_content = render_template(f'emails/{template_name}.html', **kwargs)
         
         # Create message
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
-        msg['To'] = recipient
-        msg['Reply-To'] = COMPANY_EMAIL
+        message = MIMEMultipart('alternative')
+        message['to'] = recipient
+        message['subject'] = subject
+        message['from'] = f"{COMPANY_NAME} <{MAIL_DEFAULT_SENDER}>"
+        message['reply-to'] = COMPANY_EMAIL
         
         # Plain text version
         claim = kwargs.get('claim', {})
@@ -264,35 +298,29 @@ For support: {COMPANY_EMAIL}
         """
         text_part = MIMEText(plain_text, 'plain')
         html_part = MIMEText(html_content, 'html')
-        msg.attach(text_part)
-        msg.attach(html_part)
+        message.attach(text_part)
+        message.attach(html_part)
         
-        app.logger.info(f"📧 Sending email to {recipient} via SMTP SSL (port 465)")
+        # Encode and send
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
         
-        # Use SSL connection (port 465)
-        server = smtplib.SMTP_SSL(MAIL_SERVER, MAIL_PORT, timeout=30)
-        server.login(MAIL_USERNAME, MAIL_PASSWORD)
-        server.send_message(msg)
-        server.quit()
+        service.users().messages().send(
+            userId='me',
+            body={'raw': raw_message}
+        ).execute()
         
-        app.logger.info(f"✅ Email sent to {recipient}: {subject}")
+        app.logger.info(f"✅ Email sent via Gmail API to {recipient}: {subject}")
         return True
         
-    except smtplib.SMTPAuthenticationError as e:
-        app.logger.error(f"❌ SMTP Authentication failed: {str(e)}")
-        return False
-    except smtplib.SMTPServerDisconnected as e:
-        app.logger.error(f"❌ SMTP Server disconnected: {str(e)}")
-        return False
     except Exception as e:
-        app.logger.error(f"❌ SMTP error: {str(e)}")
+        app.logger.error(f"❌ Gmail API error: {str(e)}")
         return False
 
 # ============================================================
 # EMAIL TEMPLATE FUNCTIONS
 # ============================================================
 def send_claim_confirmation(claim_data):
-    payment_url = f"http://localhost:5000/payment/{claim_data['id']}"
+    payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
     return send_email(
         recipient=claim_data['email'],
         subject=f"🎁 Your Gift Claim Confirmation - {claim_data['claim_number']}",
@@ -329,7 +357,7 @@ def send_payment_receipt(claim_data, payment_data):
     )
 
 def send_payment_failed(claim_data, error_message=None):
-    payment_url = f"http://localhost:5000/payment/{claim_data['id']}"
+    payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
     return send_email(
         recipient=claim_data['email'],
         subject=f"❌ Payment Failed - {claim_data['claim_number']}",
@@ -686,7 +714,7 @@ def health():
         'status': 'healthy',
         'supabase_configured': bool(SUPABASE_URL and SUPABASE_KEY),
         'paystack_configured': bool(PAYSTACK_SECRET),
-        'email_configured': bool(MAIL_USERNAME and MAIL_PASSWORD),
+        'gmail_api_configured': bool(GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN),
         'timestamp': datetime.datetime.now().isoformat()
     })
 
@@ -695,7 +723,6 @@ def health():
 # ============================================================
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login page"""
     if session.get('admin_logged_in'):
         return redirect(url_for('admin_dashboard'))
     
@@ -715,7 +742,6 @@ def admin_login():
 
 @app.route('/admin/logout')
 def admin_logout():
-    """Admin logout"""
     session.clear()
     flash('Logged out successfully', 'info')
     return redirect(url_for('admin_login'))
@@ -723,7 +749,6 @@ def admin_logout():
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
-    """Admin dashboard with real data from Supabase"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -751,7 +776,6 @@ def admin_dashboard():
 @app.route('/admin/claims')
 @admin_required
 def admin_claims():
-    """View all claims with real data and filters"""
     try:
         status = request.args.get('status', '')
         search = request.args.get('search', '')
@@ -792,7 +816,6 @@ def admin_claims():
 @app.route('/admin/claim/<claim_id>')
 @admin_required
 def admin_claim_detail(claim_id):
-    """View individual claim details with real data"""
     try:
         result = supabase_select('gift_claims', {'id': claim_id})
         if not result or (isinstance(result, dict) and 'error' in result):
@@ -818,7 +841,6 @@ def admin_claim_detail(claim_id):
 @app.route('/admin/claim/update/<claim_id>', methods=['POST'])
 @admin_required
 def admin_update_claim(claim_id):
-    """Update claim status"""
     try:
         action = request.form.get('action')
         tracking_number = request.form.get('tracking_number', '')
@@ -851,7 +873,6 @@ def admin_update_claim(claim_id):
 @app.route('/admin/export')
 @admin_required
 def admin_export():
-    """Export claims as CSV"""
     try:
         claims_result = supabase_select('gift_claims', order_by='updated_at.desc')
         claims = claims_result if isinstance(claims_result, list) else []
@@ -888,7 +909,6 @@ def admin_export():
 @app.route('/admin/codes')
 @admin_required
 def admin_codes():
-    """Admin - Claim Code Management"""
     try:
         codes_result = supabase_select('claim_codes', order_by='created_at.desc')
         
@@ -927,7 +947,6 @@ def admin_codes():
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
 def admin_generate_codes():
-    """Generate new claim codes"""
     try:
         count = min(int(request.form.get('count', 10)), 100)
         description = request.form.get('description', '')
@@ -956,7 +975,6 @@ def admin_generate_codes():
 @app.route('/admin/codes/delete/<code_id>', methods=['POST'])
 @admin_required
 def admin_delete_code(code_id):
-    """Delete a single claim code"""
     try:
         result = supabase_select('claim_codes', {'id': code_id})
         if result and isinstance(result, list) and len(result) > 0:
@@ -989,7 +1007,6 @@ def admin_delete_code(code_id):
 @app.route('/admin/codes/bulk-delete', methods=['POST'])
 @admin_required
 def admin_bulk_delete_codes():
-    """Delete multiple claim codes at once"""
     try:
         code_ids = request.form.getlist('code_ids')
         deleted = 0
@@ -1019,7 +1036,6 @@ def admin_bulk_delete_codes():
 @app.route('/admin/test-email')
 @admin_required
 def admin_test_email():
-    """Test email functionality"""
     try:
         result = send_email(
             recipient=ADMIN_EMAIL,
@@ -1031,7 +1047,7 @@ def admin_test_email():
                 'email': ADMIN_EMAIL,
                 'channel_name': 'Test Channel'
             },
-            payment_url='http://localhost:5000/payment/test',
+            payment_url='https://creator-reward.onrender.com/payment/test',
             company_name=COMPANY_NAME,
             campaign_name=CAMPAIGN_NAME,
             reward_name=REWARD_NAME,
@@ -1050,16 +1066,36 @@ def admin_test_email():
 
 @app.route('/admin/check-session')
 def admin_check_session():
-    """Check if admin is logged in"""
     return jsonify({
         'logged_in': session.get('admin_logged_in', False),
         'session_keys': list(session.keys()),
         'session': dict(session)
     })
+
 # ============================================================
-# ROUTES - ADMIN
+# ERROR HANDLERS
 # ============================================================
-# ... (all your existing admin routes remain unchanged) ...
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('landing.html', company_name=COMPANY_NAME), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    app.logger.error(f"500 error: {str(e)}")
+    return render_template('error.html', company_name=COMPANY_NAME), 500
+
+# ============================================================
+# CONTEXT PROCESSOR
+# ============================================================
+@app.context_processor
+def inject_globals():
+    return {
+        'company_name': COMPANY_NAME,
+        'company_email': COMPANY_EMAIL,
+        'campaign_name': CAMPAIGN_NAME,
+        'reward_name': REWARD_NAME,
+        'current_year': datetime.datetime.now().year
+    }
 
 # ============================================================
 # RUN APP
@@ -1070,7 +1106,7 @@ if __name__ == '__main__':
     print(f"📍 http://localhost:5000")
     print(f"📊 Supabase: {'✅ Configured' if SUPABASE_URL and SUPABASE_KEY else '❌ Not Configured'}")
     print(f"💳 Paystack: {'✅ Configured' if PAYSTACK_SECRET else '❌ Not Configured'}")
-    print(f"📧 Email: {'✅ Configured' if MAIL_USERNAME and MAIL_PASSWORD else '❌ Not Configured'}")
+    print(f"📧 Gmail API: {'✅ Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else '❌ Not Configured'}")
     print(f"🔐 Admin: http://localhost:5000/admin/login (password: {ADMIN_PASSWORD})")
     print("=" * 50)
     print("\n⚠️ IMPORTANT DISCLAIMER:")
