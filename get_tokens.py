@@ -1,45 +1,58 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os
 import pickle
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
+# If modifying these SCOPES, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
-def get_oauth_tokens():
-    """Get OAuth tokens for production"""
-    if not os.path.exists('credentials.json'):
-        print("❌ credentials.json not found!")
-        print("Please place it in the project root.")
-        return
+def main():
+    """Shows basic usage of the Gmail API.
+    Creates a token.pickle file for authentication.
+    """
+    creds = None
     
-    print("=" * 60)
-    print("📧 Getting Gmail API Tokens")
-    print("=" * 60)
-    print("A browser window will open. Please sign in with:")
-    print("📧 awwalu253@gmail.com")
-    print("=" * 60)
+    # The file token.pickle stores the user's access and refresh tokens.
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
     
-    flow = InstalledAppFlow.from_client_secrets_file(
-        'credentials.json', SCOPES)
-    creds = flow.run_local_server(port=8080)
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+        # Save the credentials for the next run
+        with open('token.pickle', 'wb') as token:
+            pickle.dump(creds, token)
     
-    print("\n" + "=" * 60)
-    print("✅ TOKENS GENERATED SUCCESSFULLY!")
-    print("=" * 60)
-    print("📝 FOR LOCAL DEVELOPMENT:")
-    print("   token.pickle has been saved")
-    print("\n📝 FOR RENDER PRODUCTION:")
-    print("   Add these to your Render environment variables:")
-    print("=" * 60)
-    print(f"GMAIL_API_CLIENT_ID={creds.client_id}")
-    print(f"GMAIL_API_CLIENT_SECRET={creds.client_secret}")
-    print(f"GMAIL_API_REFRESH_TOKEN={creds.refresh_token}")
-    print("=" * 60)
+    # Print the refresh token
+    if creds and creds.refresh_token:
+        print("\n" + "=" * 60)
+        print("✅ YOUR REFRESH TOKEN:")
+        print("=" * 60)
+        print(creds.refresh_token)
+        print("=" * 60)
+        print("\n📋 Copy this token and update your .env file:")
+        print(f"GMAIL_API_REFRESH_TOKEN={creds.refresh_token}")
+        print("=" * 60)
+    else:
+        print("❌ No refresh token found. Please try again.")
     
-    # Save token locally
-    with open('token.pickle', 'wb') as token:
-        pickle.dump(creds, token)
-    print("\n✅ token.pickle saved for local use")
+    # Test sending an email
+    try:
+        service = build('gmail', 'v1', credentials=creds)
+        print("\n✅ Gmail API is working!")
+        print("   Service created successfully.")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
 
 if __name__ == '__main__':
-    get_oauth_tokens()
+    main()
