@@ -48,7 +48,7 @@ app = Flask(__name__)
 # ============================================================
 # SECRET KEY & SESSION
 # ============================================================
-app.secret_key = os.getenv('SECRET_KEY', 'bb0169c81b04bb4ed2d57d0cf94b4631d54f21a787abda6ba95c9d2675b6aeab')
+app.secret_key = os.getenv('SECRET_KEY', 'change-me-in-render-env-vars')
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
@@ -225,7 +225,16 @@ def generate_bulk_codes(count):
 # GMAIL API EMAIL SYSTEM (Works on Render Free - port 443)
 # ============================================================
 def get_gmail_service():
-    """Get authenticated Gmail API service"""
+    """Get authenticated Gmail API service.
+
+    NOTE: we are constructed with token=None (we only ever store the
+    refresh_token, never a live access token). google-auth's `expired`
+    property is driven off `expiry`, which is never set here, so
+    `creds.expired` evaluates to False even though there is no valid
+    access token yet. That made the old `if creds.expired:` guard skip
+    the refresh entirely, leaving creds.valid False forever. Fix: just
+    always refresh - it's a cheap, standard OAuth token exchange.
+    """
     try:
         client_id = GMAIL_API_CLIENT_ID
         client_secret = GMAIL_API_CLIENT_SECRET
@@ -249,15 +258,17 @@ def get_gmail_service():
             scopes=SCOPES
         )
         
-        if creds.expired and creds.refresh_token:
-            app.logger.info("🔄 Refreshing token...")
-            creds.refresh(Request())
+        # Always refresh: we never carry a live access token, only the
+        # refresh token, so `creds.expired` can't be trusted to tell us
+        # whether we need a fresh access token.
+        app.logger.info("🔄 Refreshing token...")
+        creds.refresh(Request())
         
         if creds.valid:
             app.logger.info("✅ Gmail API ready")
             return build('gmail', 'v1', credentials=creds)
         else:
-            app.logger.error("❌ Credentials not valid")
+            app.logger.error("❌ Credentials not valid after refresh")
             return None
             
     except Exception as e:
@@ -524,9 +535,15 @@ def claim_form():
         def send_emails_in_background():
             with app.app_context():
                 try:
-                    send_claim_confirmation(claim_data)
-                    send_admin_notification(claim_data)
-                    app.logger.info(f"✅ Emails sent for claim {claim_number}")
+                    confirmation_sent = send_claim_confirmation(claim_data)
+                    admin_sent = send_admin_notification(claim_data)
+                    if confirmation_sent and admin_sent:
+                        app.logger.info(f"✅ Emails sent for claim {claim_number}")
+                    else:
+                        app.logger.error(
+                            f"⚠️ Email send incomplete for claim {claim_number} "
+                            f"(confirmation={confirmation_sent}, admin={admin_sent})"
+                        )
                 except Exception as e:
                     app.logger.error(f"❌ Background email error: {str(e)}")
         
