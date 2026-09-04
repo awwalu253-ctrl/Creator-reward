@@ -3,50 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✅ Payment Confirmed</title>
+    <title>Payment Confirmed</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
-        .header { background: #28a745; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-        .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; }
-        .receipt-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #28a745; }
-        .receipt-box p { margin: 8px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #e9ecef; padding-bottom: 8px; }
-        .receipt-box p:last-child { border-bottom: none; }
-        .receipt-box .label { font-weight: bold; color: #555; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #888; font-size: 12px; }
-        .disclaimer { background: #fee2e2; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 13px; color: #991b1b; }
-        .support { text-align: center; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a2e;
+            background: #f5f5f5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .email-header {
+            background: #1a1a2e;
+            padding: 35px 30px 30px;
+            text-align: center;
+        }
+        .email-header .icon {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .email-header h1 {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 800;
+            margin: 0;
+        }
+        .email-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 16px;
+            margin: 6px 0 0;
+        }
+        .email-body {
+            padding: 35px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .greeting span {
+            color: #dc2626;
+        }
+        .receipt-box {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 2px solid #48bb78;
+        }
+        .receipt-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .receipt-item:last-child {
+            border-bottom: none;
+        }
+        .receipt-item .label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .receipt-item .value {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 14px;
+            text-align: right;
+        }
+        .receipt-item .value.highlight {
+            color: #48bb78;
+            font-size: 16px;
+        }
+        .next-steps {
+            margin: 24px 0 16px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        .next-steps h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .next-steps ol {
+            padding-left: 20px;
+            margin: 0;
+        }
+        .next-steps ol li {
+            padding: 4px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        .support-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 18px 20px;
+            text-align: center;
+            margin-top: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        .support-box p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        .support-box a {
+            color: #1a1a2e;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .support-box a:hover {
+            color: #dc2626;
+        }
+        .email-footer {
+            background: #f8fafc;
+            padding: 25px 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .email-footer p {
+            color: #9ca3af;
+            font-size: 13px;
+            margin: 2px 0;
+        }
+        .email-footer .brand {
+            font-weight: 700;
+            color: #4b5563;
+        }
+        @media (max-width: 500px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            .email-header h1 {
+                font-size: 22px;
+            }
+            .email-body {
+                padding: 25px 20px;
+            }
+            .receipt-item {
+                flex-direction: column;
+                gap: 2px;
+            }
+            .receipt-item .value {
+                text-align: left;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>✅ Payment Confirmed!</h1>
-        <p>Your shipping fee has been received</p>
-    </div>
-    <div class="content">
-        <h2>Hello {{ claim.full_name }},</h2>
-        <p>Your shipping fee payment has been confirmed.</p>
-        <div class="receipt-box">
-            <h3>🧾 Payment Receipt</h3>
-            <p><span class="label">Transaction ID:</span> {{ payment.transaction_id }}</p>
-            <p><span class="label">Amount:</span> {{ payment.currency }} {{ "%.2f"|format(payment.amount) }}</p>
-            <p><span class="label">Claim Number:</span> {{ claim.claim_number }}</p>
-            <p><span class="label">Channel:</span> {{ claim.channel_name }}</p>
-            <p><span class="label">Date:</span> {{ payment.payment_date[:10] }}</p>
-            <p><span class="label">Status:</span> ✅ Paid</p>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <span class="icon">✓</span>
+            <h1>Payment Confirmed</h1>
+            <p>Your shipping fee has been received</p>
         </div>
-        <h3>🚚 What's Next?</h3>
-        <ol>
-            <li>Preparing your {{ reward_name }} for delivery</li>
-            <li>Tracking number within 24-48 hours</li>
-            <li>Delivery: 5-7 business days</li>
-        </ol>
-        <div class="support">
-            <p><strong>❓ Questions?</strong><br>
-            <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
+
+        <!-- Body -->
+        <div class="email-body">
+            <div class="greeting">
+                Hello <span>{{ claim.full_name }}</span>
+            </div>
+            <p style="color: #4b5563; font-size: 15px; margin-bottom: 16px;">
+                Your shipping fee payment has been confirmed. Thank you for completing this step!
+            </p>
+
+            <!-- Receipt -->
+            <div class="receipt-box">
+                <h3>Payment Receipt</h3>
+                <div class="receipt-item">
+                    <span class="label">Transaction ID</span>
+                    <span class="value">{{ payment.transaction_id }}</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="label">Amount</span>
+                    <span class="value highlight">{{ payment.currency }} {{ "%.2f"|format(payment.amount) }}</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="label">Claim Number</span>
+                    <span class="value">{{ claim.claim_number }}</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="label">Channel</span>
+                    <span class="value">{{ claim.channel_name }}</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="label">Date</span>
+                    <span class="value">{{ payment.payment_date[:10] if payment.payment_date else '' }}</span>
+                </div>
+                <div class="receipt-item">
+                    <span class="label">Status</span>
+                    <span class="value" style="color: #48bb78;">Confirmed</span>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="next-steps">
+                <h3>What's Next?</h3>
+                <ol>
+                    <li>We're preparing your {{ reward_name }} for delivery</li>
+                    <li>You'll receive a tracking number within 24-48 hours</li>
+                    <li>Delivery typically takes 5-7 business days</li>
+                </ol>
+            </div>
+
+            <!-- Support -->
+            <div class="support-box">
+                <p style="font-weight: 600; color: #1a1a2e;">Need Help?</p>
+                <p>Contact us at <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
+                <p style="font-size: 13px; color: #9ca3af;">Reference: {{ claim.claim_number }}</p>
+            </div>
         </div>
-    </div>
-    <div class="footer">
-        <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p class="brand">{{ company_name }}</p>
+            <p>Celebrating creators worldwide</p>
+            <p style="margin-top: 6px;">&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
+        </div>
     </div>
 </body>
 </html>

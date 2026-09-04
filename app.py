@@ -41,19 +41,15 @@ load_dotenv()
 app = Flask(__name__)
 
 # ============================================================
-# DISCLAIMER - SHOWN ON ALL PAGES
-# ============================================================
-DISCLAIMER_TEXT = """⚠️ DISCLAIMER: This promotion is organized by Creator Rewards and is NOT affiliated with, endorsed by, or sponsored by YouTube or Google. This is an independent promotional campaign. All product names, logos, and brands are property of their respective owners."""
-
-# ============================================================
 # SECRET KEY & SESSION
 # ============================================================
 app.secret_key = os.getenv('SECRET_KEY', 'change-me-in-render-env-vars')
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=24)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=30)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('FLASK_ENV', 'production') == 'production'
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_REFRESH_EACH_REQUEST'] = True
+app.config['SESSION_PERMANENT'] = True
 
 # CSRF protection
 csrf = CSRFProtect(app)
@@ -309,13 +305,9 @@ def send_email(recipient, subject, template_name, **kwargs):
             message = MIMEMultipart('alternative')
             message['to'] = recipient
             message['subject'] = subject
-
-            # Use the MAIL_DEFAULT_SENDER directly (already includes display name)
-            # The display name will be shown if "Send Mail As" is configured in Gmail
             message['from'] = MAIL_DEFAULT_SENDER
             message['reply-to'] = COMPANY_EMAIL
 
-            # Add headers to improve deliverability
             message['X-Mailer'] = 'Creator Rewards Platform'
             message['X-Priority'] = '3'
             message['List-Unsubscribe'] = f'<mailto:{COMPANY_EMAIL}?subject=Unsubscribe>'
@@ -368,7 +360,6 @@ Not affiliated with YouTube or Google
 # EMAIL TEMPLATE FUNCTIONS
 # ============================================================
 def send_claim_confirmation(claim_data):
-    """Send claim confirmation to the user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
 
     app.logger.info(f"Sending confirmation email to user: {claim_data['email']}")
@@ -395,7 +386,6 @@ def send_claim_confirmation(claim_data):
     return result
 
 def send_admin_notification(claim_data):
-    """Send admin notification when new claim is submitted"""
     app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
 
     result = send_email(
@@ -417,7 +407,6 @@ def send_admin_notification(claim_data):
     return result
 
 def send_payment_receipt(claim_data, payment_data):
-    """Send payment receipt to the user"""
     result = send_email(
         recipient=claim_data['email'],
         subject=f"Payment Confirmed - {claim_data['claim_number']}",
@@ -436,7 +425,6 @@ def send_payment_receipt(claim_data, payment_data):
     return result
 
 def send_payment_failed(claim_data, error_message=None):
-    """Send payment failure notification to the user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
     result = send_email(
         recipient=claim_data['email'],
@@ -469,7 +457,6 @@ def admin_required(f):
     return decorated_function
 
 def check_admin_password(candidate):
-    """Timing-safe comparison against the configured admin password."""
     if not ADMIN_PASSWORD or not candidate:
         return False
     return hmac.compare_digest(candidate, ADMIN_PASSWORD)
@@ -512,7 +499,6 @@ def landing():
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
                          reward_name=REWARD_NAME,
-                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/terms')
@@ -520,7 +506,6 @@ def terms():
     return render_template('terms.html',
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
-                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/privacy')
@@ -529,7 +514,6 @@ def privacy():
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
                          company_email=COMPANY_EMAIL,
-                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/claim', methods=['GET', 'POST'])
@@ -539,8 +523,7 @@ def claim_form():
         return render_template('claim_form.html',
                              company_name=COMPANY_NAME,
                              campaign_name=CAMPAIGN_NAME,
-                             reward_name=REWARD_NAME,
-                             disclaimer=DISCLAIMER_TEXT)
+                             reward_name=REWARD_NAME)
 
     data = request.form
     app.logger.info(f"Form data received for claim from {request.remote_addr}")
@@ -550,30 +533,29 @@ def claim_form():
         if not data.get(field, '').strip():
             flash(f'Please fill in {field.replace("_", " ")}', 'error')
             return render_template('claim_form.html', company_name=COMPANY_NAME,
-                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
     if not validate_email(data['email']):
         flash('Please enter a valid email address', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
     if not validate_phone(data['phone']):
         flash('Please enter a valid phone number', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
-    # Validate claim code
     code_result = supabase_select('claim_codes', {'code': data['claim_code'].upper()})
     if not code_result or (isinstance(code_result, dict) and 'error' in code_result) or len(code_result) == 0:
         flash('Invalid claim code. Please check your code and try again.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
     code_data = code_result[0]
     if code_data.get('status') != 'active':
         flash('This claim code has already been used or expired.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
     claim_code_id = code_data['id']
     claim_number = generate_claim_number()
@@ -602,7 +584,7 @@ def claim_form():
         if isinstance(result, dict) and 'error' in result:
             flash('Database error. Please try again.', 'error')
             return render_template('claim_form.html', company_name=COMPANY_NAME,
-                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                                 campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
         claim_id = result[0]['id'] if result and isinstance(result, list) and len(result) > 0 else str(uuid.uuid4())
         claim_data['id'] = claim_id
@@ -617,13 +599,11 @@ def claim_form():
         session['claim_id'] = claim_id
         session['claim_number'] = claim_number
 
-        # Send emails in background
         def send_emails_in_background():
             with app.app_context():
                 try:
                     app.logger.info(f"Starting background email sending for claim {claim_number}")
 
-                    # Email 1: Send confirmation to user
                     app.logger.info(f"Sending confirmation to user: {claim_data['email']}")
                     confirmation_sent = send_claim_confirmation(claim_data)
                     if confirmation_sent:
@@ -631,7 +611,6 @@ def claim_form():
                     else:
                         app.logger.error(f"User confirmation FAILED")
 
-                    # Email 2: Send admin notification
                     app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
                     admin_sent = send_admin_notification(claim_data)
                     if admin_sent:
@@ -639,7 +618,6 @@ def claim_form():
                     else:
                         app.logger.error(f"Admin notification FAILED")
 
-                    # Summary
                     if confirmation_sent and admin_sent:
                         app.logger.info(f"All emails sent for claim {claim_number}")
                     else:
@@ -661,7 +639,7 @@ def claim_form():
         app.logger.error(f"Exception in claim submission: {str(e)}", exc_info=True)
         flash('An error occurred. Please try again.', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
-                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, disclaimer=DISCLAIMER_TEXT, form_data=data)
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
 @app.route('/review/<claim_id>')
 def review_claim(claim_id):
@@ -678,8 +656,7 @@ def review_claim(claim_id):
                          company_name=COMPANY_NAME,
                          company_email=COMPANY_EMAIL,
                          campaign_name=CAMPAIGN_NAME,
-                         reward_name=REWARD_NAME,
-                         disclaimer=DISCLAIMER_TEXT)
+                         reward_name=REWARD_NAME)
 
 @app.route('/payment/<claim_id>')
 def initiate_payment(claim_id):
@@ -879,7 +856,6 @@ def confirmation(claim_id):
                          company_email=COMPANY_EMAIL,
                          campaign_name=CAMPAIGN_NAME,
                          reward_name=REWARD_NAME,
-                         disclaimer=DISCLAIMER_TEXT,
                          current_year=datetime.datetime.now().year)
 
 @app.route('/health')
@@ -913,7 +889,7 @@ def admin_login():
         else:
             flash('Invalid password', 'error')
 
-    return render_template('admin/login.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT)
+    return render_template('admin/login.html', company_name=COMPANY_NAME)
 
 @app.route('/admin/logout')
 def admin_logout():
@@ -952,14 +928,13 @@ def admin_dashboard():
                              total_pending=total_pending,
                              total_revenue=total_revenue,
                              recent_claims=claims[:10],
-                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
         flash('Error loading dashboard', 'error')
         return render_template('admin/dashboard.html', company_name=COMPANY_NAME,
                              total_claims=0, total_paid=0, total_pending=0, total_revenue=0,
-                             recent_claims=[], disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
+                             recent_claims=[], current_year=datetime.datetime.now().year)
 
 @app.route('/admin/claims')
 @admin_required
@@ -994,14 +969,12 @@ def admin_claims():
                              claims=claims[:100],
                              status_counts=status_counts,
                              current_status=status,
-                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Claims error: {str(e)}")
         flash('Error loading claims', 'error')
         return render_template('admin/claims.html', company_name=COMPANY_NAME,
-                             claims=[], status_counts={}, current_status='',
-                             disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
+                             claims=[], status_counts={}, current_status='', current_year=datetime.datetime.now().year)
 
 @app.route('/admin/claim/<claim_id>')
 @admin_required
@@ -1022,7 +995,6 @@ def admin_claim_detail(claim_id):
                              company_name=COMPANY_NAME,
                              claim=claim,
                              payment=payment,
-                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Claim detail error: {str(e)}")
@@ -1122,14 +1094,13 @@ def admin_codes():
                              active_codes=active_codes,
                              used_codes=used_codes,
                              expired_codes=expired_codes,
-                             disclaimer=DISCLAIMER_TEXT,
                              current_year=datetime.datetime.now().year)
     except Exception as e:
         app.logger.error(f"Codes error: {str(e)}")
         flash('Error loading codes', 'error')
         return render_template('admin/codes.html', company_name=COMPANY_NAME,
                              codes=[], total_codes=0, active_codes=0, used_codes=0, expired_codes=0,
-                             disclaimer=DISCLAIMER_TEXT, current_year=datetime.datetime.now().year)
+                             current_year=datetime.datetime.now().year)
 
 @app.route('/admin/codes/generate', methods=['POST'])
 @admin_required
@@ -1265,7 +1236,6 @@ def admin_check_session():
 @app.route('/admin/resend-emails/<claim_id>')
 @admin_required
 def admin_resend_emails(claim_id):
-    """Manually resend emails for a claim"""
     try:
         result = supabase_select('gift_claims', {'id': claim_id})
         if not result or (isinstance(result, dict) and 'error' in result):
@@ -1298,12 +1268,12 @@ def admin_resend_emails(claim_id):
 # ============================================================
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('landing.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT), 404
+    return render_template('landing.html', company_name=COMPANY_NAME), 404
 
 @app.errorhandler(500)
 def internal_error(e):
     app.logger.error(f"500 error: {str(e)}")
-    return render_template('error.html', company_name=COMPANY_NAME, disclaimer=DISCLAIMER_TEXT), 500
+    return render_template('error.html', company_name=COMPANY_NAME), 500
 
 # ============================================================
 # CONTEXT PROCESSOR
@@ -1315,7 +1285,6 @@ def inject_globals():
         'company_email': COMPANY_EMAIL,
         'campaign_name': CAMPAIGN_NAME,
         'reward_name': REWARD_NAME,
-        'disclaimer': DISCLAIMER_TEXT,
         'current_year': datetime.datetime.now().year
     }
 
@@ -1329,7 +1298,5 @@ if __name__ == '__main__':
     print(f"Supabase: {'Configured' if SUPABASE_URL and SUPABASE_KEY else 'Not Configured'}")
     print(f"Paystack: {'Configured' if PAYSTACK_SECRET else 'Not Configured'}")
     print(f"Gmail API: {'Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else 'Not Configured'}")
-    print("=" * 50)
-    print("\nDISCLAIMER:")
     print("=" * 50)
     app.run(debug=(os.getenv('FLASK_ENV') != 'production'), host='0.0.0.0', port=int(os.getenv('PORT', 5000)))

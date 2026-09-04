@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>❌ Payment Failed</title>
+    <title>Payment Failed</title>
     <style>
         * {
             margin: 0;
@@ -26,12 +26,12 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.08);
         }
         .email-header {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            background: #1a1a2e;
             padding: 35px 30px 30px;
             text-align: center;
         }
         .email-header .icon {
-            font-size: 52px;
+            font-size: 48px;
             display: block;
             margin-bottom: 8px;
         }
@@ -42,7 +42,7 @@
             margin: 0;
         }
         .email-header p {
-            color: rgba(255,255,255,0.85);
+            color: rgba(255,255,255,0.7);
             font-size: 16px;
             margin: 6px 0 0;
         }
@@ -67,7 +67,7 @@
             text-align: center;
         }
         .alert-box .big-icon {
-            font-size: 40px;
+            font-size: 36px;
             display: block;
             margin-bottom: 8px;
         }
@@ -87,11 +87,13 @@
             border-radius: 12px;
             padding: 18px 20px;
             margin: 20px 0;
+            border: 1px solid #e5e7eb;
         }
         .reason-box h4 {
             font-size: 14px;
             color: #4b5563;
             margin-bottom: 10px;
+            font-weight: 600;
         }
         .reason-box ul {
             padding-left: 20px;
@@ -104,7 +106,7 @@
         }
         .btn-primary {
             display: inline-block;
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            background: #1a1a2e;
             color: #ffffff !important;
             padding: 16px 40px;
             border-radius: 50px;
@@ -113,11 +115,11 @@
             font-size: 16px;
             text-align: center;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            box-shadow: 0 4px 15px rgba(26, 26, 46, 0.2);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            box-shadow: 0 8px 25px rgba(26, 26, 46, 0.3);
         }
         .btn-secondary {
             display: inline-block;
@@ -133,8 +135,8 @@
             transition: all 0.3s ease;
         }
         .btn-secondary:hover {
-            border-color: #dc2626;
-            color: #dc2626 !important;
+            border-color: #1a1a2e;
+            color: #1a1a2e !important;
         }
         .btn-container {
             text-align: center;
@@ -154,6 +156,7 @@
             padding: 18px 20px;
             text-align: center;
             margin-top: 20px;
+            border: 1px solid #e5e7eb;
         }
         .support-box p {
             margin: 4px 0;
@@ -161,18 +164,12 @@
             color: #4b5563;
         }
         .support-box a {
-            color: #dc2626;
+            color: #1a1a2e;
             font-weight: 600;
             text-decoration: none;
         }
-        .disclaimer-small {
-            font-size: 12px;
-            color: #9ca3af;
-            text-align: center;
-            margin-top: 20px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 8px;
+        .support-box a:hover {
+            color: #dc2626;
         }
         .email-footer {
             background: #f8fafc;
@@ -212,7 +209,7 @@
     <div class="email-container">
         <!-- Header -->
         <div class="email-header">
-            <span class="icon">❌</span>
+            <span class="icon">✕</span>
             <h1>Payment Failed</h1>
             <p>We couldn't process your payment</p>
         </div>
@@ -247,11 +244,11 @@
             <!-- Action Buttons -->
             <div class="btn-container">
                 <a href="{{ payment_url }}" class="btn-primary">
-                    🔄 Try Payment Again ($120.00)
+                    Try Payment Again ($120.00)
                 </a>
                 <br>
                 <a href="{{ url_for('review_claim', claim_id=claim.id, _external=True) }}" class="btn-secondary">
-                    📋 Review Claim Details
+                    Review Claim Details
                 </a>
             </div>
 
@@ -259,7 +256,7 @@
 
             <!-- Support -->
             <div class="support-box">
-                <p style="font-weight: 600; color: #1a1a2e;">❓ Need Help?</p>
+                <p style="font-weight: 600; color: #1a1a2e;">Need Help?</p>
                 <p>Contact our support team at <a href="mailto:{{ company_email }}">{{ company_email }}</a></p>
                 <p>Please mention your claim number: <strong>{{ claim.claim_number }}</strong></p>
             </div>

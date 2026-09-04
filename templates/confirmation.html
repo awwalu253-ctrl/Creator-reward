@@ -6,7 +6,7 @@
 <style>
     .confirmation-section {
         padding: 80px 0;
-        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #fef2f2 100%);
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f8fafc 100%);
         min-height: 70vh;
         display: flex;
         align-items: center;
@@ -17,41 +17,41 @@
         text-align: center;
     }
     .confirmation-icon {
-        font-size: 5rem;
-        color: var(--primary);
+        font-size: 4.5rem;
+        color: #1a1a2e;
         margin-bottom: 24px;
         animation: bounce 1s ease;
     }
     @keyframes bounce {
         0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.2); }
+        50% { transform: scale(1.15); }
     }
     .confirmation-wrapper h1 {
         font-size: 2.5rem;
         font-weight: 800;
-        color: var(--secondary);
+        color: #1a1a2e;
         margin-bottom: 24px;
     }
     .confirmation-card {
         background: white;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
         padding: 40px;
         text-align: left;
-        border: 1px solid var(--gray);
+        border: 1px solid #e5e7eb;
     }
     .confirmation-number {
-        background: var(--primary);
+        background: #1a1a2e;
         color: white;
         padding: 20px;
-        border-radius: var(--radius);
+        border-radius: 12px;
         text-align: center;
         margin-bottom: 24px;
     }
     .confirmation-number .label {
         display: block;
-        font-size: 0.9rem;
-        opacity: 0.9;
+        font-size: 0.85rem;
+        opacity: 0.8;
     }
     .confirmation-number .number {
         font-size: 2rem;
@@ -61,86 +61,94 @@
     .confirmation-message {
         margin: 24px 0;
         padding: 20px;
-        background: var(--gray);
-        border-radius: var(--radius);
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
     }
     .confirmation-message p {
         margin: 4px 0;
+        color: #4b5563;
     }
     .next-steps {
         margin: 24px 0;
         padding: 20px;
-        background: var(--gray);
-        border-radius: var(--radius);
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
     }
     .next-steps h3 {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-bottom: 16px;
-        color: var(--secondary);
+        color: #1a1a2e;
+        font-size: 1.1rem;
     }
     .next-steps h3 i {
-        color: var(--primary);
+        color: #dc2626;
     }
     .next-steps ol {
         padding-left: 20px;
+        margin: 0;
     }
     .next-steps ol li {
         padding: 6px 0;
+        color: #4b5563;
+        font-size: 14px;
     }
     .payment-reminder {
         margin: 24px 0;
         padding: 20px;
-        background: var(--primary-light);
-        border-radius: var(--radius);
-        border-left: 4px solid var(--primary);
+        background: #fef2f2;
+        border-radius: 12px;
+        border-left: 4px solid #dc2626;
     }
-    .payment-reminder i {
-        color: var(--primary);
-        font-size: 1.5rem;
+    .payment-reminder p {
+        color: #4b5563;
+        margin-bottom: 12px;
     }
     .payment-reminder .btn {
-        margin-top: 12px;
+        margin-top: 8px;
     }
     .payment-success {
         margin: 24px 0;
         padding: 20px;
-        background: #f0fff4;
-        border-radius: var(--radius);
+        background: #f0fdf4;
+        border-radius: 12px;
         border-left: 4px solid #48bb78;
+    }
+    .payment-success p {
+        color: #166534;
+        margin: 0;
     }
     .payment-success i {
         color: #48bb78;
-        font-size: 1.5rem;
-    }
-    .disclaimer-box {
-        background: var(--primary-light);
-        border-left: 4px solid var(--primary);
-        padding: 15px;
-        margin: 20px 0;
-        border-radius: 4px;
-        font-size: 14px;
-        color: var(--secondary);
+        font-size: 1.2rem;
+        margin-right: 8px;
     }
     .support-info {
         margin-top: 24px;
         padding-top: 24px;
-        border-top: 1px solid var(--gray);
+        border-top: 1px solid #e5e7eb;
     }
     .support-info h4 {
         display: flex;
         align-items: center;
         gap: 10px;
         margin-bottom: 12px;
-        color: var(--secondary);
+        color: #1a1a2e;
+        font-size: 1rem;
     }
     .support-info h4 i {
-        color: var(--primary);
+        color: #dc2626;
     }
     .support-info a {
-        color: var(--primary);
+        color: #1a1a2e;
         font-weight: 600;
+        text-decoration: none;
+    }
+    .support-info a:hover {
+        color: #dc2626;
     }
     @media (max-width: 768px) {
         .confirmation-wrapper h1 {
@@ -166,7 +174,7 @@
                 <i class="fas fa-gift"></i>
             </div>
             
-            <h1>🎁 Gift Claim Successfully Submitted!</h1>
+            <h1>Gift Claim Successfully Submitted</h1>
             
             <div class="confirmation-card">
                 <div class="confirmation-number">
@@ -184,7 +192,7 @@
                 {% if claim.shipping_fee_paid == 'true' or claim.shipping_fee_paid == True %}
                     <div class="payment-success">
                         <i class="fas fa-check-circle"></i>
-                        <p><strong>Payment Confirmed!</strong> Your gift package is being prepared and will be shipped soon.</p>
+                        <strong>Payment Confirmed!</strong> Your gift package is being prepared and will be shipped soon.
                     </div>
                     
                     <div class="next-steps">
@@ -207,9 +215,8 @@
                     </div>
                     
                     <div class="payment-reminder">
-                        <i class="fas fa-exclamation-circle"></i>
                         <p><strong>Action Required:</strong> Please complete the shipping fee payment to receive your gift package.</p>
-                        <a href="{{ url_for('initiate_payment', claim_id=claim.id) }}" class="btn btn-success">
+                        <a href="{{ url_for('initiate_payment', claim_id=claim.id) }}" class="btn btn-primary">
                             <i class="fas fa-credit-card"></i> Pay Shipping Fee Now ($120.00)
                         </a>
                     </div>
@@ -222,7 +229,7 @@
                 </div>
             </div>
             
-            <a href="{{ url_for('landing') }}" class="btn btn-outline">
+            <a href="{{ url_for('landing') }}" class="btn btn-secondary" style="margin-top: 24px;">
                 <i class="fas fa-home"></i> Return Home
             </a>
         </div>

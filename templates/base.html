@@ -61,34 +61,6 @@
         }
 
         /* ========================================
-           TOP DISCLAIMER BAR
-           ======================================== */
-        .top-disclaimer {
-            background: var(--primary);
-            padding: 8px 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .top-disclaimer p {
-            margin: 0;
-            font-size: 12px;
-            color: var(--white);
-            text-align: center;
-            font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-
-        .top-disclaimer i {
-            margin-right: 8px;
-        }
-
-        .top-disclaimer strong {
-            text-decoration: underline;
-        }
-
-        /* ========================================
            HEADER / NAVIGATION
            ======================================== */
         .header {
@@ -344,39 +316,11 @@
             color: var(--primary);
         }
 
-        .footer-disclaimer {
-            padding: 20px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            margin-bottom: 20px;
-        }
-        .footer-disclaimer .disclaimer-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            color: #cbd5e0;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .footer-disclaimer .disclaimer-content i {
-            color: #f6ad55;
-            font-size: 18px;
-            margin-top: 2px;
-            flex-shrink: 0;
-        }
-        .footer-disclaimer .disclaimer-content strong {
-            color: #f6ad55;
-        }
-
         .footer-bottom {
             padding: 20px 0;
             text-align: center;
             font-size: 0.9rem;
             opacity: 0.7;
-        }
-        .footer-bottom .disclaimer {
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: #f6ad55;
         }
 
         /* ========================================
@@ -392,19 +336,9 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
-            .top-disclaimer p {
-                font-size: 11px;
-                padding: 0 10px;
-            }
             .footer-grid {
                 grid-template-columns: 1fr;
                 gap: 30px;
-            }
-            .footer-disclaimer .disclaimer-content {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                font-size: 12px;
             }
             .flash-messages {
                 top: 100px;
@@ -418,17 +352,6 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-    <!-- Top Disclaimer Bar -->
-    <div class="top-disclaimer">
-        <div class="container">
-            <p>
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>DISCLAIMER:</strong> This promotion is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.
-                This is an independent promotional campaign.
-            </p>
-        </div>
-    </div>
-
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -497,10 +420,6 @@
             
             <div class="footer-bottom">
                 <p>&copy; {{ current_year }} {{ company_name }}. All rights reserved.</p>
-                <p class="disclaimer">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    Not affiliated with YouTube or Google
-                </p>
             </div>
         </div>
     </footer>
@@ -551,6 +470,41 @@
             });
             observer.observe(document.body, { childList: true, subtree: true });
         });
+
+        // ============================================================
+        // AUTO-LOGOUT ON TAB/BROWSER CLOSE
+        // ============================================================
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                if (window.location.pathname.includes('/admin/') && 
+                    !window.location.pathname.includes('/admin/login')) {
+                    navigator.sendBeacon('/admin/logout');
+                }
+            }
+        });
+
+        // ============================================================
+        // AUTO-LOGOUT AFTER INACTIVITY (30 minutes)
+        // ============================================================
+        let inactivityTimer;
+        const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(function() {
+                if (window.location.pathname.includes('/admin/') && 
+                    !window.location.pathname.includes('/admin/login')) {
+                    window.location.href = '/admin/logout';
+                }
+            }, INACTIVITY_TIMEOUT);
+        }
+
+        const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+        events.forEach(function(event) {
+            document.addEventListener(event, resetInactivityTimer);
+        });
+
+        document.addEventListener('DOMContentLoaded', resetInactivityTimer);
     </script>
     
     {% block scripts %}{% endblock %}
