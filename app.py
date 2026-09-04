@@ -495,6 +495,8 @@ def validate_phone(phone):
 # ============================================================
 @app.route('/')
 def landing():
+    # Clear flash messages on landing page to prevent admin messages showing
+    session.pop('_flashes', None)
     return render_template('landing.html',
                          company_name=COMPANY_NAME,
                          campaign_name=CAMPAIGN_NAME,
@@ -520,6 +522,8 @@ def privacy():
 @limiter.limit("10 per hour", methods=['POST'])
 def claim_form():
     if request.method == 'GET':
+        # Clear flash messages when accessing claim page
+        session.pop('_flashes', None)
         return render_template('claim_form.html',
                              company_name=COMPANY_NAME,
                              campaign_name=CAMPAIGN_NAME,
@@ -867,6 +871,12 @@ def health():
         'gmail_api_configured': bool(GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN),
         'timestamp': datetime.datetime.now().isoformat()
     })
+
+@app.route('/clear-flash', methods=['POST'])
+def clear_flash():
+    """Clear flash messages from session"""
+    session.pop('_flakes', None)
+    return jsonify({'status': 'cleared'})
 
 # ============================================================
 # ROUTES - ADMIN
@@ -1285,7 +1295,8 @@ def inject_globals():
         'company_email': COMPANY_EMAIL,
         'campaign_name': CAMPAIGN_NAME,
         'reward_name': REWARD_NAME,
-        'current_year': datetime.datetime.now().year
+        'current_year': datetime.datetime.now().year,
+        'is_admin_page': request.path.startswith('/admin/') if request else False
     }
 
 # ============================================================
