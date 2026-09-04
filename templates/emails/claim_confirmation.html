@@ -3,40 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claim Received - {{ company_name }}</title>
+    <title>Order Received - {{ company_name }}</title>
 </head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a2e; background: #f9fafb;">
 
     <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <!-- Header -->
         <div style="text-align: center; padding-bottom: 24px; border-bottom: 2px solid #f3f4f6;">
-            <div style="font-size: 28px; font-weight: 800; color: #dc2626;">{{ company_name }}</div>
-            <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">Official Notification</p>
+            <div style="font-size: 26px; font-weight: 700; color: #1a1a2e;">{{ company_name }}</div>
         </div>
 
         <!-- Greeting -->
         <div style="margin: 30px 0 20px;">
-            <p style="font-size: 18px; font-weight: 600; margin: 0;">Hello {{ claim.full_name }},</p>
+            <p style="font-size: 18px; font-weight: 600; margin: 0;">Hi {{ claim.full_name }},</p>
             <p style="color: #4b5563; line-height: 1.6; margin-top: 8px;">
-                Thank you for participating in the <strong>{{ campaign_name }}</strong>. 
-                This email confirms that we have received your claim submission.
+                We've received your details for the {{ campaign_name }} {{ reward_name }}. Here's a summary
+                of your order and the remaining step to get it shipped.
             </p>
         </div>
 
-        <!-- Claim Details -->
+        <!-- Order Details -->
         <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e5e7eb;">
-            <p style="font-weight: 600; margin: 0 0 12px; font-size: 14px; color: #374151;">📋 Claim Summary</p>
+            <p style="font-weight: 600; margin: 0 0 12px; font-size: 14px; color: #374151;">Order summary</p>
             <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
                 <tr>
-                    <td style="padding: 6px 0; color: #6b7280;">Reference Number</td>
+                    <td style="padding: 6px 0; color: #6b7280;">Order number</td>
                     <td style="padding: 6px 0; text-align: right; font-weight: 600;">{{ claim.claim_number }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #6b7280;">Status</td>
-                    <td style="padding: 6px 0; text-align: right;"><span style="background: #dbeafe; color: #1e40af; padding: 2px 12px; border-radius: 12px; font-size: 12px;">Under Review</span></td>
+                    <td style="padding: 6px 0; color: #6b7280;">Item</td>
+                    <td style="padding: 6px 0; text-align: right;">{{ reward_name }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #6b7280;">Date Submitted</td>
+                    <td style="padding: 6px 0; color: #6b7280;">Status</td>
+                    <td style="padding: 6px 0; text-align: right;"><span style="background: #dbeafe; color: #1e40af; padding: 2px 12px; border-radius: 12px; font-size: 12px;">Awaiting shipping payment</span></td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #6b7280;">Date</td>
                     <td style="padding: 6px 0; text-align: right;">{{ claim.claim_date[:10] if claim.claim_date else '' }}</td>
                 </tr>
             </table>
@@ -44,60 +47,51 @@
 
         <!-- Shipping Information -->
         <div style="margin: 20px 0; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb; background: white;">
-            <p style="font-weight: 600; margin: 0 0 8px; font-size: 14px; color: #374151;">📦 Shipping & Fulfillment</p>
+            <p style="font-weight: 600; margin: 0 0 8px; font-size: 14px; color: #374151;">Shipping cost</p>
             <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0;">
-                Your gift package will be shipped to the address you provided. 
-                A shipping and handling fee of <strong>${{ shipping_fee }}</strong> applies to cover:
-            </p>
-            <ul style="color: #4b5563; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 8px 0 0;">
-                <li>International shipping and tracking</li>
-                <li>Secure packaging and handling</li>
-                <li>Customs and import processing</li>
-                <li>Delivery confirmation</li>
-            </ul>
-            <p style="color: #6b7280; font-size: 13px; margin: 12px 0 0; background: #fef3c7; padding: 8px 12px; border-radius: 6px;">
-                💡 This fee is charged by the shipping carrier and is not a purchase price.
+                To ship your {{ reward_name }} to the address you provided, there's a shipping and
+                handling charge of ${{ shipping_fee }}. This covers international shipping, tracking,
+                packaging, and customs processing.
             </p>
         </div>
 
         <!-- Next Steps -->
-        <div style="margin: 20px 0; padding: 20px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0;">
-            <p style="font-weight: 600; margin: 0 0 8px; font-size: 14px; color: #166534;">✅ Next Steps</p>
-            <ol style="color: #166534; font-size: 14px; line-height: 2; padding-left: 20px; margin: 0;">
-                <li>Review your shipping address for accuracy</li>
-                <li>Complete the shipping fee payment</li>
-                <li>Receive tracking information via email</li>
-                <li>Your package will arrive within 7-14 business days</li>
+        <div style="margin: 20px 0; padding: 20px; border-radius: 8px; background: #f9fafb; border: 1px solid #e5e7eb;">
+            <p style="font-weight: 600; margin: 0 0 8px; font-size: 14px; color: #374151;">Remaining steps</p>
+            <ol style="color: #4b5563; font-size: 14px; line-height: 2; padding-left: 20px; margin: 0;">
+                <li>Pay the shipping charge below</li>
+                <li>We hand off your package for shipping</li>
+                <li>You'll get a tracking number by email</li>
+                <li>Delivery typically takes 7-14 business days</li>
             </ol>
         </div>
 
         <!-- CTA Button -->
         <div style="text-align: center; margin: 30px 0 20px;">
-            <a href="{{ payment_url }}" 
-               style="background: #dc2626; color: white; padding: 14px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">
-                Complete Shipping Payment
+            <a href="{{ payment_url }}"
+               style="background: #1a1a2e; color: white; padding: 14px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 16px;">
+                Pay Shipping Charge
             </a>
-            <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">Secure payment processed by Paystack</p>
+            <p style="color: #9ca3af; font-size: 12px; margin-top: 8px;">Payment processed securely by Paystack</p>
         </div>
 
         <!-- Help Section -->
         <div style="margin: 30px 0 0; padding-top: 20px; border-top: 2px solid #f3f4f6;">
             <p style="font-size: 14px; color: #4b5563; margin: 0;">
-                <strong>Questions?</strong> Our support team is available at 
-                <a href="mailto:{{ company_email }}" style="color: #dc2626; text-decoration: none;">{{ company_email }}</a>
-            </p>
-            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0;">
-                Response time: 24-48 hours
+                Questions about your order? Reach us at
+                <a href="mailto:{{ company_email }}" style="color: #1a1a2e; text-decoration: none;">{{ company_email }}</a>
+                — we usually reply within 24-48 hours.
             </p>
         </div>
 
         <!-- Footer -->
         <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f3f4f6; text-align: center; font-size: 12px; color: #9ca3af;">
-            <p style="margin: 0;">© {{ current_year }} {{ company_name }}. All rights reserved.</p>
+            <p style="margin: 0;">{{ company_name }}</p>
+            <p style="margin: 4px 0 0;">{{ company_address | default('') }}</p>
             <p style="margin: 4px 0 0;">{{ company_email }}</p>
-            <p style="margin: 8px 0 0; color: #d1d5db; font-size: 11px;">
-                This is a legitimate promotional notification. 
-                {{ company_name }} is not affiliated with YouTube or Google.
+            <p style="margin: 12px 0 0; color: #d1d5db; font-size: 11px;">
+                {{ company_name }} is an independent promotional campaign and is not affiliated with
+                YouTube or Google.
             </p>
         </div>
     </div>

@@ -287,11 +287,11 @@ def send_email(recipient, subject, template_name, **kwargs):
     """Send email using Gmail API with retry logic"""
     max_retries = 3
     retry_delay = 2
-    
+
     app.logger.info(f"Attempting to send email to: {recipient}")
     app.logger.info(f"Subject: {subject}")
     app.logger.info(f"Template: {template_name}")
-    
+
     for attempt in range(max_retries):
         try:
             service = get_gmail_service()
@@ -301,7 +301,7 @@ def send_email(recipient, subject, template_name, **kwargs):
                     time.sleep(retry_delay)
                     continue
                 return False
-            
+
             with app.app_context():
                 html_content = render_template(f'emails/{template_name}.html', **kwargs)
                 app.logger.info(f"HTML rendered: {len(html_content)} characters")
@@ -309,11 +309,12 @@ def send_email(recipient, subject, template_name, **kwargs):
             message = MIMEMultipart('alternative')
             message['to'] = recipient
             message['subject'] = subject
-            
+
             # Use the MAIL_DEFAULT_SENDER directly (already includes display name)
+            # The display name will be shown if "Send Mail As" is configured in Gmail
             message['from'] = MAIL_DEFAULT_SENDER
             message['reply-to'] = COMPANY_EMAIL
-            
+
             # Add headers to improve deliverability
             message['X-Mailer'] = 'Creator Rewards Platform'
             message['X-Priority'] = '3'
@@ -343,14 +344,14 @@ Not affiliated with YouTube or Google
             message.attach(html_part)
 
             raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
-            
+
             app.logger.info(f"Sending via Gmail API...")
             service.users().messages().send(
                 userId='me',
                 body={'raw': raw_message}
             ).execute()
 
-            app.logger.info(f"Email sent successfully to {recipient}")
+            app.logger.info(f"Email sent successfully to {recipient} from {MAIL_DEFAULT_SENDER}")
             return True
 
         except Exception as e:
@@ -369,48 +370,50 @@ Not affiliated with YouTube or Google
 def send_claim_confirmation(claim_data):
     """Send claim confirmation to the user"""
     payment_url = f"https://creator-reward.onrender.com/payment/{claim_data['id']}"
-    
+
     app.logger.info(f"Sending confirmation email to user: {claim_data['email']}")
-    
+
     result = send_email(
         recipient=claim_data['email'],
-        subject=f"Your Gift Claim Confirmation - {claim_data['claim_number']}",
+        subject=f"Claim Received - {claim_data['claim_number']}",
         template_name='claim_confirmation',
         claim=claim_data,
         payment_url=payment_url,
-        company_name=COMPANY_NAME,  # This will be used in the email template
+        company_name=COMPANY_NAME,
         company_email=COMPANY_EMAIL,
         campaign_name=CAMPAIGN_NAME,
         reward_name=REWARD_NAME,
+        shipping_fee=SHIPPING_FEE_USD,
         current_year=datetime.datetime.now().year
     )
-    
+
     if result:
         app.logger.info(f"Confirmation email sent to {claim_data['email']}")
     else:
         app.logger.error(f"Failed to send confirmation email to {claim_data['email']}")
-    
+
     return result
 
 def send_admin_notification(claim_data):
     """Send admin notification when new claim is submitted"""
     app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
-    
+
     result = send_email(
         recipient=ADMIN_EMAIL,
-        subject=f"New Gift Claim Submitted - {claim_data['claim_number']}",
+        subject=f"New Claim Submitted - {claim_data['claim_number']}",
         template_name='admin_notification',
         claim=claim_data,
         company_name=COMPANY_NAME,
+        company_email=COMPANY_EMAIL,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
-    
+
     if result:
         app.logger.info(f"Admin notification sent for claim {claim_data['claim_number']}")
     else:
         app.logger.error(f"Failed to send admin notification for claim {claim_data['claim_number']}")
-    
+
     return result
 
 def send_payment_receipt(claim_data, payment_data):
@@ -422,6 +425,7 @@ def send_payment_receipt(claim_data, payment_data):
         claim=claim_data,
         payment=payment_data,
         company_name=COMPANY_NAME,
+        company_email=COMPANY_EMAIL,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
@@ -442,6 +446,7 @@ def send_payment_failed(claim_data, error_message=None):
         payment_url=payment_url,
         error_message=error_message,
         company_name=COMPANY_NAME,
+        company_email=COMPANY_EMAIL,
         reward_name=REWARD_NAME,
         current_year=datetime.datetime.now().year
     )
@@ -617,7 +622,7 @@ def claim_form():
             with app.app_context():
                 try:
                     app.logger.info(f"Starting background email sending for claim {claim_number}")
-                    
+
                     # Email 1: Send confirmation to user
                     app.logger.info(f"Sending confirmation to user: {claim_data['email']}")
                     confirmation_sent = send_claim_confirmation(claim_data)
@@ -625,7 +630,7 @@ def claim_form():
                         app.logger.info(f"User confirmation sent")
                     else:
                         app.logger.error(f"User confirmation FAILED")
-                    
+
                     # Email 2: Send admin notification
                     app.logger.info(f"Sending admin notification to: {ADMIN_EMAIL}")
                     admin_sent = send_admin_notification(claim_data)
@@ -633,13 +638,13 @@ def claim_form():
                         app.logger.info(f"Admin notification sent")
                     else:
                         app.logger.error(f"Admin notification FAILED")
-                    
+
                     # Summary
                     if confirmation_sent and admin_sent:
                         app.logger.info(f"All emails sent for claim {claim_number}")
                     else:
                         app.logger.warning(f"Partial email success for claim {claim_number}: user={confirmation_sent}, admin={admin_sent}")
-                        
+
                 except Exception as e:
                     app.logger.error(f"Background email error: {str(e)}")
                     import traceback
@@ -785,11 +790,31 @@ def payment_callback():
                     flash('Payment amount mismatch. Please contact support.', 'error')
                     return redirect(url_for('landing'))
 
-                supabase_update('gift_claims', {
+                claim_update_result = supabase_update('gift_claims', {
                     'status': 'paid',
                     'shipping_fee_paid': 'true',
                     'updated_at': datetime.datetime.now().isoformat()
-                }, {'id': claim_id})
+                }, {'id': claim_id, 'shipping_fee_paid': 'false'})
+
+                update_failed = isinstance(claim_update_result, dict) and 'error' in claim_update_result
+                already_claimed_by_other_request = (
+                    not update_failed
+                    and isinstance(claim_update_result, list)
+                    and len(claim_update_result) == 0
+                )
+
+                if update_failed:
+                    app.logger.error(f"Failed to mark claim {claim_id} as paid: {claim_update_result}")
+                    flash('Payment verification error. Please contact support.', 'error')
+                    return redirect(url_for('landing'))
+
+                if already_claimed_by_other_request:
+                    app.logger.info(
+                        f"Duplicate payment callback for claim {claim_id} "
+                        f"(reference {reference}) - already processed by another request, skipping."
+                    )
+                    flash('Payment already processed.', 'info')
+                    return redirect(url_for('confirmation', claim_id=claim_id))
 
                 payment_data = {
                     'claim_id': claim_id,
@@ -1163,20 +1188,37 @@ def admin_delete_code(code_id):
 def admin_bulk_delete_codes():
     try:
         code_ids = request.form.getlist('code_ids')
+        app.logger.info(f"Bulk delete requested for code_ids: {code_ids}")
+        
+        if not code_ids or len(code_ids) == 0:
+            flash('No codes selected to delete.', 'warning')
+            return redirect(url_for('admin_codes'))
+        
         deleted = 0
+        skipped = 0
 
         for code_id in code_ids:
             result = supabase_select('claim_codes', {'id': code_id})
             if result and isinstance(result, list) and len(result) > 0:
                 code = result[0]
-                if code.get('status') != 'used' and supabase_delete('claim_codes', code_id):
+                if code.get('status') == 'used':
+                    skipped += 1
+                elif supabase_delete('claim_codes', code_id):
                     deleted += 1
 
-        flash(f'{deleted} code(s) deleted successfully', 'success')
+        if deleted > 0 and skipped == 0:
+            flash(f'{deleted} code(s) deleted successfully!', 'success')
+        elif deleted > 0 and skipped > 0:
+            flash(f'{deleted} code(s) deleted successfully. {skipped} code(s) skipped (already used).', 'warning')
+        elif skipped > 0:
+            flash(f'{skipped} code(s) were not deleted because they are already used.', 'warning')
+        else:
+            flash('No codes were deleted.', 'info')
+            
         return redirect(url_for('admin_codes'))
     except Exception as e:
         app.logger.error(f"Bulk delete error: {str(e)}")
-        flash('Error deleting codes', 'error')
+        flash('Error deleting codes. Please try again.', 'error')
         return redirect(url_for('admin_codes'))
 
 @app.route('/admin/test-email')
@@ -1211,7 +1253,6 @@ def admin_test_email():
         return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/check-session')
-@admin_required
 def admin_check_session():
     return jsonify({
         'logged_in': session.get('admin_logged_in', False),
@@ -1290,6 +1331,5 @@ if __name__ == '__main__':
     print(f"Gmail API: {'Configured' if GMAIL_API_CLIENT_ID and GMAIL_API_REFRESH_TOKEN else 'Not Configured'}")
     print("=" * 50)
     print("\nDISCLAIMER:")
-    print("   This campaign is NOT affiliated with, endorsed by, or sponsored by YouTube or Google.")
     print("=" * 50)
     app.run(debug=(os.getenv('FLASK_ENV') != 'production'), host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
