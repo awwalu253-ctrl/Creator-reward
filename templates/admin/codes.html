@@ -85,7 +85,6 @@
 
         <form method="POST" action="{{ url_for('admin_generate_codes') }}" class="generate-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
             <div class="form-group"><label for="count">Number of Codes</label><input type="number" id="count" name="count" value="10" min="1" max="100" required></div>
             <div class="form-group"><label for="description">Description</label><input type="text" id="description" name="description" placeholder="e.g., VIP Campaign 2026"></div>
             <div class="form-group"><label for="expires_days">Expires After</label><select id="expires_days" name="expires_days"><option value="0">Never Expires</option><option value="7">7 Days</option><option value="14">14 Days</option><option value="30">30 Days</option><option value="60">60 Days</option><option value="90">90 Days</option></select></div>
@@ -104,9 +103,18 @@
         <div class="table-responsive">
             <form id="bulkDeleteForm" method="POST" action="{{ url_for('admin_bulk_delete_codes') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
                 <table class="admin-table">
-                    <thead><tr><th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes()"></th><th>Code</th><th>Status</th><th>Description</th><th>Created</th><th>Used By</th><th>Actions</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes()"></th>
+                            <th>Code</th>
+                            <th>Status</th>
+                            <th>Description</th>
+                            <th>Created</th>
+                            <th>Used By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for code in codes %}
                         <tr>
@@ -114,7 +122,7 @@
                                 {% if code.status != 'used' %}
                                 <input type="checkbox" name="code_ids" value="{{ code.id }}" class="code-checkbox" onchange="updateSelectedCount()">
                                 {% else %}
-                                <span style="color:#a0aec0;font-size:12px;">🔒</span>
+                                <span style="color:#a0aec0;font-size:12px;">Locked</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -158,7 +166,7 @@
                         <tr>
                             <td colspan="7" style="text-align:center;padding:40px;color:#a0aec0;">
                                 <i class="fas fa-key" style="font-size:48px;display:block;margin-bottom:10px;"></i>
-                                No claim codes created yet.  Generate your first code above!
+                                No claim codes created yet. Generate your first code above!
                             </td>
                         </tr>
                         {% endfor %}
@@ -229,7 +237,9 @@
     function bulkDeleteCodes() {
         var count = document.querySelectorAll('.code-checkbox:checked').length;
         if (count === 0) { showToast('Select at least one code', 'error'); return; }
-        if (confirm('Delete ' + count + ' selected code(s)?')) document.getElementById('bulkDeleteForm').submit();
+        if (confirm('Delete ' + count + ' selected code(s)?')) {
+            document.getElementById('bulkDeleteForm').submit();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', updateSelectedCount);

@@ -106,21 +106,6 @@
             color: var(--primary);
         }
 
-        .nav-link.admin-link {
-            color: var(--primary);
-            font-weight: 600;
-            background: var(--primary-light);
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-            border: 1px solid rgba(220, 38, 38, 0.2);
-        }
-
-        .nav-link.admin-link:hover {
-            background: var(--primary);
-            color: var(--white);
-        }
-
         /* ========================================
            FLASH MESSAGES
            ======================================== */
@@ -363,9 +348,6 @@
                 <div class="nav-links">
                     <a href="{{ url_for('landing') }}" class="nav-link">Home</a>
                     <a href="{{ url_for('claim_form') }}" class="nav-link">Claim Gift</a>
-                    <a href="{{ url_for('admin_login') }}" class="nav-link admin-link">
-                        <i class="fas fa-shield-alt"></i> Admin
-                    </a>
                 </div>
             </nav>
         </div>
