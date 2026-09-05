@@ -487,8 +487,11 @@ def validate_email(email):
     return re.match(pattern, email) is not None
 
 def validate_phone(phone):
-    phone = re.sub(r'[\s\-\(\)\+]', '', phone)
-    return len(phone) >= 10 and phone.isdigit()
+    # Remove any non-digit characters except +
+    phone = re.sub(r'[^\d+]', '', phone)
+    # Must have at least 10 digits after the country code
+    digits_only = re.sub(r'[^\d]', '', phone)
+    return len(digits_only) >= 10
 
 # ============================================================
 # ROUTES - PUBLIC
@@ -532,7 +535,8 @@ def claim_form():
     data = request.form
     app.logger.info(f"Form data received for claim from {request.remote_addr}")
 
-    required = ['full_name', 'email', 'channel_name', 'phone', 'country', 'address', 'city', 'postal_code', 'clothing_size', 'claim_code']
+    # Required fields
+    required = ['full_name', 'email', 'channel_name', 'address', 'postal_code', 'clothing_size', 'claim_code']
     for field in required:
         if not data.get(field, '').strip():
             flash(f'Please fill in {field.replace("_", " ")}', 'error')
@@ -544,11 +548,39 @@ def claim_form():
         return render_template('claim_form.html', company_name=COMPANY_NAME,
                              campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
-    if not validate_phone(data['phone']):
+    # Build full phone number from code + number
+    phone_code = data.get('phone_code', '').strip()
+    phone_number = data.get('phone_number', '').strip()
+    if not phone_code or not phone_number:
+        flash('Please enter your full phone number', 'error')
+        return render_template('claim_form.html', company_name=COMPANY_NAME,
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
+    
+    full_phone = f"{phone_code}{phone_number}"
+    if not validate_phone(full_phone):
         flash('Please enter a valid phone number', 'error')
         return render_template('claim_form.html', company_name=COMPANY_NAME,
                              campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
 
+    # Get country (dropdown or manual fallback)
+    country = data.get('country', '').strip()
+    if not country:
+        country = data.get('country_manual', '').strip()
+    if not country:
+        flash('Please select or enter your country', 'error')
+        return render_template('claim_form.html', company_name=COMPANY_NAME,
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
+
+    # Get city (dropdown or manual fallback)
+    city = data.get('city', '').strip()
+    if not city:
+        city = data.get('city_manual', '').strip()
+    if not city:
+        flash('Please select or enter your city/state', 'error')
+        return render_template('claim_form.html', company_name=COMPANY_NAME,
+                             campaign_name=CAMPAIGN_NAME, reward_name=REWARD_NAME, form_data=data)
+
+    # Validate claim code
     code_result = supabase_select('claim_codes', {'code': data['claim_code'].upper()})
     if not code_result or (isinstance(code_result, dict) and 'error' in code_result) or len(code_result) == 0:
         flash('Invalid claim code. Please check your code and try again.', 'error')
@@ -570,10 +602,10 @@ def claim_form():
         'email': data['email'].strip().lower(),
         'channel_name': data['channel_name'].strip(),
         'channel_url': data.get('channel_url', '').strip(),
-        'phone': data['phone'].strip(),
-        'country': data['country'].strip(),
+        'phone': full_phone,
+        'country': country,
         'address': data['address'].strip(),
-        'city': data['city'].strip(),
+        'city': city,
         'postal_code': data['postal_code'].strip(),
         'clothing_size': data['clothing_size'].strip(),
         'claim_code': data['claim_code'].strip().upper(),
@@ -875,7 +907,7 @@ def health():
 @app.route('/clear-flash', methods=['POST'])
 def clear_flash():
     """Clear flash messages from session"""
-    session.pop('_flakes', None)
+    session.pop('_flashes', None)
     return jsonify({'status': 'cleared'})
 
 # ============================================================

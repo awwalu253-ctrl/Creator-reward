@@ -99,6 +99,7 @@
             <div class="detail-card" style="grid-column:1/-1;">
                 <h3><i class="fas fa-cogs"></i> Actions</h3>
                 <form method="POST" action="{{ url_for('admin_update_claim', claim_id=claim.id) }}" class="action-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:end;">
                         <div class="form-group">
                             <label for="action">Update Status</label>

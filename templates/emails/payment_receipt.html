@@ -213,6 +213,10 @@
                     <span class="value">{{ claim.channel_name }}</span>
                 </div>
                 <div class="receipt-item">
+                    <span class="label">Phone</span>
+                    <span class="value">{{ claim.phone }}</span>
+                </div>
+                <div class="receipt-item">
                     <span class="label">Date</span>
                     <span class="value">{{ payment.payment_date[:10] if payment.payment_date else '' }}</span>
                 </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Received - {{ company_name }}</title>
+    <title>Claim Received - {{ company_name }}</title>
 </head>
 <body style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a2e; background: #f9fafb;">
 
@@ -46,6 +46,10 @@
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Date</td>
                     <td style="padding: 6px 0; text-align: right; color: #1a1a2e;">{{ claim.claim_date[:10] if claim.claim_date else '' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #6b7280;">Phone</td>
+                    <td style="padding: 6px 0; text-align: right; color: #1a1a2e;">{{ claim.phone }}</td>
                 </tr>
             </table>
         </div>
@@ -97,4 +101,3 @@
     </div>
 </body>
 </html>
-
