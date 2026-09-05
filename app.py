@@ -536,7 +536,7 @@ def claim_form():
     app.logger.info(f"Form data received for claim from {request.remote_addr}")
 
     # Required fields
-    required = ['full_name', 'email', 'channel_name', 'address', 'postal_code', 'clothing_size', 'claim_code']
+    required = ['full_name', 'email', 'address', 'postal_code', 'clothing_size', 'claim_code']
     for field in required:
         if not data.get(field, '').strip():
             flash(f'Please fill in {field.replace("_", " ")}', 'error')
@@ -600,8 +600,6 @@ def claim_form():
         'claim_number': claim_number,
         'full_name': data['full_name'].strip(),
         'email': data['email'].strip().lower(),
-        'channel_name': data['channel_name'].strip(),
-        'channel_url': data.get('channel_url', '').strip(),
         'phone': full_phone,
         'country': country,
         'address': data['address'].strip(),
