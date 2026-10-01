@@ -1,54 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}Claim Detail - {{ company_name }}{% endblock %}
+{% block title %}Registration Detail - {{ company_name }}{% endblock %}
 
 {% block content %}
 <style>
     .detail-section { padding: 40px 0; background: #f7fafc; min-height: 80vh; }
     .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
     .detail-header h1 { margin: 0; font-size: 28px; color: #1a1a2e; }
-    .detail-header h1 i { color: #dc2626; }
+    .detail-header h1 i { color: #1e40af; }
     .status-alert { padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; font-weight: 500; border-left: 4px solid; }
+    .status-alert.status-registered { background: #dbeafe; border-color: #1e40af; color: #1e3a8a; }
+    .status-alert.status-contacted { background: #d1fae5; border-color: #48bb78; color: #065f46; }
+    .status-alert.status-cancelled { background: #fee2e2; border-color: #fc8181; color: #991b1b; }
     .status-alert.status-pending { background: #fef3c7; border-color: #f6ad55; color: #92400e; }
     .status-alert.status-paid { background: #d1fae5; border-color: #48bb78; color: #065f46; }
     .status-alert.status-shipped { background: #dbeafe; border-color: #667eea; color: #1e40af; }
     .status-alert.status-delivered { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
-    .status-alert.status-cancelled { background: #fee2e2; border-color: #fc8181; color: #991b1b; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
     .detail-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     .detail-card h3 { margin: 0 0 20px 0; font-size: 18px; color: #1a1a2e; }
-    .detail-card h3 i { color: #dc2626; }
+    .detail-card h3 i { color: #1e40af; }
     .detail-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
     .detail-item:last-child { border-bottom: none; }
     .detail-item .label { color: #718096; font-weight: 500; font-size: 14px; }
     .detail-item .value { color: #1a1a2e; font-weight: 500; text-align: right; word-break: break-word; max-width: 60%; }
-    .detail-item .value.highlight { color: #dc2626; font-weight: 700; }
+    .detail-item .value.highlight { color: #1e40af; font-weight: 700; }
+    .detail-item .value.mono { font-family: monospace; font-size: 12px; }
     .status-badge { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; display: inline-block; text-transform: uppercase; }
+    .status-registered { background: #dbeafe; color: #1e3a8a; }
+    .status-contacted { background: #d1fae5; color: #065f46; }
+    .status-cancelled { background: #fee2e2; color: #991b1b; }
     .status-pending { background: #fef3c7; color: #92400e; }
     .status-paid { background: #d1fae5; color: #065f46; }
     .status-shipped { background: #dbeafe; color: #1e40af; }
     .status-delivered { background: #e0e7ff; color: #3730a3; }
-    .status-cancelled { background: #fee2e2; color: #991b1b; }
-    .payment-badge { padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; display: inline-block; }
-    .payment-badge.paid { background: #d1fae5; color: #065f46; }
-    .payment-badge.unpaid { background: #fef3c7; color: #92400e; }
     .action-form { display: flex; flex-direction: column; gap: 15px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group label { font-weight: 600; font-size: 14px; color: #4a5568; }
     .form-group select, .form-group input { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: border-color 0.3s; width: 100%; }
-    .form-group select:focus, .form-group input:focus { outline: none; border-color: #dc2626; }
-    .btn-primary { background: #dc2626; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s; }
-    .btn-primary:hover { background: #b91c1c; }
-    .btn-secondary { background: #e2e8f0; color: #4a5568; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; transition: background 0.3s; border: none; cursor: pointer; }
+    .form-group select:focus, .form-group input:focus { outline: none; border-color: #1e40af; }
+    .btn-primary { background: #1e40af; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s; }
+    .btn-primary:hover { background: #1e3a8a; }
+    .btn-secondary { background: #e2e8f0; color: #4a5568; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; transition: background 0.3s; border: none; cursor: pointer; display: inline-block; }
     .btn-secondary:hover { background: #cbd5e0; }
-    @media (max-width: 1024px) { .detail-grid { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } .detail-header { flex-direction: column; align-items: flex-start; } .detail-item { flex-direction: column; gap: 4px; } .detail-item .value { text-align: left; max-width: 100%; } }
+    .password-notice { background: #f0fdf4; border-left: 4px solid #48bb78; padding: 12px 16px; border-radius: 8px; margin-top: 8px; font-size: 13px; color: #166534; }
+    @media (max-width: 1024px) { .detail-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .detail-header { flex-direction: column; align-items: flex-start; } .detail-item { flex-direction: column; gap: 4px; } .detail-item .value { text-align: left; max-width: 100%; } }
 </style>
 
 <div class="detail-section">
     <div class="container">
         <div class="detail-header">
-            <div><h1><i class="fas fa-file-invoice"></i> Claim Detail</h1><p style="color:#718096;">Claim #{{ claim.claim_number }}</p></div>
+            <div>
+                <h1><i class="fas fa-user-circle"></i> Registration Detail</h1>
+                <p style="color:#718096;">Registration #{{ claim.claim_number }}</p>
+            </div>
             <div>
                 <a href="{{ url_for('admin_claims') }}" class="btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
                 <a href="{{ url_for('admin_dashboard') }}" class="btn-secondary"><i class="fas fa-chart-line"></i> Dashboard</a>
@@ -57,45 +63,80 @@
 
         <div class="status-alert status-{{ claim.status }}">
             <strong>Status:</strong> {{ claim.status|capitalize }}
-            {% if claim.status == 'pending' %} - Waiting for payment{% elif claim.status == 'paid' %} - Payment received, processing{% elif claim.status == 'shipped' %} - Order has been shipped{% elif claim.status == 'delivered' %} - Order has been delivered{% elif claim.status == 'cancelled' %} - Order has been cancelled{% endif %}
+            {% if claim.status == 'registered' %} - New registration, awaiting contact
+            {% elif claim.status == 'contacted' %} - User has been contacted
+            {% elif claim.status == 'cancelled' %} - Registration cancelled
+            {% endif %}
         </div>
 
         <div class="detail-grid">
+            <!-- User Information -->
             <div class="detail-card">
                 <h3><i class="fas fa-user"></i> User Information</h3>
-                <div class="detail-item"><span class="label">Full Name</span><span class="value">{{ claim.full_name }}</span></div>
-                <div class="detail-item"><span class="label">Email</span><span class="value"><a href="mailto:{{ claim.email }}">{{ claim.email }}</a></span></div>
-                <div class="detail-item"><span class="label">Phone</span><span class="value">{{ claim.phone }}</span></div>
-                <div class="detail-item"><span class="label">Channel</span><span class="value">{{ claim.channel_name }}</span></div>
-                <div class="detail-item"><span class="label">Country</span><span class="value">{{ claim.country }}</span></div>
-                <div class="detail-item"><span class="label">Address</span><span class="value">{{ claim.address }}, {{ claim.city }}, {{ claim.postal_code }}</span></div>
-            </div>
-
-            <div class="detail-card">
-                <h3><i class="fas fa-info-circle"></i> Claim Information</h3>
-                <div class="detail-item"><span class="label">Claim Number</span><span class="value highlight">{{ claim.claim_number }}</span></div>
-                <div class="detail-item"><span class="label">Clothing Size</span><span class="value">{{ claim.clothing_size }}</span></div>
-                <div class="detail-item"><span class="label">Status</span><span class="value"><span class="status-badge status-{{ claim.status }}">{{ claim.status|capitalize }}</span></span></div>
-                <div class="detail-item"><span class="label">Payment</span><span class="value"><span class="payment-badge {% if claim.shipping_fee_paid == 'true' %}paid{% else %}unpaid{% endif %}">{% if claim.shipping_fee_paid == 'true' %}✅ Paid{% else %}❌ Unpaid{% endif %}</span></span></div>
-                <div class="detail-item"><span class="label">Claim Date</span><span class="value">{{ claim.claim_date[:10] if claim.claim_date else '-' }}</span></div>
-                {% if claim.tracking_number %}
-                <div class="detail-item"><span class="label">Tracking #</span><span class="value"><strong>{{ claim.tracking_number }}</strong></span></div>
+                <div class="detail-item">
+                    <span class="label">Full Name</span>
+                    <span class="value">{{ claim.full_name }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Email</span>
+                    <span class="value"><a href="mailto:{{ claim.email }}" style="color:#1e40af;">{{ claim.email }}</a></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Password</span>
+                    <span class="value">
+                        {% if claim.password_hash %}
+                            <span style="color: #48bb78; font-weight: 600;">🔒 Secure (hashed)</span>
+                        {% else %}
+                            <span style="color: #a0aec0;">Not set</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if claim.password_hash %}
+                <div class="password-notice">
+                    <i class="fas fa-info-circle"></i>
+                    Password is hashed for security. The user's actual password cannot be retrieved.
+                </div>
                 {% endif %}
+                <div class="detail-item">
+                    <span class="label">Phone</span>
+                    <span class="value">{{ claim.phone }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Country</span>
+                    <span class="value">{{ claim.country }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Address</span>
+                    <span class="value">{{ claim.address }}, {{ claim.city }}, {{ claim.postal_code }}</span>
+                </div>
             </div>
 
+            <!-- Registration Information -->
             <div class="detail-card">
-                <h3><i class="fas fa-credit-card"></i> Payment Information</h3>
-                {% if payment %}
-                <div class="detail-item"><span class="label">Transaction ID</span><span class="value" style="font-size:12px;">{{ payment.transaction_id }}</span></div>
-                <div class="detail-item"><span class="label">Amount</span><span class="value highlight">${{ "%.2f"|format(payment.amount) }}</span></div>
-                <div class="detail-item"><span class="label">Currency</span><span class="value">{{ payment.currency }}</span></div>
-                <div class="detail-item"><span class="label">Payment Date</span><span class="value">{{ payment.payment_date[:10] if payment.payment_date else '-' }}</span></div>
-                <div class="detail-item"><span class="label">Status</span><span class="value"><span class="payment-badge paid">✅ Paid</span></span></div>
-                {% else %}
-                <div style="text-align:center;padding:30px 0;color:#a0aec0;"><i class="fas fa-credit-card" style="font-size:36px;display:block;margin-bottom:10px;"></i><p>No payment recorded yet</p></div>
-                {% endif %}
+                <h3><i class="fas fa-info-circle"></i> Registration Information</h3>
+                <div class="detail-item">
+                    <span class="label">Registration Number</span>
+                    <span class="value highlight">{{ claim.claim_number }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Clothing Size</span>
+                    <span class="value">{{ claim.clothing_size }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Status</span>
+                    <span class="value"><span class="status-badge status-{{ claim.status }}">{{ claim.status|capitalize }}</span></span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Registered On</span>
+                    <span class="value">{{ claim.claim_date[:10] if claim.claim_date else '-' }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="label">Last Updated</span>
+                    <span class="value">{{ claim.updated_at[:10] if claim.updated_at else '-' }}</span>
+                </div>
             </div>
 
+            <!-- Actions -->
             <div class="detail-card" style="grid-column:1/-1;">
                 <h3><i class="fas fa-cogs"></i> Actions</h3>
                 <form method="POST" action="{{ url_for('admin_update_claim', claim_id=claim.id) }}" class="action-form">
@@ -105,23 +146,27 @@
                             <label for="action">Update Status</label>
                             <select name="action" id="action">
                                 <option value="">Select action...</option>
-                                <option value="mark_paid">✅ Mark as Paid</option>
-                                <option value="mark_shipped">📦 Mark as Shipped</option>
-                                <option value="mark_delivered">📬 Mark as Delivered</option>
+                                <option value="mark_contacted">✅ Mark as Contacted</option>
                                 <option value="mark_cancelled">❌ Mark as Cancelled</option>
                             </select>
                         </div>
-                        <div class="form-group" id="tracking-group" style="display:none;">
-                            <label for="tracking_number">Tracking Number</label>
-                            <input type="text" id="tracking_number" name="tracking_number" placeholder="Enter tracking number">
+                        <div class="form-group">
+                            <label for="tracking_number">Notes (optional)</label>
+                            <input type="text" id="tracking_number" name="tracking_number" placeholder="Add notes">
                         </div>
-                        <div class="form-group"><button type="submit" class="btn-primary"><i class="fas fa-save"></i> Update</button></div>
+                        <div class="form-group">
+                            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Update</button>
+                        </div>
                     </div>
                 </form>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #e2e8f0;">
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <a href="mailto:{{ claim.email }}?subject=Your Claim #{{ claim.claim_number }}" class="btn-secondary"><i class="fas fa-envelope"></i> Email User</a>
-                    <a href="#" onclick="window.print()" class="btn-secondary"><i class="fas fa-print"></i> Print</a>
+                    <a href="mailto:{{ claim.email }}?subject=Your Registration #{{ claim.claim_number }}" class="btn-secondary">
+                        <i class="fas fa-envelope"></i> Email User
+                    </a>
+                    <a href="#" onclick="window.print()" class="btn-secondary">
+                        <i class="fas fa-print"></i> Print
+                    </a>
                 </div>
             </div>
         </div>
@@ -130,7 +175,7 @@
 
 <script>
     document.getElementById('action').addEventListener('change', function() {
-        document.getElementById('tracking-group').style.display = this.value === 'mark_shipped' ? 'block' : 'none';
+        // Could add tracking field visibility logic here
     });
 </script>
 {% endblock %}

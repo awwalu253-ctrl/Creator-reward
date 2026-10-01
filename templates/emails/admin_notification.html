@@ -3,58 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Claim Notification</title>
+    <title>New Registration Notification</title>
 </head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a2e; background: #f9fafb;">
 
     <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
         <!-- Header -->
         <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f3f4f6;">
-            <div style="font-size: 24px; font-weight: 800; color: #dc2626;">{{ company_name }}</div>
-            <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">New Claim Submission Alert</p>
+            <div style="font-size: 24px; font-weight: 800; color: #1e40af;">{{ company_name }}</div>
+            <p style="color: #6b7280; margin: 4px 0 0; font-size: 14px;">🎉 New Registration Alert</p>
         </div>
 
         <div style="margin: 24px 0;">
             <p style="font-size: 16px; font-weight: 600; color: #1a1a2e; margin: 0;">
-                A new gift claim has been submitted.
+                A new user has registered for the gift package.
             </p>
         </div>
 
-        <!-- Claim Details -->
+        <!-- Details -->
         <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 16px 0; border: 1px solid #e5e7eb;">
-            <p style="font-weight: 600; margin: 0 0 12px; font-size: 14px; color: #374151;">📋 Claim Information</p>
+            <p style="font-weight: 600; margin: 0 0 12px; font-size: 14px; color: #374151;">📋 Registration Information</p>
             <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Reference</td>
-                    <td style="padding: 6px 0; text-align: right; font-weight: 600;">{{ claim.claim_number }}</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 600; color: #1e40af;">{{ claim.claim_number }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Name</td>
-                    <td style="padding: 6px 0; text-align: right;">{{ claim.full_name }}</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 600;">{{ claim.full_name }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Email</td>
-                    <td style="padding: 6px 0; text-align: right;"><a href="mailto:{{ claim.email }}" style="color: #dc2626;">{{ claim.email }}</a></td>
+                    <td style="padding: 6px 0; text-align: right;"><a href="mailto:{{ claim.email }}" style="color: #1e40af;">{{ claim.email }}</a></td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Phone</td>
                     <td style="padding: 6px 0; text-align: right;">{{ claim.phone }}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #6b7280;">Channel</td>
-                    <td style="padding: 6px 0; text-align: right;">{{ claim.channel_name }}</td>
-                </tr>
-                <tr>
-                    <td style="padding: 6px 0; color: #6b7280;">Location</td>
-                    <td style="padding: 6px 0; text-align: right;">{{ claim.country }}, {{ claim.city }}</td>
+                    <td style="padding: 6px 0; color: #6b7280;">Country</td>
+                    <td style="padding: 6px 0; text-align: right;">{{ claim.country }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Address</td>
-                    <td style="padding: 6px 0; text-align: right; font-size: 13px;">{{ claim.address }}</td>
+                    <td style="padding: 6px 0; text-align: right; font-size: 13px;">{{ claim.address }}, {{ claim.city }}, {{ claim.postal_code }}</td>
                 </tr>
                 <tr>
                     <td style="padding: 6px 0; color: #6b7280;">Size</td>
                     <td style="padding: 6px 0; text-align: right; font-weight: 600;">{{ claim.clothing_size }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px 0; color: #6b7280;">Password</td>
+                    <td style="padding: 6px 0; text-align: right; font-size: 12px; color: #48bb78;">🔒 Secure (hashed)</td>
                 </tr>
             </table>
         </div>
@@ -62,14 +62,14 @@
         <!-- Action Button -->
         <div style="text-align: center; margin: 24px 0;">
             <a href="https://creator-reward.onrender.com/admin/claim/{{ claim.id }}" 
-               style="background: #dc2626; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 15px;">
+               style="background: #1e40af; color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block; font-size: 15px;">
                 View Full Details
             </a>
         </div>
 
         <div style="margin-top: 20px; padding-top: 16px; border-top: 2px solid #f3f4f6; text-align: center; font-size: 12px; color: #9ca3af;">
             <p style="margin: 0;">© {{ current_year }} {{ company_name }}</p>
-            <p style="margin: 4px 0 0;">This is an automated notification from {{ company_name }}</p>
+            <p style="margin: 4px 0 0;">Automated notification from {{ company_name }}</p>
         </div>
     </div>
 </body>

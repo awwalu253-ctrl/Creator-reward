@@ -1,53 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}Claim Your Gift Package{% endblock %}
+{% block title %}Register for Your Gift Package{% endblock %}
 
 {% block content %}
 <style>
-    /* ========================================
-       VIDEO-PLATFORM INSPIRED COLOR SCHEME
-       ======================================== */
     :root {
-        --primary: #E62117;
-        --primary-hover: #CC0000;
-        --primary-light: #FFE5E5;
-        --primary-subtle: rgba(230, 33, 23, 0.08);
-        
+        --primary: #1e40af;
+        --primary-hover: #1e3a8a;
+        --primary-light: #dbeafe;
+        --primary-subtle: rgba(30, 64, 175, 0.08);
         --bg-primary: #FFFFFF;
         --bg-secondary: #F8F9FA;
         --bg-tertiary: #F1F1F1;
-        
         --text-primary: #0F0F0F;
         --text-secondary: #606060;
         --text-tertiary: #888888;
         --text-white: #FFFFFF;
-        
         --border-light: #E5E5E5;
         --border-dark: #3D3D3D;
-        
         --success: #28A745;
         --error: #E62117;
         --warning: #F9A825;
         --info: #1A73E8;
-        
-        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-        --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-        --shadow-focus: 0 0 0 4px rgba(230, 33, 23, 0.12);
-        
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --shadow-focus: 0 0 0 4px rgba(30, 64, 175, 0.15);
         --radius-sm: 4px;
         --radius-md: 8px;
         --radius-lg: 12px;
         --radius-xl: 16px;
-        
         --transition-fast: 0.15s ease;
         --transition-base: 0.25s ease;
         --transition-slow: 0.4s ease;
     }
 
-    /* ========================================
-       FORM SECTION
-       ======================================== */
     .form-section {
         padding: 60px 0 80px;
         background: var(--bg-secondary);
@@ -55,7 +42,7 @@
         display: flex;
         align-items: center;
     }
-    
+
     .form-wrapper {
         max-width: 820px;
         margin: 0 auto;
@@ -66,21 +53,18 @@
         border: 1px solid var(--border-light);
         transition: var(--transition-base);
     }
-    
+
     .form-wrapper:hover {
         box-shadow: var(--shadow-lg);
     }
-    
-    /* ========================================
-       FORM HEADER
-       ======================================== */
+
     .form-header {
         text-align: center;
         margin-bottom: 40px;
         padding-bottom: 32px;
         border-bottom: 1px solid var(--border-light);
     }
-    
+
     .form-header .header-icon {
         display: inline-flex;
         align-items: center;
@@ -94,12 +78,12 @@
         margin-bottom: 16px;
         transition: var(--transition-base);
     }
-    
+
     .form-header .header-icon:hover {
         transform: scale(1.05);
-        background: rgba(230, 33, 23, 0.12);
+        background: rgba(30, 64, 175, 0.15);
     }
-    
+
     .form-header h1 {
         font-size: 2rem;
         font-weight: 800;
@@ -107,40 +91,34 @@
         margin: 0 0 8px 0;
         letter-spacing: -0.5px;
     }
-    
+
     .form-header h1 i {
         color: var(--primary);
     }
-    
+
     .form-header p {
         color: var(--text-secondary);
         font-size: 1rem;
         margin: 0;
         font-weight: 400;
     }
-    
-    /* ========================================
-       FORM GRID
-       ======================================== */
+
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 20px 24px;
     }
-    
+
     .form-group {
         display: flex;
         flex-direction: column;
         gap: 6px;
     }
-    
+
     .form-group.full-width {
         grid-column: 1 / -1;
     }
-    
-    /* ========================================
-       FORM LABELS
-       ======================================== */
+
     .form-group label {
         font-weight: 600;
         font-size: 0.85rem;
@@ -150,23 +128,20 @@
         color: var(--text-primary);
         letter-spacing: 0.2px;
     }
-    
+
     .form-group label i {
         color: var(--primary);
         width: 16px;
         font-size: 0.85rem;
         opacity: 0.8;
     }
-    
+
     .required {
         color: var(--error);
         font-weight: 700;
         margin-left: 2px;
     }
-    
-    /* ========================================
-       FORM INPUTS
-       ======================================== */
+
     .form-group input,
     .form-group select,
     .form-group textarea {
@@ -182,13 +157,13 @@
         -webkit-appearance: none;
         appearance: none;
     }
-    
+
     .form-group input:hover,
     .form-group select:hover,
     .form-group textarea:hover {
         border-color: var(--text-tertiary);
     }
-    
+
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
@@ -196,73 +171,48 @@
         border-color: var(--primary);
         box-shadow: var(--shadow-focus);
     }
-    
+
     .form-group input::placeholder,
     .form-group textarea::placeholder {
         color: var(--text-tertiary);
         font-weight: 400;
     }
-    
-    .form-group input[readonly] {
-        background: var(--bg-tertiary);
-        cursor: not-allowed;
-        color: var(--text-secondary);
-        border-color: var(--border-light);
-    }
-    
-    .form-group input:disabled,
-    .form-group select:disabled {
-        background: var(--bg-tertiary);
-        cursor: not-allowed;
-        color: var(--text-tertiary);
-    }
-    
+
     .form-group textarea {
         resize: vertical;
         min-height: 80px;
         line-height: 1.5;
     }
-    
+
     .form-group select {
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23606060' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 14px center;
         padding-right: 40px;
     }
-    
-    .form-group select:focus {
-        border-color: var(--primary);
-        box-shadow: var(--shadow-focus);
-    }
-    
-    /* ========================================
-       PHONE FIELD (code + number)
-       ======================================== */
+
     .phone-row {
         display: flex;
         gap: 10px;
     }
-    
+
     .phone-row select {
         flex: 0 0 150px;
         padding-right: 32px;
     }
-    
+
     .phone-row input {
         flex: 1;
         min-width: 0;
     }
-    
-    /* ========================================
-       FORM HELP TEXT
-       ======================================== */
+
     .form-group small {
         color: var(--text-tertiary);
         font-size: 0.75rem;
         margin-top: 4px;
         font-weight: 400;
     }
-    
+
     .form-group .hint {
         color: var(--text-secondary);
         font-size: 0.75rem;
@@ -272,15 +222,12 @@
         align-items: center;
         gap: 6px;
     }
-    
+
     .form-group .hint i {
         color: var(--info);
         font-size: 0.7rem;
     }
-    
-    /* ========================================
-       PRIVACY NOTICE
-       ======================================== */
+
     .privacy-notice {
         margin: 32px 0 28px;
         padding: 24px 28px;
@@ -289,11 +236,11 @@
         border-left: 4px solid var(--primary);
         transition: var(--transition-base);
     }
-    
+
     .privacy-notice:hover {
         background: var(--bg-tertiary);
     }
-    
+
     .privacy-notice h4 {
         display: flex;
         align-items: center;
@@ -302,19 +249,19 @@
         color: var(--text-primary);
         font-size: 0.95rem;
     }
-    
+
     .privacy-notice h4 i {
         color: var(--primary);
         font-size: 1rem;
     }
-    
+
     .privacy-notice p {
         font-size: 0.9rem;
         color: var(--text-secondary);
         margin: 0 0 12px 0;
         line-height: 1.6;
     }
-    
+
     .privacy-notice .checkbox {
         display: flex;
         align-items: flex-start;
@@ -322,7 +269,7 @@
         cursor: pointer;
         padding: 4px 0;
     }
-    
+
     .privacy-notice .checkbox input[type="checkbox"] {
         width: 18px;
         height: 18px;
@@ -332,34 +279,31 @@
         flex-shrink: 0;
         border-radius: var(--radius-sm);
     }
-    
+
     .privacy-notice .checkbox span {
         font-size: 0.9rem;
         color: var(--text-secondary);
         line-height: 1.5;
     }
-    
+
     .privacy-notice .checkbox span a {
         color: var(--primary);
         font-weight: 600;
         text-decoration: none;
         transition: var(--transition-fast);
     }
-    
+
     .privacy-notice .checkbox span a:hover {
         text-decoration: underline;
         color: var(--primary-hover);
     }
-    
-    /* ========================================
-       FORM ACTIONS
-       ======================================== */
+
     .form-actions {
         text-align: center;
         margin-top: 8px;
         padding-top: 8px;
     }
-    
+
     .btn-primary {
         display: inline-flex;
         align-items: center;
@@ -373,137 +317,116 @@
         font-weight: 600;
         cursor: pointer;
         transition: var(--transition-base);
-        box-shadow: 0 4px 16px rgba(230, 33, 23, 0.25);
+        box-shadow: 0 4px 16px rgba(30, 64, 175, 0.25);
         text-decoration: none;
         justify-content: center;
     }
-    
+
     .btn-primary:hover {
         background: var(--primary-hover);
         transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(230, 33, 23, 0.35);
+        box-shadow: 0 8px 30px rgba(30, 64, 175, 0.35);
     }
-    
+
     .btn-primary:active {
         transform: translateY(0);
-        box-shadow: 0 4px 16px rgba(230, 33, 23, 0.2);
+        box-shadow: 0 4px 16px rgba(30, 64, 175, 0.2);
     }
-    
+
     .btn-primary:disabled {
         opacity: 0.6;
         cursor: not-allowed;
         transform: none;
     }
-    
+
     .btn-primary i {
         font-size: 1rem;
     }
-    
+
     .btn-large {
         padding: 16px 48px;
         font-size: 1.05rem;
     }
-    
-    /* ========================================
-       LOADING STATE
-       ======================================== */
+
     .btn-loading {
         opacity: 0.7;
         cursor: wait;
     }
-    
+
     .btn-loading i {
         animation: spin 0.8s linear infinite;
     }
-    
+
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
-    
-    /* ========================================
-       RESPONSIVE BREAKPOINTS
-       ======================================== */
+
     @media (max-width: 768px) {
         .form-wrapper {
             padding: 28px 20px;
             margin: 0 16px;
             border-radius: var(--radius-md);
         }
-        
         .form-grid {
             grid-template-columns: 1fr;
             gap: 16px;
         }
-        
         .form-group.full-width {
             grid-column: 1;
         }
-        
         .form-header h1 {
             font-size: 1.6rem;
         }
-        
         .form-header .header-icon {
             width: 52px;
             height: 52px;
             font-size: 1.4rem;
         }
-        
         .privacy-notice {
             padding: 18px 16px;
         }
-        
         .btn-primary {
             padding: 14px 32px;
             font-size: 0.95rem;
             width: 100%;
             justify-content: center;
         }
-        
         .btn-large {
             padding: 16px 36px;
             font-size: 1rem;
         }
-        
         .form-group input,
         .form-group select,
         .form-group textarea {
             padding: 10px 14px;
             font-size: 0.9rem;
         }
-        
         .phone-row {
             flex-direction: column;
         }
-        
         .phone-row select {
             flex: 1 1 auto;
         }
     }
-    
+
     @media (max-width: 480px) {
         .form-wrapper {
             padding: 20px 14px;
             margin: 0 8px;
         }
-        
         .form-header h1 {
             font-size: 1.4rem;
         }
-        
         .form-header p {
             font-size: 0.9rem;
         }
-        
         .privacy-notice {
             padding: 14px 12px;
         }
-        
         .privacy-notice p {
             font-size: 0.85rem;
         }
-        
         .privacy-notice .checkbox span {
             font-size: 0.85rem;
         }
@@ -517,26 +440,26 @@
                 <div class="header-icon">
                     <i class="fas fa-gift"></i>
                 </div>
-                <h1>Claim Your Gift Package</h1>
-                <p>Enter your details to receive your exclusive creator gift package</p>
+                <h1>Register for Your Gift Package</h1>
+                <p>Enter your details to register for your exclusive creator gift package</p>
             </div>
 
             <form method="POST" action="{{ url_for('claim_form') }}" class="claim-form" id="claimForm" novalidate
-                  data-prefill-country="{{ form_data.country if form_data else '' }}"
-                  data-prefill-city="{{ form_data.city if form_data else '' }}"
-                  data-prefill-phone-code="{{ form_data.phone_code if form_data else '' }}"
-                  data-prefill-phone-number="{{ form_data.phone_number if form_data else '' }}">
+                data-prefill-country="{{ form_data.country if form_data else '' }}"
+                data-prefill-city="{{ form_data.city if form_data else '' }}"
+                data-prefill-phone-code="{{ form_data.phone_code if form_data else '' }}"
+                data-prefill-phone-number="{{ form_data.phone_number if form_data else '' }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
+
                 <div class="form-grid">
                     <!-- Full Name -->
                     <div class="form-group">
                         <label for="full_name">
                             <i class="fas fa-user"></i> Full Name <span class="required">*</span>
                         </label>
-                        <input type="text" id="full_name" name="full_name" 
-                               value="{{ form_data.full_name if form_data else '' }}"
-                               placeholder="Enter your full name" required autofocus>
+                        <input type="text" id="full_name" name="full_name"
+                            value="{{ form_data.full_name if form_data else '' }}" placeholder="Enter your full name"
+                            required autofocus>
                     </div>
 
                     <!-- Email -->
@@ -544,9 +467,21 @@
                         <label for="email">
                             <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
                         </label>
-                        <input type="email" id="email" name="email" 
-                               value="{{ form_data.email if form_data else '' }}"
-                               placeholder="Enter your email" required>
+                        <input type="email" id="email" name="email" value="{{ form_data.email if form_data else '' }}"
+                            placeholder="Enter your email" required>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i> Password <span class="required">*</span>
+                        </label>
+                        <input type="password" id="password" name="password"
+                            placeholder="Create a password (min 8 characters)" required minlength="8">
+                        <div class="hint">
+                            <i class="fas fa-info-circle"></i>
+                            Password must be at least 8 characters long.
+                        </div>
                     </div>
 
                     <!-- Phone (country code + number) -->
@@ -559,8 +494,8 @@
                                 <option value="">Code</option>
                             </select>
                             <input type="tel" id="phone_number" name="phone_number"
-                                   value="{{ form_data.phone_number if form_data else '' }}"
-                                   placeholder="800 000 0000" required>
+                                value="{{ form_data.phone_number if form_data else '' }}" placeholder="800 000 0000"
+                                required>
                         </div>
                         <div class="hint">
                             <i class="fas fa-info-circle"></i>
@@ -578,7 +513,7 @@
                         </select>
                     </div>
 
-                    <!-- City / State (dynamic based on country) -->
+                    <!-- City / State -->
                     <div class="form-group">
                         <label for="city">
                             <i class="fas fa-city"></i> City/State <span class="required">*</span>
@@ -586,8 +521,8 @@
                         <select id="city" name="city" required disabled>
                             <option value="">Select a country first</option>
                         </select>
-                        <input type="text" id="city_manual" name="city_manual"
-                               placeholder="Enter your city/state" style="display:none;">
+                        <input type="text" id="city_manual" name="city_manual" placeholder="Enter your city/state"
+                            style="display:none;">
                     </div>
 
                     <!-- Address -->
@@ -595,8 +530,8 @@
                         <label for="address">
                             <i class="fas fa-home"></i> Shipping Address <span class="required">*</span>
                         </label>
-                        <textarea id="address" name="address" rows="2" 
-                                  placeholder="Enter your street address" required>{{ form_data.address if form_data else '' }}</textarea>
+                        <textarea id="address" name="address" rows="2" placeholder="Enter your street address"
+                            required>{{ form_data.address if form_data else '' }}</textarea>
                     </div>
 
                     <!-- Postal Code -->
@@ -604,9 +539,9 @@
                         <label for="postal_code">
                             <i class="fas fa-mailbox"></i> Postal Code <span class="required">*</span>
                         </label>
-                        <input type="text" id="postal_code" name="postal_code" 
-                               value="{{ form_data.postal_code if form_data else '' }}"
-                               placeholder="Enter postal code" required>
+                        <input type="text" id="postal_code" name="postal_code"
+                            value="{{ form_data.postal_code if form_data else '' }}" placeholder="Enter postal code"
+                            required>
                     </div>
 
                     <!-- Clothing Size -->
@@ -616,47 +551,32 @@
                         </label>
                         <select id="clothing_size" name="clothing_size" required>
                             <option value="">Select your size</option>
-                            <option value="S" {% if form_data and form_data.clothing_size == 'S' %}selected{% endif %}>S</option>
-                            <option value="M" {% if form_data and form_data.clothing_size == 'M' %}selected{% endif %}>M</option>
-                            <option value="L" {% if form_data and form_data.clothing_size == 'L' %}selected{% endif %}>L</option>
-                            <option value="XL" {% if form_data and form_data.clothing_size == 'XL' %}selected{% endif %}>XL</option>
-                            <option value="2XL" {% if form_data and form_data.clothing_size == '2XL' %}selected{% endif %}>2XL</option>
-                            <option value="3XL" {% if form_data and form_data.clothing_size == '3XL' %}selected{% endif %}>3XL</option>
+                            <option value="S" {% if form_data and form_data.clothing_size=='S' %}selected{% endif %}>S</option>
+                            <option value="M" {% if form_data and form_data.clothing_size=='M' %}selected{% endif %}>M</option>
+                            <option value="L" {% if form_data and form_data.clothing_size=='L' %}selected{% endif %}>L</option>
+                            <option value="XL" {% if form_data and form_data.clothing_size=='XL' %}selected{% endif %}>XL</option>
+                            <option value="2XL" {% if form_data and form_data.clothing_size=='2XL' %}selected{% endif %}>2XL</option>
+                            <option value="3XL" {% if form_data and form_data.clothing_size=='3XL' %}selected{% endif %}>3XL</option>
                         </select>
-                    </div>
-
-                    <!-- Claim Code -->
-                    <div class="form-group full-width">
-                        <label for="claim_code">
-                            <i class="fas fa-key"></i> Claim Code <span class="required">*</span>
-                        </label>
-                        <input type="text" id="claim_code" name="claim_code" 
-                               value="{{ form_data.claim_code if form_data else '' }}"
-                               placeholder="Enter your claim code" required
-                               style="text-transform: uppercase; letter-spacing: 1px; font-family: monospace; font-size: 16px;">
-                        <div class="hint">
-                            <i class="fas fa-info-circle"></i>
-                            Enter the claim code you received. Codes are case-sensitive.
-                        </div>
                     </div>
                 </div>
 
                 <!-- Privacy Notice -->
                 <div class="privacy-notice">
                     <h4><i class="fas fa-shield-alt"></i> Privacy Notice</h4>
-                    <p>Your information will be used solely for processing your gift claim and delivery. 
-                    We do not share your data with third parties except as necessary for fulfillment.</p>
+                    <p>Your information will be used solely for processing your gift registration and delivery.
+                        We do not share your data with third parties except as necessary for fulfillment.</p>
                     <label class="checkbox">
                         <input type="checkbox" id="privacy_consent" required>
-                        <span>I agree to the <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a> and 
-                        <a href="{{ url_for('terms') }}" target="_blank">Terms & Conditions</a></span>
+                        <span>I agree to the <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a> and
+                            <a href="{{ url_for('terms') }}" target="_blank">Terms & Conditions</a></span>
                     </label>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="form-actions">
                     <button type="submit" class="btn-primary btn-large" id="submitBtn">
-                        <i class="fas fa-gift"></i> Claim Your Gift Package
+                        <i class="fas fa-gift"></i> Register Now
                     </button>
                 </div>
             </form>
@@ -673,17 +593,10 @@
         const cityManual = document.getElementById('city_manual');
         const phoneCodeSelect = document.getElementById('phone_code');
 
-        // Pre-fill values from a failed previous submission (Jinja-rendered attributes)
         const prefillCountry = form.dataset.prefillCountry || '';
         const prefillCity = form.dataset.prefillCity || '';
         const prefillPhoneCode = form.dataset.prefillPhoneCode || '';
 
-        /* ----------------------------------------
-           1. Phone country codes
-           Static list: name, ISO2 code, dial code.
-           Flag emoji is derived from the ISO2 code
-           so we don't have to hardcode 190+ emojis.
-        ---------------------------------------- */
         function flagEmoji(iso2) {
             return iso2.toUpperCase().replace(/./g, c =>
                 String.fromCodePoint(127397 + c.charCodeAt(0))
@@ -691,72 +604,72 @@
         }
 
         const PHONE_CODES = [
-            ["Afghanistan","AF","+93"],["Albania","AL","+355"],["Algeria","DZ","+213"],
-            ["Andorra","AD","+376"],["Angola","AO","+244"],["Argentina","AR","+54"],
-            ["Armenia","AM","+374"],["Australia","AU","+61"],["Austria","AT","+43"],
-            ["Azerbaijan","AZ","+994"],["Bahamas","BS","+1"],["Bahrain","BH","+973"],
-            ["Bangladesh","BD","+880"],["Barbados","BB","+1"],["Belarus","BY","+375"],
-            ["Belgium","BE","+32"],["Belize","BZ","+501"],["Benin","BJ","+229"],
-            ["Bhutan","BT","+975"],["Bolivia","BO","+591"],["Bosnia and Herzegovina","BA","+387"],
-            ["Botswana","BW","+267"],["Brazil","BR","+55"],["Brunei","BN","+673"],
-            ["Bulgaria","BG","+359"],["Burkina Faso","BF","+226"],["Burundi","BI","+257"],
-            ["Cambodia","KH","+855"],["Cameroon","CM","+237"],["Canada","CA","+1"],
-            ["Cape Verde","CV","+238"],["Central African Republic","CF","+236"],["Chad","TD","+235"],
-            ["Chile","CL","+56"],["China","CN","+86"],["Colombia","CO","+57"],
-            ["Comoros","KM","+269"],["Congo (DRC)","CD","+243"],["Congo (Republic)","CG","+242"],
-            ["Costa Rica","CR","+506"],["Croatia","HR","+385"],["Cuba","CU","+53"],
-            ["Cyprus","CY","+357"],["Czech Republic","CZ","+420"],["Denmark","DK","+45"],
-            ["Djibouti","DJ","+253"],["Dominica","DM","+1"],["Dominican Republic","DO","+1"],
-            ["Ecuador","EC","+593"],["Egypt","EG","+20"],["El Salvador","SV","+503"],
-            ["Equatorial Guinea","GQ","+240"],["Eritrea","ER","+291"],["Estonia","EE","+372"],
-            ["Eswatini","SZ","+268"],["Ethiopia","ET","+251"],["Fiji","FJ","+679"],
-            ["Finland","FI","+358"],["France","FR","+33"],["Gabon","GA","+241"],
-            ["Gambia","GM","+220"],["Georgia","GE","+995"],["Germany","DE","+49"],
-            ["Ghana","GH","+233"],["Greece","GR","+30"],["Grenada","GD","+1"],
-            ["Guatemala","GT","+502"],["Guinea","GN","+224"],["Guinea-Bissau","GW","+245"],
-            ["Guyana","GY","+592"],["Haiti","HT","+509"],["Honduras","HN","+504"],
-            ["Hong Kong","HK","+852"],["Hungary","HU","+36"],["Iceland","IS","+354"],
-            ["India","IN","+91"],["Indonesia","ID","+62"],["Iran","IR","+98"],
-            ["Iraq","IQ","+964"],["Ireland","IE","+353"],["Israel","IL","+972"],
-            ["Italy","IT","+39"],["Ivory Coast","CI","+225"],["Jamaica","JM","+1"],
-            ["Japan","JP","+81"],["Jordan","JO","+962"],["Kazakhstan","KZ","+7"],
-            ["Kenya","KE","+254"],["Kiribati","KI","+686"],["Kosovo","XK","+383"],
-            ["Kuwait","KW","+965"],["Kyrgyzstan","KG","+996"],["Laos","LA","+856"],
-            ["Latvia","LV","+371"],["Lebanon","LB","+961"],["Lesotho","LS","+266"],
-            ["Liberia","LR","+231"],["Libya","LY","+218"],["Liechtenstein","LI","+423"],
-            ["Lithuania","LT","+370"],["Luxembourg","LU","+352"],["Madagascar","MG","+261"],
-            ["Malawi","MW","+265"],["Malaysia","MY","+60"],["Maldives","MV","+960"],
-            ["Mali","ML","+223"],["Malta","MT","+356"],["Marshall Islands","MH","+692"],
-            ["Mauritania","MR","+222"],["Mauritius","MU","+230"],["Mexico","MX","+52"],
-            ["Micronesia","FM","+691"],["Moldova","MD","+373"],["Monaco","MC","+377"],
-            ["Mongolia","MN","+976"],["Montenegro","ME","+382"],["Morocco","MA","+212"],
-            ["Mozambique","MZ","+258"],["Myanmar","MM","+95"],["Namibia","NA","+264"],
-            ["Nauru","NR","+674"],["Nepal","NP","+977"],["Netherlands","NL","+31"],
-            ["New Zealand","NZ","+64"],["Nicaragua","NI","+505"],["Niger","NE","+227"],
-            ["Nigeria","NG","+234"],["North Korea","KP","+850"],["North Macedonia","MK","+389"],
-            ["Norway","NO","+47"],["Oman","OM","+968"],["Pakistan","PK","+92"],
-            ["Palau","PW","+680"],["Palestine","PS","+970"],["Panama","PA","+507"],
-            ["Papua New Guinea","PG","+675"],["Paraguay","PY","+595"],["Peru","PE","+51"],
-            ["Philippines","PH","+63"],["Poland","PL","+48"],["Portugal","PT","+351"],
-            ["Qatar","QA","+974"],["Romania","RO","+40"],["Russia","RU","+7"],
-            ["Rwanda","RW","+250"],["Saint Lucia","LC","+1"],["Samoa","WS","+685"],
-            ["San Marino","SM","+378"],["Sao Tome and Principe","ST","+239"],["Saudi Arabia","SA","+966"],
-            ["Senegal","SN","+221"],["Serbia","RS","+381"],["Seychelles","SC","+248"],
-            ["Sierra Leone","SL","+232"],["Singapore","SG","+65"],["Slovakia","SK","+421"],
-            ["Slovenia","SI","+386"],["Solomon Islands","SB","+677"],["Somalia","SO","+252"],
-            ["South Africa","ZA","+27"],["South Korea","KR","+82"],["South Sudan","SS","+211"],
-            ["Spain","ES","+34"],["Sri Lanka","LK","+94"],["Sudan","SD","+249"],
-            ["Suriname","SR","+597"],["Sweden","SE","+46"],["Switzerland","CH","+41"],
-            ["Syria","SY","+963"],["Taiwan","TW","+886"],["Tajikistan","TJ","+992"],
-            ["Tanzania","TZ","+255"],["Thailand","TH","+66"],["Timor-Leste","TL","+670"],
-            ["Togo","TG","+228"],["Tonga","TO","+676"],["Trinidad and Tobago","TT","+1"],
-            ["Tunisia","TN","+216"],["Turkey","TR","+90"],["Turkmenistan","TM","+993"],
-            ["Tuvalu","TV","+688"],["Uganda","UG","+256"],["Ukraine","UA","+380"],
-            ["United Arab Emirates","AE","+971"],["United Kingdom","GB","+44"],
-            ["United States","US","+1"],["Uruguay","UY","+598"],["Uzbekistan","UZ","+998"],
-            ["Vanuatu","VU","+678"],["Vatican City","VA","+379"],["Venezuela","VE","+58"],
-            ["Vietnam","VN","+84"],["Yemen","YE","+967"],["Zambia","ZM","+260"],
-            ["Zimbabwe","ZW","+263"]
+            ["Afghanistan", "AF", "+93"], ["Albania", "AL", "+355"], ["Algeria", "DZ", "+213"],
+            ["Andorra", "AD", "+376"], ["Angola", "AO", "+244"], ["Argentina", "AR", "+54"],
+            ["Armenia", "AM", "+374"], ["Australia", "AU", "+61"], ["Austria", "AT", "+43"],
+            ["Azerbaijan", "AZ", "+994"], ["Bahamas", "BS", "+1"], ["Bahrain", "BH", "+973"],
+            ["Bangladesh", "BD", "+880"], ["Barbados", "BB", "+1"], ["Belarus", "BY", "+375"],
+            ["Belgium", "BE", "+32"], ["Belize", "BZ", "+501"], ["Benin", "BJ", "+229"],
+            ["Bhutan", "BT", "+975"], ["Bolivia", "BO", "+591"], ["Bosnia and Herzegovina", "BA", "+387"],
+            ["Botswana", "BW", "+267"], ["Brazil", "BR", "+55"], ["Brunei", "BN", "+673"],
+            ["Bulgaria", "BG", "+359"], ["Burkina Faso", "BF", "+226"], ["Burundi", "BI", "+257"],
+            ["Cambodia", "KH", "+855"], ["Cameroon", "CM", "+237"], ["Canada", "CA", "+1"],
+            ["Cape Verde", "CV", "+238"], ["Central African Republic", "CF", "+236"], ["Chad", "TD", "+235"],
+            ["Chile", "CL", "+56"], ["China", "CN", "+86"], ["Colombia", "CO", "+57"],
+            ["Comoros", "KM", "+269"], ["Congo (DRC)", "CD", "+243"], ["Congo (Republic)", "CG", "+242"],
+            ["Costa Rica", "CR", "+506"], ["Croatia", "HR", "+385"], ["Cuba", "CU", "+53"],
+            ["Cyprus", "CY", "+357"], ["Czech Republic", "CZ", "+420"], ["Denmark", "DK", "+45"],
+            ["Djibouti", "DJ", "+253"], ["Dominica", "DM", "+1"], ["Dominican Republic", "DO", "+1"],
+            ["Ecuador", "EC", "+593"], ["Egypt", "EG", "+20"], ["El Salvador", "SV", "+503"],
+            ["Equatorial Guinea", "GQ", "+240"], ["Eritrea", "ER", "+291"], ["Estonia", "EE", "+372"],
+            ["Eswatini", "SZ", "+268"], ["Ethiopia", "ET", "+251"], ["Fiji", "FJ", "+679"],
+            ["Finland", "FI", "+358"], ["France", "FR", "+33"], ["Gabon", "GA", "+241"],
+            ["Gambia", "GM", "+220"], ["Georgia", "GE", "+995"], ["Germany", "DE", "+49"],
+            ["Ghana", "GH", "+233"], ["Greece", "GR", "+30"], ["Grenada", "GD", "+1"],
+            ["Guatemala", "GT", "+502"], ["Guinea", "GN", "+224"], ["Guinea-Bissau", "GW", "+245"],
+            ["Guyana", "GY", "+592"], ["Haiti", "HT", "+509"], ["Honduras", "HN", "+504"],
+            ["Hong Kong", "HK", "+852"], ["Hungary", "HU", "+36"], ["Iceland", "IS", "+354"],
+            ["India", "IN", "+91"], ["Indonesia", "ID", "+62"], ["Iran", "IR", "+98"],
+            ["Iraq", "IQ", "+964"], ["Ireland", "IE", "+353"], ["Israel", "IL", "+972"],
+            ["Italy", "IT", "+39"], ["Ivory Coast", "CI", "+225"], ["Jamaica", "JM", "+1"],
+            ["Japan", "JP", "+81"], ["Jordan", "JO", "+962"], ["Kazakhstan", "KZ", "+7"],
+            ["Kenya", "KE", "+254"], ["Kiribati", "KI", "+686"], ["Kosovo", "XK", "+383"],
+            ["Kuwait", "KW", "+965"], ["Kyrgyzstan", "KG", "+996"], ["Laos", "LA", "+856"],
+            ["Latvia", "LV", "+371"], ["Lebanon", "LB", "+961"], ["Lesotho", "LS", "+266"],
+            ["Liberia", "LR", "+231"], ["Libya", "LY", "+218"], ["Liechtenstein", "LI", "+423"],
+            ["Lithuania", "LT", "+370"], ["Luxembourg", "LU", "+352"], ["Madagascar", "MG", "+261"],
+            ["Malawi", "MW", "+265"], ["Malaysia", "MY", "+60"], ["Maldives", "MV", "+960"],
+            ["Mali", "ML", "+223"], ["Malta", "MT", "+356"], ["Marshall Islands", "MH", "+692"],
+            ["Mauritania", "MR", "+222"], ["Mauritius", "MU", "+230"], ["Mexico", "MX", "+52"],
+            ["Micronesia", "FM", "+691"], ["Moldova", "MD", "+373"], ["Monaco", "MC", "+377"],
+            ["Mongolia", "MN", "+976"], ["Montenegro", "ME", "+382"], ["Morocco", "MA", "+212"],
+            ["Mozambique", "MZ", "+258"], ["Myanmar", "MM", "+95"], ["Namibia", "NA", "+264"],
+            ["Nauru", "NR", "+674"], ["Nepal", "NP", "+977"], ["Netherlands", "NL", "+31"],
+            ["New Zealand", "NZ", "+64"], ["Nicaragua", "NI", "+505"], ["Niger", "NE", "+227"],
+            ["Nigeria", "NG", "+234"], ["North Korea", "KP", "+850"], ["North Macedonia", "MK", "+389"],
+            ["Norway", "NO", "+47"], ["Oman", "OM", "+968"], ["Pakistan", "PK", "+92"],
+            ["Palau", "PW", "+680"], ["Palestine", "PS", "+970"], ["Panama", "PA", "+507"],
+            ["Papua New Guinea", "PG", "+675"], ["Paraguay", "PY", "+595"], ["Peru", "PE", "+51"],
+            ["Philippines", "PH", "+63"], ["Poland", "PL", "+48"], ["Portugal", "PT", "+351"],
+            ["Qatar", "QA", "+974"], ["Romania", "RO", "+40"], ["Russia", "RU", "+7"],
+            ["Rwanda", "RW", "+250"], ["Saint Lucia", "LC", "+1"], ["Samoa", "WS", "+685"],
+            ["San Marino", "SM", "+378"], ["Sao Tome and Principe", "ST", "+239"], ["Saudi Arabia", "SA", "+966"],
+            ["Senegal", "SN", "+221"], ["Serbia", "RS", "+381"], ["Seychelles", "SC", "+248"],
+            ["Sierra Leone", "SL", "+232"], ["Singapore", "SG", "+65"], ["Slovakia", "SK", "+421"],
+            ["Slovenia", "SI", "+386"], ["Solomon Islands", "SB", "+677"], ["Somalia", "SO", "+252"],
+            ["South Africa", "ZA", "+27"], ["South Korea", "KR", "+82"], ["South Sudan", "SS", "+211"],
+            ["Spain", "ES", "+34"], ["Sri Lanka", "LK", "+94"], ["Sudan", "SD", "+249"],
+            ["Suriname", "SR", "+597"], ["Sweden", "SE", "+46"], ["Switzerland", "CH", "+41"],
+            ["Syria", "SY", "+963"], ["Taiwan", "TW", "+886"], ["Tajikistan", "TJ", "+992"],
+            ["Tanzania", "TZ", "+255"], ["Thailand", "TH", "+66"], ["Timor-Leste", "TL", "+670"],
+            ["Togo", "TG", "+228"], ["Tonga", "TO", "+676"], ["Trinidad and Tobago", "TT", "+1"],
+            ["Tunisia", "TN", "+216"], ["Turkey", "TR", "+90"], ["Turkmenistan", "TM", "+993"],
+            ["Tuvalu", "TV", "+688"], ["Uganda", "UG", "+256"], ["Ukraine", "UA", "+380"],
+            ["United Arab Emirates", "AE", "+971"], ["United Kingdom", "GB", "+44"],
+            ["United States", "US", "+1"], ["Uruguay", "UY", "+598"], ["Uzbekistan", "UZ", "+998"],
+            ["Vanuatu", "VU", "+678"], ["Vatican City", "VA", "+379"], ["Venezuela", "VE", "+58"],
+            ["Vietnam", "VN", "+84"], ["Yemen", "YE", "+967"], ["Zambia", "ZM", "+260"],
+            ["Zimbabwe", "ZW", "+263"]
         ];
 
         const phoneFrag = document.createDocumentFragment();
@@ -775,12 +688,6 @@
             phoneCodeSelect.value = prefillPhoneCode;
         }
 
-        /* ----------------------------------------
-           2. Country + state/province dropdowns
-           Pulled live from the free Countries Now API
-           (https://countriesnow.space) so the list stays
-           complete without us hand-maintaining it.
-        ---------------------------------------- */
         let countryStateData = [];
 
         function populateCityOptions(countryName) {
@@ -811,7 +718,6 @@
                     citySelect.value = prefillCity;
                 }
             } else {
-                // No state/province data for this country — fall back to free text
                 citySelect.required = false;
                 citySelect.disabled = true;
                 citySelect.style.display = 'none';
@@ -870,7 +776,6 @@
                     }
                 })
                 .catch(() => {
-                    // Fallback: keep the field usable even if the API is unreachable
                     countrySelect.innerHTML = '<option value="">Could not load list — type your country below</option>';
                     countrySelect.insertAdjacentHTML('afterend',
                         '<input type="text" id="country_manual" name="country_manual" placeholder="Enter your country" required style="margin-top:8px;">'
@@ -895,9 +800,6 @@
 
         loadCountries();
 
-        /* ----------------------------------------
-           3. Submit handling
-        ---------------------------------------- */
         form.addEventListener('submit', function (e) {
             const privacyCheck = document.getElementById('privacy_consent');
             if (!privacyCheck.checked) {

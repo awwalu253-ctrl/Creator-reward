@@ -8,43 +8,47 @@
        VIDEO-PLATFORM INSPIRED COLOR SCHEME
        ======================================== */
     :root {
+
         /* Primary Accent - Bold Red (YouTube inspired) */
-        --primary: #E62117;
-        --primary-hover: #CC0000;
-        --primary-light: #FFE5E5;
-        
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1e3a8a;
+            --primary-light: #eff6ff;
+            --shadow-hover: 0 12px 40px rgba(30, 64, 175, 0.15);
+        }
+
         /* Backgrounds */
         --bg-primary: #FFFFFF;
         --bg-secondary: #F1F1F1;
         --bg-dark: #0F0F0F;
-        
+
         /* Text Colors */
         --text-primary: #0F0F0F;
         --text-secondary: #606060;
         --text-white: #FFFFFF;
-        
+
         /* Borders & Dividers */
         --border-light: #E5E5E5;
         --border-dark: #3D3D3D;
-        
+
         /* Status Colors */
         --success: #28A745;
         --error: #E62117;
         --warning: #F9A825;
         --info: #1A73E8;
-        
+
         /* Shadows & Effects */
-        --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-        --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
         --shadow-hover: 0 12px 40px rgba(230, 33, 23, 0.15);
-        
+
         /* Border Radius */
         --radius-sm: 4px;
         --radius-md: 8px;
         --radius-lg: 16px;
         --radius-xl: 24px;
-        
+
         /* Transitions */
         --transition-fast: 0.15s ease;
         --transition-base: 0.25s ease;
@@ -63,7 +67,7 @@
         position: relative;
         overflow: hidden;
     }
-    
+
     /* Subtle background accent */
     .hero-section::before {
         content: '';
@@ -76,7 +80,7 @@
         border-radius: 50%;
         pointer-events: none;
     }
-    
+
     .hero-section::after {
         content: '';
         position: absolute;
@@ -88,7 +92,7 @@
         border-radius: 50%;
         pointer-events: none;
     }
-    
+
     .hero-content {
         text-align: center;
         max-width: 900px;
@@ -96,7 +100,7 @@
         position: relative;
         z-index: 1;
     }
-    
+
     /* ========================================
        HERO BADGE
        ======================================== */
@@ -115,11 +119,11 @@
         letter-spacing: 1.2px;
         border: 1px solid rgba(230, 33, 23, 0.15);
     }
-    
+
     .hero-badge i {
         font-size: 0.85rem;
     }
-    
+
     /* ========================================
        HERO TITLE
        ======================================== */
@@ -131,12 +135,12 @@
         color: var(--text-primary);
         letter-spacing: -1.5px;
     }
-    
+
     .hero-title .highlight {
         color: var(--primary);
         position: relative;
     }
-    
+
     .hero-title .highlight::after {
         content: '';
         position: absolute;
@@ -148,7 +152,7 @@
         border-radius: 4px;
         z-index: -1;
     }
-    
+
     /* ========================================
        HERO SUBTITLE
        ======================================== */
@@ -160,7 +164,7 @@
         line-height: 1.8;
         font-weight: 400;
     }
-    
+
     /* ========================================
        GIFT GRID
        ======================================== */
@@ -171,7 +175,7 @@
         margin: 48px 0 40px;
         text-align: left;
     }
-    
+
     .gift-item {
         background: var(--bg-secondary);
         padding: 18px 20px;
@@ -183,14 +187,14 @@
         gap: 14px;
         cursor: default;
     }
-    
+
     .gift-item:hover {
         transform: translateY(-2px);
         border-color: var(--primary);
         box-shadow: var(--shadow-hover);
         background: var(--bg-primary);
     }
-    
+
     .gift-item i {
         font-size: 1.5rem;
         color: var(--primary);
@@ -198,14 +202,14 @@
         text-align: center;
         flex-shrink: 0;
     }
-    
+
     .gift-item .gift-text {
         font-size: 0.85rem;
         font-weight: 400;
         color: var(--text-secondary);
         line-height: 1.4;
     }
-    
+
     .gift-item .gift-text strong {
         display: block;
         font-weight: 700;
@@ -213,14 +217,14 @@
         font-size: 0.9rem;
         margin-bottom: 2px;
     }
-    
+
     /* ========================================
        CTA BUTTON
        ======================================== */
     .cta-section {
         margin-top: 40px;
     }
-    
+
     .btn-primary {
         display: inline-flex;
         align-items: center;
@@ -237,22 +241,22 @@
         text-decoration: none;
         box-shadow: 0 4px 16px rgba(230, 33, 23, 0.25);
     }
-    
+
     .btn-primary:hover {
         background: var(--primary-hover);
         transform: translateY(-2px);
         box-shadow: 0 8px 30px rgba(230, 33, 23, 0.35);
     }
-    
+
     .btn-primary i {
         font-size: 1.1rem;
     }
-    
+
     .btn-large {
         padding: 18px 48px;
         font-size: 1.1rem;
     }
-    
+
     /* ========================================
        TRUST BADGES
        ======================================== */
@@ -265,7 +269,7 @@
         padding-top: 32px;
         border-top: 1px solid var(--border-light);
     }
-    
+
     .trust-item {
         display: flex;
         align-items: center;
@@ -275,17 +279,17 @@
         font-weight: 500;
         transition: var(--transition-fast);
     }
-    
+
     .trust-item:hover {
         color: var(--text-primary);
     }
-    
+
     .trust-item i {
         color: var(--primary);
         font-size: 1.1rem;
         opacity: 0.8;
     }
-    
+
     /* ========================================
        RESPONSIVE BREAKPOINTS
        ======================================== */
@@ -294,84 +298,84 @@
             font-size: 3rem;
         }
     }
-    
+
     @media (max-width: 768px) {
         .hero-section {
             padding: 60px 0 50px;
         }
-        
+
         .hero-title {
             font-size: 2.2rem;
             letter-spacing: -0.5px;
         }
-        
+
         .hero-subtitle {
             font-size: 1rem;
             padding: 0 10px;
         }
-        
+
         .gift-grid {
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-        
+
         .gift-item {
             padding: 14px 16px;
         }
-        
+
         .gift-item i {
             font-size: 1.25rem;
             min-width: 28px;
         }
-        
+
         .gift-item .gift-text {
             font-size: 0.8rem;
         }
-        
+
         .gift-item .gift-text strong {
             font-size: 0.85rem;
         }
-        
+
         .btn-primary {
             padding: 14px 32px;
             font-size: 0.95rem;
         }
-        
+
         .btn-large {
             padding: 16px 36px;
             font-size: 1rem;
         }
-        
+
         .trust-badges {
             gap: 24px;
         }
-        
+
         .trust-item {
             font-size: 0.8rem;
         }
     }
-    
+
     @media (max-width: 480px) {
         .hero-title {
             font-size: 1.7rem;
         }
-        
+
         .gift-grid {
             grid-template-columns: 1fr;
             gap: 10px;
         }
-        
+
         .trust-badges {
             gap: 16px;
             flex-direction: column;
             align-items: center;
         }
-        
+
         .hero-badge {
             font-size: 0.65rem;
             padding: 4px 14px;
         }
-        
+
         .btn-primary {
             padding: 14px 28px;
             font-size: 0.9rem;
@@ -388,13 +392,13 @@
                 <i class="fas fa-gift"></i>
                 Creator Appreciation Program
             </div>
-            
+
             <h1 class="hero-title">
                 A Special <span class="highlight">Gift Package</span> Awaits You
             </h1>
-            
+
             <p class="hero-subtitle">
-                We've been following your journey, and we want to say thank you for everything you bring 
+                We've been following your journey, and we want to say thank you for everything you bring
                 to the creator community. Your dedication and creativity inspire viewers around the world.
             </p>
 
